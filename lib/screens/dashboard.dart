@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'documents_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final Function(int)? onNavigate;
+
+  const DashboardScreen({super.key, this.onNavigate});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -55,7 +56,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               constraints: const BoxConstraints(),
             ),
             IconButton(
-              icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)), // Adjusted back to more_horiz for options
+              icon: const Icon(
+                Icons.more_horiz,
+                color: Color(0xFF212022),
+              ), // Adjusted back to more_horiz for options
               onPressed: () {},
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -68,7 +72,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF8B8893)),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: Color(0xFF8B8893),
+                ),
                 const SizedBox(width: 4),
                 const Text(
                   'Current Trip',
@@ -101,10 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFC1EAFF),
-            Color(0xFFD9F0FC),
-          ],
+          colors: [Color(0xFFC1EAFF), Color(0xFFD9F0FC)],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -198,10 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: Colors.white,
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.white, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF262F40).withValues(alpha: 0.08),
@@ -211,9 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      child: Center(
-        child: Text(emoji, style: const TextStyle(fontSize: 11)),
-      ),
+      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 11))),
     );
   }
 
@@ -238,12 +238,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisSpacing: 16,
           childAspectRatio: 172 / 112, // Aspect ratio from Figma (w/h)
           children: [
-            _buildExploreCard(
-              title: 'Payments',
-              subtitle: 'Split & Settle',
-              icon: Icons.account_balance_wallet_outlined,
-              iconBgColor: const Color(0xFF7EF1CB),
-              cardBgColor: const Color(0xFFE5F8F1),
+            GestureDetector(
+              onTap: () {
+                if (widget.onNavigate != null) {
+                  widget.onNavigate!(1); // 1 is Payments
+                }
+              },
+              child: _buildExploreCard(
+                title: 'Payments',
+                subtitle: 'Split & Settle',
+                icon: Icons.account_balance_wallet_outlined,
+                iconBgColor: const Color(0xFF7EF1CB),
+                cardBgColor: const Color(0xFFE5F8F1),
+              ),
             ),
             _buildExploreCard(
               title: 'Gallery',
@@ -260,16 +267,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               cardBgColor: const Color(0xFFE7F8FA),
             ),
             GestureDetector(
-                onTap: () {
-                    // Handled structurally now
-                },
-                child: _buildExploreCard(
-                  title: 'Documents',
-                  subtitle: 'All your file',
-                  icon: Icons.description_outlined,
-                  iconBgColor: const Color(0xFFFFE591),
-                  cardBgColor: const Color(0xFFFEF9EA),
-                ),
+              onTap: () {
+                if (widget.onNavigate != null) {
+                  widget.onNavigate!(4); // 4 is Documents
+                }
+              },
+              child: _buildExploreCard(
+                title: 'Documents',
+                subtitle: 'All your file',
+                icon: Icons.description_outlined,
+                iconBgColor: const Color(0xFFFFE591),
+                cardBgColor: const Color(0xFFFEF9EA),
+              ),
             ),
           ],
         ),
@@ -300,18 +309,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 46,
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(15.97),
-            ),
-            child: Center(
-              child: Icon(icon, size: 24, color: Colors.white),
+          Expanded(
+            child: Container(
+              width: 44,
+              height: 46,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(15.97),
+              ),
+              child: Center(child: Icon(icon, size: 24, color: Colors.white)),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           Text(
             title,
             style: const TextStyle(
@@ -415,6 +424,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-
 }
