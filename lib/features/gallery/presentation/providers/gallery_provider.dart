@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import '../models/photo.dart';
-import '../repositories/photo_repository.dart';
+import '../../data/models/photo_model.dart';
+import '../../data/repositories/photo_repository.dart';
 
 class GalleryProvider with ChangeNotifier {
   final PhotoRepository _photoRepository;
 
-  GalleryProvider({PhotoRepository? photoRepository})
-      : _photoRepository = photoRepository ?? PhotoRepository();
+  GalleryProvider({required PhotoRepository photoRepository})
+      : _photoRepository = photoRepository;
 
   List<Photo> _photos = [];
   bool _isLoading = false;
