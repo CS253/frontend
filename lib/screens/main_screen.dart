@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'documents_screen.dart';
+import 'gallery_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
     const DashboardScreen(),
     const Scaffold(body: Center(child: Text('Pay'))),
     const Scaffold(body: Center(child: Text('Plan'))),
-    const Scaffold(body: Center(child: Text('Gallery'))),
+    const GalleryScreen(),
     const DocumentsScreen(),
   ];
 
