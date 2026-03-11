@@ -1,16 +1,18 @@
 import 'dart:io';
-import '../models/photo.dart';
-import '../services/api_service.dart';
+import '../models/photo_model.dart';
+import '../services/photo_service.dart';
+import '../../../../core/api/api_client.dart';
 
 class PhotoRepository {
-  final ApiService _apiService;
+  final PhotoService _photoService;
 
-  PhotoRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+  PhotoRepository({required ApiClient apiClient})
+      : _photoService = PhotoService(apiClient: apiClient);
 
   Future<List<Photo>> fetchPhotos({int page = 1, int limit = 20}) async {
     try {
-      final response = await _apiService.getPhotos(page: page, limit: limit);
+      final response = await _photoService.fetchPhotos(page: page, limit: limit);
+
       final List<dynamic> data = response['data'];
       return data.map((json) => Photo.fromJson(json)).toList();
     } catch (e) {
@@ -22,7 +24,7 @@ class PhotoRepository {
     try {
       // Intended to pass file to upload service. 
       // For now passing path to the mock service.
-      await _apiService.uploadPhoto(image.path);
+      await _photoService.uploadPhoto(image.path);
     } catch (e) {
       throw Exception('Failed to upload photo: $e');
     }

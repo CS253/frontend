@@ -1,13 +1,17 @@
-# Backend Integration Guide for Photo Gallery
+# Gallery Backend Integration Guide
 
-This document outlines the step-by-step process for integrating the actual backend APIs into the Gallery screen application.
+This guide outlines the steps required to connect the Gallery feature to a real backend API, following the new layered architecture.
 
-## 1. Files Requiring Modification
+## 1. Project Structure
 
-Only the following files in the project need to be modified when wiring up the real backend. You do **NOT** need to touch `lib/screens/gallery_screen.dart` or `lib/widgets/photo_card.dart`.
+The gallery feature is structured cleanly under `lib/features/gallery/`:
 
-The files to modify:
-- `lib/config/api_config.dart`
+*   **Models:** `lib/features/gallery/data/models/photo_model.dart`
+*   **Services:** `lib/features/gallery/data/services/photo_service.dart`
+*   **Repositories:** `lib/features/gallery/data/repositories/photo_repository.dart`
+*   **Providers:** `lib/features/gallery/presentation/providers/gallery_provider.dart`
+*   **UI (Screens & Widgets):** `lib/features/gallery/presentation/screens/gallery_screen.dart`, `lib/features/gallery/presentation/widgets/photo_card.dart`
+*   **Core Endpoints:** `lib/core/api/api_endpoints.dart`
 - `lib/services/api_service.dart`
 
 ## 2. Replacing Mock Data with Real API Calls
