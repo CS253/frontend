@@ -6,6 +6,7 @@ class Photo {
 
   // Additional fields based on Figma design: User's name
   final String authorName;
+  final String? localPath; // For rendering newly picked media
 
   Photo({
     required this.id,
@@ -13,6 +14,7 @@ class Photo {
     this.title,
     this.createdAt,
     required this.authorName,
+    this.localPath,
   });
 
   factory Photo.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class Photo {
       title: json['title'] as String?,
       createdAt: json['createdAt'] as String?,
       authorName: json['authorName'] as String? ?? 'Unknown',
+      localPath: json['localPath'] as String?,
     );
   }
 
