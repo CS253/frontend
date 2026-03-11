@@ -1,60 +1,34 @@
 # Gallery Backend Integration Guide
 
-This guide outlines the steps required to connect the Gallery feature to a real backend API, following the new layered architecture.
+This guide outlines exactly how backend engineers should set up the REST API layer for the Travelly Gallery feature. 
+The Flutter frontend is already fully wired via Clean Architecture. All data calls pass through `lib/core/api/api_client.dart` down to `lib/features/gallery/data/services/photo_service.dart`.
 
-## 1. Project Structure
+## 1. Environment Configuration
 
-The gallery feature is structured cleanly under `lib/features/gallery/`:
-
-*   **Models:** `lib/features/gallery/data/models/photo_model.dart`
-*   **Services:** `lib/features/gallery/data/services/photo_service.dart`
-*   **Repositories:** `lib/features/gallery/data/repositories/photo_repository.dart`
-*   **Providers:** `lib/features/gallery/presentation/providers/gallery_provider.dart`
-*   **UI (Screens & Widgets):** `lib/features/gallery/presentation/screens/gallery_screen.dart`, `lib/features/gallery/presentation/widgets/photo_card.dart`
-*   **Core Endpoints:** `lib/core/api/api_endpoints.dart`
-- `lib/services/api_service.dart`
-
-## 2. Replacing Mock Data with Real API Calls
-
-In `lib/services/api_service.dart`:
-- Currently, the `getPhotos` and `uploadPhoto` functions use `Future.delayed` and return hardcoded maps.
-- You must replace these simulated network calls with the `http` package, `dio`, or whichever client is preferred.
-- Example replacement:
-  ```dart
-  Future<Map<String, dynamic>> getPhotos({int page = 1, int limit = 20}) async {
-    final response = await http.get(Uri.parse('${ApiConfig.baseUrl}${ApiConfig.photosEndpoint}?page=\$page&limit=\$limit'));
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load photos');
-    }
-  }
-  ```
-
-## 3. API Endpoints Insertion
-
-Modify `lib/config/api_config.dart` to define the base URL and endpoints:
+Define the Base URL inside `lib/core/api/api_endpoints.dart`:
 ```dart
-class ApiConfig {
-  static const String baseUrl = 'https://api.yourbackend.com/v1'; // Set your real API base URL
-  static const String photosEndpoint = '/photos'; // Endpoint for GET /photos
-  static const String uploadEndpoint = '/photos/upload'; // Endpoint for POST /photos/upload
+class ApiEndpoints {
+  static const String baseUrl = 'https://api.yourbackend.com/v1'; 
+  static const String photosEndpoint = '/photos'; 
+  static const String uploadEndpoint = '/photos/upload'; 
+  static const String deletePhotosEndpoint = '/photos/delete'; 
 }
 ```
 
-## 4. Expected Backend JSON Response Format
+## 2. GET `/photos` (Paginating Grid Data)
 
-The `getPhotos` API should preferably return JSON matching the structure that `Photo.fromJson` is listening for (or a structured wrapper):
+When `GalleryProvider.fetchPhotos()` is called, the UI expects a JSON array payload matching the `PhotoModel`:
 
+**Expected JSON Response:**
 ```json
 {
   "data": [
     {
-      "id": "item123",
+      "id": "abc12345",
       "imageUrl": "https://cdn.example.com/item123.jpg",
-      "title": "Optional Title",
-      "createdAt": "2026-03-11T12:00:00Z",
-      "authorName": "Rahul"
+      "title": "Beach Day",
+      "createdAt": "2026-03-12T12:00:00Z",
+      "authorName": "You"
     }
   ],
   "meta": {
@@ -64,70 +38,63 @@ The `getPhotos` API should preferably return JSON matching the structure that `P
   }
 }
 ```
+*Note: If your JSON keys (like `authorName` vs `author_name`) change, update the string identifiers directly in `lib/features/gallery/data/models/photo_model.dart` line 18.*
 
-## 5. How Photo.fromJson Connects
+## 3. POST `/photos/upload` (Adding Media)
 
-In `lib/models/photo.dart`:
-- `Photo.fromJson(Map<String, dynamic> json)` reads keys exactly as returned by the backend.
-- If your backend JSON keys differ (e.g. `image_url` instead of `imageUrl`), you must alter the key string identifiers inside `Photo.fromJson` to match. 
+The UI utilizes `ImagePicker` allowing multi-image/video selection. When the "Add Media" FAB is tapped, the provider grabs a `List<XFile>` from native device storage.
 
-## 6. Integrating Pagination
-
-The API Service function `getPhotos({int page = 1, int limit = 20})` and `PhotoRepository.fetchPhotos` already accept pagination arguments.
-- In `lib/providers/gallery_provider.dart`, you can introduce list appending logic:
-  ```dart
-  // Inside fetchPhotos()
-  final fetchedPhotos = await _photoRepository.fetchPhotos(page: _currentPage, limit: 20);
-  _photos.addAll(fetchedPhotos);
-  _currentPage++;
-  ```
-- Trigger this update using a ScrollController inside `lib/screens/gallery_screen.dart` (which requires minimal UI logic adjustments, simply triggering `provider.fetchPhotos()`).
-
-## 7. How Image Upload Works
-
-- The UI trigger lives in the `FloatingActionButton` of `GalleryScreen`.
-- Upon image selection, call `context.read<GalleryProvider>().uploadPhoto(imageFile)`.
-- The provider calls `PhotoRepository.uploadPhoto(File image)`.
-- Integrate `MultipartRequest` logic inside `lib/services/api_service.dart`:
-  ```dart
-  Future<Map<String, dynamic>> uploadPhoto(String filePath) async {
-    var request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}${ApiConfig.uploadEndpoint}'));
-    request.files.add(await http.MultipartFile.fromPath('photo', filePath));
-    // Add auth headers if needed
-    var response = await request.send();
-    // Parse response...
+Inside `lib/features/gallery/data/services/photo_service.dart`, execute a Multipart POST Request:
+```dart
+Future<void> uploadPhotos(List<String> filePaths) async {
+  var request = http.MultipartRequest('POST', Uri.parse('\${ApiEndpoints.baseUrl}\${ApiEndpoints.uploadEndpoint}'));
+  
+  // Attach all picked images
+  for (String path in filePaths) {
+    request.files.add(await http.MultipartFile.fromPath('photos[]', path));
   }
-  ```
-
-## 8. Authentication Tokens
-
-If APIs require Bearer tokens:
-- Add a shared or secure token retrieval method.
-- Inject headers in `ApiService` calls:
-  ```dart
-  headers: {
+  
+  // Attach headers
+  request.headers.addAll({
     'Authorization': 'Bearer \$YOUR_TOKEN',
-    'Content-Type': 'application/json'
-  }
-  ```
+  });
+  
+  var response = await request.send();
+}
+```
+*Currently, `GalleryProvider.pickAndUploadMedia()` mocks this by inserting local file paths directly into the grid state so the UI updates instantly. Once the backend endpoint is ready, simply loop `await _photoRepository.uploadPhoto(File(file.path))` inside that provider method instead.*
 
-## 9. Provider Auto-Updating UI
+## 4. DELETE `/photos/:id` (Single Shot Viewer Delete)
 
-The frontend currently uses `provider` state management. Once you yield an API result in `ApiService`, the `GalleryProvider` sets `_photos = newPhotos` and calls `notifyListeners()`. The UI automatically rebuilds and renders the new images dynamically.
+When a user taps an image to open `FullPhotoScreen` and taps the Trash Can in the AppBar, it executes a single delete.
 
-## 10. Environment Configuration
+**Setup in Service:**
+```dart
+Future<void> deletePhoto(String id) async {
+  await apiClient.delete('\${ApiEndpoints.photosEndpoint}/\$id');
+}
+```
 
-- Keep different environment URLs inside `.env` utilizing packages like `flutter_dotenv`.
-- Retrieve them in `ApiConfig` based on debug/release modes.
+## 5. POST `/photos/delete` (Bulk Selection Checkout)
 
-## 11. Testing the Integration
+When a user Long-Presses an image in the grid, the app enters **Selection Mode**, aggregating an array of IDs. Tapping the red Trash Can in the header instantly wipes them.
 
-- Temporarily log incoming HTTP JSON responses prior to `Photo.fromJson` decoding.
-- Verify that UI `CachedNetworkImage` components download images successfully (validate CORS if testing from web).
-- Test failing API routes to verify `GalleryProvider` logs `error` and renders the error component correctly.
+**Setup in Provider & Service:**
+The API should accept a JSON body payload containing the ID array:
+```json
+{
+  "ids": ["abc12345", "def67890"]
+}
+```
 
-## 12. Scalability Suggestions
+```dart
+// Service layer
+Future<void> deletePhotos(List<String> ids) async {
+  await apiClient.post(ApiEndpoints.deletePhotosEndpoint, body: {'ids': ids});
+}
+```
 
-For scalable media storage, you should avoid storing Blobs directly in your database.
-- Utilize services like **AWS S3**, **Google Cloud Storage**, or **Cloudinary**.
-- Either have the device upload directly via Presigned URLs provided by your backend and send only the resultant URL to your DB, or pipe the upload POST through your backend to abstract the cloud storage mechanism.
+## 6. S3/Cloud Delivery Suggestion
+For scalable performance, avoid storing Blobs directly in PostgreSQL/MongoDB.
+- Configure backend controllers to ship the Multipart incoming files from flutter directly to **AWS S3** or **Cloudinary**.
+- Return only the generated CDN URL strings back into your Database table columns.
