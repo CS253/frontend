@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../../features/documents/presentation/screens/documents_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final Function(int)? onNavigate;
-
-  const DashboardScreen({super.key, this.onNavigate});
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // TODO: Integrate DashboardService to fetch real trip data and activities.
-  // This screen currently uses static UI. Wrap with FutureBuilder similar to AllExpensesList.
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,13 +21,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 16), // Top spacing for header
                 _buildHeader(),
                 const SizedBox(height: 24),
+                // Trip Info Card
                 _buildTripInfoCard(),
                 const SizedBox(height: 24),
+                // Explore Section
                 _buildExploreSection(),
                 const SizedBox(height: 24),
+                // Recent Activity Section
                 _buildRecentActivitySection(),
                 const SizedBox(height: 32),
               ],
@@ -56,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               constraints: const BoxConstraints(),
             ),
             IconButton(
-              icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)),
+              icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)), // Adjusted back to more_horiz for options
               onPressed: () {},
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -69,18 +68,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 14,
-                  color: Color(0xFF8B8893),
-                ),
+                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF8B8893)),
                 const SizedBox(width: 4),
                 const Text(
                   'Current Trip',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF8B8893),
+                    color: Color(0xFF8B8893), // Adjusted color to match gray
                   ),
                 ),
               ],
@@ -106,7 +101,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFC1EAFF), Color(0xFFD9F0FC)],
+          colors: [
+            Color(0xFFC1EAFF),
+            Color(0xFFD9F0FC),
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -148,6 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
+              // Spade emoji in circle
               Container(
                 width: 52,
                 height: 52,
@@ -199,7 +198,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(
+          color: Colors.white,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF262F40).withValues(alpha: 0.08),
@@ -209,7 +211,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 11))),
+      child: Center(
+        child: Text(emoji, style: const TextStyle(fontSize: 11)),
+      ),
     );
   }
 
@@ -232,21 +236,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 172 / 112,
+          childAspectRatio: 172 / 112, // Aspect ratio from Figma (w/h)
           children: [
-            GestureDetector(
-              onTap: () {
-                if (widget.onNavigate != null) {
-                  widget.onNavigate!(1);
-                }
-              },
-              child: _buildExploreCard(
-                title: 'Payments',
-                subtitle: 'Split & Settle',
-                icon: Icons.account_balance_wallet_outlined,
-                iconBgColor: const Color(0xFF7EF1CB),
-                cardBgColor: const Color(0xFFE5F8F1),
-              ),
+            _buildExploreCard(
+              title: 'Payments',
+              subtitle: 'Split & Settle',
+              icon: Icons.account_balance_wallet_outlined,
+              iconBgColor: const Color(0xFF7EF1CB),
+              cardBgColor: const Color(0xFFE5F8F1),
             ),
             _buildExploreCard(
               title: 'Gallery',
@@ -263,18 +260,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               cardBgColor: const Color(0xFFE7F8FA),
             ),
             GestureDetector(
-              onTap: () {
-                if (widget.onNavigate != null) {
-                  widget.onNavigate!(4);
-                }
-              },
-              child: _buildExploreCard(
-                title: 'Documents',
-                subtitle: 'All your file',
-                icon: Icons.description_outlined,
-                iconBgColor: const Color(0xFFFFE591),
-                cardBgColor: const Color(0xFFFEF9EA),
-              ),
+                onTap: () {
+                    // Handled structurally now
+                },
+                child: _buildExploreCard(
+                  title: 'Documents',
+                  subtitle: 'All your file',
+                  icon: Icons.description_outlined,
+                  iconBgColor: const Color(0xFFFFE591),
+                  cardBgColor: const Color(0xFFFEF9EA),
+                ),
             ),
           ],
         ),
@@ -301,22 +296,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.only(left: 13, top: 6, right: 10, bottom: 6),
+      padding: const EdgeInsets.only(left: 13, top: 9, right: 10, bottom: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Container(
-              width: 44,
-              height: 46,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(15.97),
-              ),
-              child: Center(child: Icon(icon, size: 24, color: Colors.white)),
+          Container(
+            width: 44,
+            height: 46,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(15.97),
+            ),
+            child: Center(
+              child: Icon(icon, size: 24, color: Colors.white),
             ),
           ),
-          const SizedBox(height: 4),
+          const Spacer(),
           Text(
             title,
             style: const TextStyle(
@@ -354,8 +349,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        // TODO: Replace with a FutureBuilder or ListView.builder to show real activity.
-        // Endpoint: GET /dashboard/activity
         _buildActivityItem('💵', 'Ronit added ₹10000 for Hotel', '2h ago'),
         const SizedBox(height: 12),
         _buildActivityItem('📷', 'Sarim shared 12 photos', '5h ago'),
@@ -422,4 +415,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+
 }

@@ -5,6 +5,8 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
+  static const String baseUrl = 'https://api.example.com/v1'; 
+  
   // ── Payments ──────────────────────────────────────────────────────────────
   static const String payments = '/payments';
   static const String expenses = '/payments/expenses';
@@ -32,4 +34,10 @@ class ApiEndpoints {
   static const String login = '/auth/login';
   static const String register = '/auth/register';
   static const String refreshToken = '/auth/refresh';
+
+  // Gallery Feature
+  static const String photos = '/photos';
+  static const String uploadPhoto = '/photos/upload';
+  static const String deletePhotos = '/photos/delete';
+
 }
