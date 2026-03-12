@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart';
-import 'documents_screen.dart';
-import 'payments_screen.dart';
+import 'package:travelly/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:travelly/features/documents/presentation/screens/documents_screen.dart';
+import 'package:travelly/features/payments/presentation/screens/payments_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
