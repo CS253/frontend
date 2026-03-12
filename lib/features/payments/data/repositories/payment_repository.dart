@@ -1,5 +1,6 @@
 import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/data/models/balance_model.dart';
+import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
 
 /// Repository that converts API responses into typed models.
@@ -137,5 +138,16 @@ class PaymentRepository {
         statusTextColorValue: 0xFF339977,
       ),
     ];
+  }
+
+  /// Fetch all trip members.
+  Future<List<MemberModel>> getTripMembers() async {
+    final response = await _service.fetchTripMembers();
+    if (response['members'] != null && response['members'] is List) {
+      return (response['members'] as List)
+          .map((m) => MemberModel.fromJson(m))
+          .toList();
+    }
+    return [];
   }
 }

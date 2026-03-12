@@ -5,12 +5,11 @@ The Payments feature handles expense tracking, balance management, and settlemen
 
 ## API Endpoints
 
-| Method | Endpoint              | Description           |
-|--------|-----------------------|-----------------------|
-| GET    | `/payments/expenses`  | List all expenses     |
-| POST   | `/payments/expenses`  | Create new expense    |
-| GET    | `/payments/balances`  | Get friend balances   |
-| POST   | `/payments/settle`    | Settle a balance      |
+| GET    | `/payments/expenses`     | List all expenses     |
+| POST   | `/payments/expenses`     | Create new expense    |
+| DELETE | `/payments/expenses/{id}`| Delete an expense     |
+| GET    | `/payments/balances`     | Get friend balances   |
+| POST   | `/payments/settle`       | Settle a balance      |
 
 ## Data Flow
 
@@ -21,20 +20,19 @@ PaymentsScreen
       → PaymentService → ApiClient
 ```
 
-## Models
-
-### `ExpenseModel`
+### `Create Expense Payload` (POST)
 ```json
 {
-  "id": "abc123",
-  "title": "Hotel Booking",
-  "amount": 8000,
-  "payer_name": "Ashish",
-  "payer_initials": "AS",
-  "payer_color": 10469322,
-  "date": "Dec 20",
-  "your_share": 500,
-  "status": "Pending"
+  "amount": "19000",
+  "description": "Flights",
+  "emoji": "✈️",
+  "payer": "Rushabh",
+  "date": "29/02/2024",
+  "transaction_id": "124421",
+  "splits": [
+    {"name": "Kashish", "amount": "9500"},
+    {"name": "Rushabh", "amount": "9500"}
+  ]
 }
 ```
 

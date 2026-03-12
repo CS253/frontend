@@ -2,19 +2,23 @@ import 'package:flutter/material.dart';
 
 /// A reusable document card widget.
 class DocumentCard extends StatelessWidget {
+  final String id;
   final String emoji;
   final String title;
   final String subtitle;
   final VoidCallback? onView;
   final VoidCallback? onDownload;
+  final VoidCallback? onDelete;
 
   const DocumentCard({
     super.key,
+    required this.id,
     required this.emoji,
     required this.title,
     required this.subtitle,
     this.onView,
     this.onDownload,
+    this.onDelete,
   });
 
   @override
@@ -79,29 +83,28 @@ class DocumentCard extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 25.8,
-                height: 25.8,
-                decoration: const BoxDecoration(shape: BoxShape.circle),
-                child: IconButton(
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 16, color: Color(0xFF8B8893)),
+                onPressed: onView ?? () {},
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.download_outlined, size: 16, color: Color(0xFF8B8893)),
+                onPressed: onDownload ?? () {},
+              ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.remove_red_eye_outlined, size: 12.9, color: Color(0xFF8B8893)),
-                  onPressed: onView ?? () {},
+                  icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFF8B8893)),
+                  onPressed: onDelete,
                 ),
-              ),
-              const SizedBox(width: 3.2),
-              Container(
-                width: 25.8,
-                height: 25.8,
-                decoration: const BoxDecoration(shape: BoxShape.circle),
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.download_outlined, size: 12.9, color: Color(0xFF8B8893)),
-                  onPressed: onDownload ?? () {},
-                ),
-              ),
+              ],
             ],
           ),
         ],

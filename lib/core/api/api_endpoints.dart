@@ -10,6 +10,7 @@ class ApiEndpoints {
   static const String expenses = '/payments/expenses';
   static const String balances = '/payments/balances';
   static const String settle = '/payments/settle';
+  static String paymentById(String id) => '/payments/expenses/$id';
 
   // ── Documents ─────────────────────────────────────────────────────────────
   static const String documents = '/documents';

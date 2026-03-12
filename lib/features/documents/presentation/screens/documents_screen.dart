@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travelly/features/documents/presentation/widgets/document_card.dart';
 import 'package:travelly/features/documents/presentation/widgets/add_document_dialog.dart';
+import 'package:travelly/features/documents/data/services/document_service.dart';
 import 'package:travelly/core/widgets/primary_button.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -11,6 +12,39 @@ class DocumentsScreen extends StatefulWidget {
 }
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
+  late Future<Map<String, dynamic>> _documentsFuture;
+  final DocumentService _documentService = DocumentService();
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshDocuments();
+  }
+
+  void _refreshDocuments() {
+    setState(() {
+      _documentsFuture = _documentService.fetchDocuments();
+    });
+  }
+
+  Future<void> _deleteDocument(String id) async {
+    try {
+      await _documentService.deleteDocument(id);
+      _refreshDocuments();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting document: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +62,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.only(
-                left: 16.0, right: 16.0, top: 22.0, bottom: 8.0,
+                left: 16.0,
+                right: 16.0,
+                top: 22.0,
+                bottom: 8.0,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -40,17 +77,25 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       const Text(
                         'Documents',
                         style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                           color: Color(0xFF212022),
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '4 Documents Uploaded',
-                        style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w400,
-                          color: const Color(0xFF8B8893),
-                        ),
+                      FutureBuilder<Map<String, dynamic>>(
+                        future: _documentsFuture,
+                        builder: (context, snapshot) {
+                          final count = snapshot.hasData ? (snapshot.data!['documents'] as List).length : 0;
+                          return Text(
+                            '$count Documents Uploaded',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF8B8893),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -63,34 +108,37 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
       body: Stack(
         children: [
-          ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            children: const [
-              DocumentCard(
-                emoji: '🚂',
-                title: 'Train Ticket - Delhi to pathankot',
-                subtitle: 'Jan 15, 2024 · By Rahul',
-              ),
-              SizedBox(height: 12),
-              DocumentCard(
-                emoji: '🏨',
-                title: 'Hotel Booking - Snow Valley Resort',
-                subtitle: 'Jan 15-18, 2024 · By Amit',
-              ),
-              SizedBox(height: 12),
-              DocumentCard(
-                emoji: '🚂',
-                title: 'Return Train Ticket',
-                subtitle: 'Jan 18, 2024 · By Rahul',
-              ),
-              SizedBox(height: 12),
-              DocumentCard(
-                emoji: '📄',
-                title: 'Hawkins Pass Permit',
-                subtitle: 'Jan 16, 2024 · By Priya',
-              ),
-              SizedBox(height: 100),
-            ],
+          FutureBuilder<Map<String, dynamic>>(
+            future: _documentsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || (snapshot.data!['documents'] as List).isEmpty) {
+                return const Center(child: Text('No documents found.'));
+              }
+
+              final documents = snapshot.data!['documents'] as List;
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                itemCount: documents.length,
+                itemBuilder: (context, index) {
+                  final doc = documents[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: DocumentCard(
+                      id: doc['id'],
+                      emoji: doc['emoji'],
+                      title: doc['title'],
+                      subtitle: doc['subtitle'],
+                      onDelete: () => _deleteDocument(doc['id']),
+                    ),
+                  );
+                },
+              );
+            },
           ),
           Positioned(
             bottom: 24,
@@ -99,11 +147,27 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             child: Center(
               child: PrimaryButton(
                 label: 'Add Document',
-                onPressed: () {
-                  showDialog(
+                onPressed: () async {
+                  final result = await showDialog<Map<String, dynamic>>(
                     context: context,
                     builder: (ctx) => const AddDocumentDialog(),
                   );
+
+                  if (result != null && mounted) {
+                    try {
+                      await _documentService.uploadDocument(result);
+                      if (!context.mounted) return;
+                      _refreshDocuments();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Document uploaded successfully')),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error uploading document: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             ),
