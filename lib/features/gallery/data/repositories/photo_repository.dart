@@ -22,11 +22,25 @@ class PhotoRepository {
 
   Future<void> uploadPhoto(File image) async {
     try {
-      // Intended to pass file to upload service. 
-      // For now passing path to the mock service.
       await _photoService.uploadPhoto(image.path);
     } catch (e) {
       throw Exception('Failed to upload photo: $e');
+    }
+  }
+
+  Future<void> deletePhoto(String id) async {
+    try {
+      await _photoService.deletePhoto(id);
+    } catch (e) {
+      throw Exception('Failed to delete photo: $e');
+    }
+  }
+
+  Future<void> deletePhotos(List<String> ids) async {
+    try {
+      await _photoService.deletePhotos(ids);
+    } catch (e) {
+      throw Exception('Failed to delete photos: $e');
     }
   }
 }

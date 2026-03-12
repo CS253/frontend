@@ -31,7 +31,7 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
     super.dispose();
   }
 
-  void _deleteCurrentPhoto(BuildContext context, GalleryProvider provider) {
+  Future<void> _deleteCurrentPhoto(BuildContext context, GalleryProvider provider) async {
     if (provider.photos.isEmpty) return;
 
     final photoToDelete = provider.photos[_currentIndex];
@@ -42,11 +42,11 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
       _currentIndex--;
     }
     
-    provider.deletePhoto(photoToDelete.id);
+    await provider.deletePhoto(photoToDelete.id);
 
     // If that was the last photo in the entire list, pop the screen
     if (provider.photos.isEmpty) {
-      Navigator.of(context).pop();
+      if (context.mounted) Navigator.of(context).pop();
     } else {
       // Otherwise, the PageView will rebuild naturally at the same/shifted index
       setState(() {}); 
