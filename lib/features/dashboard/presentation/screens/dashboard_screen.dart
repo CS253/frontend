@@ -22,16 +22,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16), // Top spacing for header
+                const SizedBox(height: 16),
                 _buildHeader(),
                 const SizedBox(height: 24),
-                // Trip Info Card
                 _buildTripInfoCard(),
                 const SizedBox(height: 24),
-                // Explore Section
                 _buildExploreSection(),
                 const SizedBox(height: 24),
-                // Recent Activity Section
                 _buildRecentActivitySection(),
                 const SizedBox(height: 32),
               ],
@@ -56,10 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               constraints: const BoxConstraints(),
             ),
             IconButton(
-              icon: const Icon(
-                Icons.more_horiz,
-                color: Color(0xFF212022),
-              ), // Adjusted back to more_horiz for options
+              icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)),
               onPressed: () {},
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -83,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF8B8893), // Adjusted color to match gray
+                    color: Color(0xFF8B8893),
                   ),
                 ),
               ],
@@ -151,7 +145,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-              // Spade emoji in circle
               Container(
                 width: 52,
                 height: 52,
@@ -236,12 +229,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 172 / 112, // Aspect ratio from Figma (w/h)
+          childAspectRatio: 172 / 112,
           children: [
             GestureDetector(
               onTap: () {
                 if (widget.onNavigate != null) {
-                  widget.onNavigate!(1); // 1 is Payments
+                  widget.onNavigate!(1);
                 }
               },
               child: _buildExploreCard(
@@ -269,7 +262,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             GestureDetector(
               onTap: () {
                 if (widget.onNavigate != null) {
-                  widget.onNavigate!(4); // 4 is Documents
+                  widget.onNavigate!(4);
                 }
               },
               child: _buildExploreCard(
