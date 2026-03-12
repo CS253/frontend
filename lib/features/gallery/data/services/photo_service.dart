@@ -1,4 +1,3 @@
-import 'dart:io';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 
@@ -17,5 +16,13 @@ class PhotoService {
 
   Future<Map<String, dynamic>> uploadPhoto(String filePath) async {
     return _apiClient.postMultipart(ApiEndpoints.uploadPhoto, filePath);
+  }
+
+  Future<void> deletePhoto(String id) async {
+    await _apiClient.delete('${ApiEndpoints.photos}/$id');
+  }
+
+  Future<void> deletePhotos(List<String> ids) async {
+    await _apiClient.post(ApiEndpoints.deletePhotos, body: {'ids': ids});
   }
 }
