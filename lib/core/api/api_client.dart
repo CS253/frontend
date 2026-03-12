@@ -33,6 +33,27 @@ class ApiClient {
     throw Exception('Endpoint not found');
   }
 
+  Future<Map<String, dynamic>> post(String endpoint, {Map<String, dynamic>? body}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (endpoint == ApiEndpoints.deletePhotos) {
+      return {'status': 'success', 'deleted': body?['ids'] ?? []};
+    }
+
+    throw Exception('Endpoint not found');
+  }
+
+  Future<Map<String, dynamic>> delete(String endpoint) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Supports deleting a single photo by ID, e.g. /photos/123
+    if (endpoint.startsWith(ApiEndpoints.photos)) {
+      return {'status': 'success'};
+    }
+
+    throw Exception('Endpoint not found');
+  }
+
   // --- Mock Data Generators Below ---
 
   Map<String, dynamic> _mockGetPhotos(Map<String, String>? queryParams) {
@@ -48,7 +69,7 @@ class ApiClient {
       },
       {
         'id': '2',
-        'imageUrl': 'https://images.unsplash.com/photo-1506744626753-1fa28f673f0c?q=80&w=600&auto=format&fit=crop',
+        'imageUrl': 'https://images.unsplash.com/photo-1708534272224-a3094a51b1eb?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDF8fHxlbnwwfHx8fHw%3D',
         'authorName': 'Priya',
         'createdAt': DateTime.now().toIso8601String(),
       },

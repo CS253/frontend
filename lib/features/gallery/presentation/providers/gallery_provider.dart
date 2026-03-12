@@ -30,24 +30,20 @@ class GalleryProvider with ChangeNotifier {
         _isLoading = true;
         notifyListeners();
 
-        // Normally, loop and call: await _photoRepository.uploadPhoto(File(file.path));
-
-        // Mocking the successful upload response:
         for (var file in pickedFiles) {
-          final newPhoto = Photo(
-            id: DateTime.now().millisecondsSinceEpoch.toString() + file.name,
-            imageUrl: '', // Blank since we use localPath directly
-            localPath: file.path,
-            authorName: 'You',
-          );
-          _photos.insert(0, newPhoto);
+          try {
+            await _photoRepository.uploadPhoto(File(file.path));
+          } catch (e) {
+            // If an individual upload fails, continue with the rest
+            debugPrint('Failed to upload ${file.name}: $e');
+          }
         }
 
-        _isLoading = false;
-        notifyListeners();
+        // Refresh from server after uploads complete
+        await fetchPhotos();
       }
     } catch (e) {
-      _error = 'Failed to pick media: \$e';
+      _error = 'Failed to pick media: $e';
       _isLoading = false;
       notifyListeners();
     }
@@ -68,26 +64,34 @@ class GalleryProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void deletePhoto(String id) {
-    // Like bulk delete, this removes locally. Usually calls repository.
-    _photos.removeWhere((photo) => photo.id == id);
-    _selectedPhotoIds.remove(id); // Ensure it's not held in selection state
-    notifyListeners();
+  Future<void> deletePhoto(String id) async {
+    try {
+      await _photoRepository.deletePhoto(id);
+      _photos.removeWhere((photo) => photo.id == id);
+      _selectedPhotoIds.remove(id);
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to delete photo: $e';
+      notifyListeners();
+    }
   }
 
-  void deleteSelected() {
-    // Usually this would call `_photoRepository.deletePhotos(_selectedPhotoIds)`
-    // For now we just remove them locally from the _photos list to reflect the UI intent
-    _photos.removeWhere((photo) => _selectedPhotoIds.contains(photo.id));
-    _selectedPhotoIds.clear();
-    notifyListeners();
+  Future<void> deleteSelected() async {
+    try {
+      final idsToDelete = _selectedPhotoIds.toList();
+      await _photoRepository.deletePhotos(idsToDelete);
+      _photos.removeWhere((photo) => idsToDelete.contains(photo.id));
+      _selectedPhotoIds.clear();
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to delete photos: $e';
+      notifyListeners();
+    }
   }
 
   Future<void> fetchPhotos() async {
     _isLoading = true;
     _error = null;
-    // In a real app we would clear or append depending on pagination.
-    // For now we just load the initial set of mock data.
     notifyListeners();
 
     try {
@@ -104,7 +108,6 @@ class GalleryProvider with ChangeNotifier {
   Future<void> uploadPhoto(File image) async {
     try {
       await _photoRepository.uploadPhoto(image);
-      // After a successful upload, fetch the updated list or append locally
       await fetchPhotos(); 
     } catch (e) {
       _error = e.toString();
@@ -113,3 +116,4 @@ class GalleryProvider with ChangeNotifier {
     }
   }
 }
+

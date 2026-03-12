@@ -1,6 +1,6 @@
 # Gallery Backend Integration Guide
 
-This guide outlines the steps required to connect the Gallery feature to a real backend API, following the new layered architecture.
+This guide outlines the steps required to connect the Gallery feature to a real backend API, following the layered architecture.
 
 ## 1. Project Structure
 
@@ -11,37 +11,57 @@ The gallery feature is structured cleanly under `lib/features/gallery/`:
 *   **Repositories:** `lib/features/gallery/data/repositories/photo_repository.dart`
 *   **Providers:** `lib/features/gallery/presentation/providers/gallery_provider.dart`
 *   **UI (Screens & Widgets):** `lib/features/gallery/presentation/screens/gallery_screen.dart`, `lib/features/gallery/presentation/widgets/photo_card.dart`
+*   **Core API Client:** `lib/core/api/api_client.dart`
 *   **Core Endpoints:** `lib/core/api/api_endpoints.dart`
-- `lib/services/api_service.dart`
 
-## 2. Replacing Mock Data with Real API Calls
+## 2. How Data Flows (Fetch → Delete → Upload)
 
-In `lib/core/api/api_client.dart` or `lib/features/gallery/data/services/photo_service.dart`:
-- Currently, the requests use `Future.delayed` and return hardcoded maps.
-- You must connect real network calls with the `http` package, `dio`, or whichever client is preferred.
-- Example replacement for `PhotoService`:
+All network operations follow the same chain:
+
+```
+UI (GalleryScreen) → GalleryProvider → PhotoRepository → PhotoService → ApiClient
+```
+
+| Operation | Provider method | Repository method | Service method | ApiClient method |
+|-----------|----------------|-------------------|----------------|------------------|
+| **Fetch** | `fetchPhotos()` | `fetchPhotos()` | `fetchPhotos()` | `get()` |
+| **Upload** | `pickAndUploadMedia()` / `uploadPhoto()` | `uploadPhoto()` | `uploadPhoto()` | `postMultipart()` |
+| **Delete single** | `deletePhoto(id)` | `deletePhoto(id)` | `deletePhoto(id)` | `delete()` |
+| **Delete bulk** | `deleteSelected()` | `deletePhotos(ids)` | `deletePhotos(ids)` | `post()` |
+
+## 3. Replacing Mock Data with Real API Calls
+
+In `lib/core/api/api_client.dart`:
+- Currently, all methods use `Future.delayed` and return hardcoded/mock data.
+- Replace the mock implementations with real HTTP calls using the `http` package or `dio`.
+- Example replacement for `get()`:
   ```dart
-  Future<Map<String, dynamic>> fetchPhotos() async {
-    final response = await apiClient.get(ApiEndpoints.photosEndpoint);
-    return response; 
+  Future<Map<String, dynamic>> get(String endpoint, {Map<String, String>? queryParams}) async {
+    final uri = Uri.parse('${ApiEndpoints.baseUrl}$endpoint').replace(queryParameters: queryParams);
+    final response = await http.get(uri, headers: _authHeaders());
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('GET $endpoint failed: ${response.statusCode}');
   }
   ```
 
-## 3. API Endpoints Insertion
+## 4. API Endpoints
 
-Modify `lib/core/api/api_endpoints.dart` to define the base URL and endpoints:
+Defined in `lib/core/api/api_endpoints.dart`:
 ```dart
 class ApiEndpoints {
   static const String baseUrl = 'https://api.yourbackend.com/v1'; // Set your real API base URL
-  static const String photosEndpoint = '/photos'; // Endpoint for GET /photos
-  static const String uploadEndpoint = '/photos/upload'; // Endpoint for POST /photos/upload
-  static const String deletePhotosEndpoint = '/photos/delete'; // Endpoint for POST /photos/delete
+  static const String photos = '/photos';              // GET  → fetch photos
+  static const String uploadPhoto = '/photos/upload';  // POST (multipart) → upload photo
+  static const String deletePhotos = '/photos/delete'; // POST → bulk delete (body: {ids: [...]})
+  // Single delete uses: DELETE /photos/{id}
 }
 ```
 
-## 4. Expected Backend JSON Response Format
+## 5. Expected Backend JSON Response Format
 
-The `getPhotos` API should preferably return JSON matching the structure that `Photo.fromJson` is listening for (or a structured wrapper):
+The `fetchPhotos` API should return JSON matching the `Photo.fromJson` structure:
 
 ```json
 {
@@ -62,79 +82,71 @@ The `getPhotos` API should preferably return JSON matching the structure that `P
 }
 ```
 
-## 5. How PhotoModels Connect
+## 6. How PhotoModels Connect
 
 In `lib/features/gallery/data/models/photo_model.dart`:
-- `PhotoModel.fromJson(Map<String, dynamic> json)` reads keys exactly as returned by the backend.
-- If your backend JSON keys differ, alter the key string identifiers inside `PhotoModel.fromJson` to match. 
+- `Photo.fromJson(Map<String, dynamic> json)` reads keys exactly as returned by the backend.
+- If your backend JSON keys differ, alter the key string identifiers inside `Photo.fromJson` to match.
 
-## 6. Integrating Deletion Logic (Single & Bulk)
+## 7. How Deletion Works (Single & Bulk)
 
-To make both the multi-selection grid deletion and the fullscreen single deletion functional:
-1. In `GalleryProvider`, update `deleteSelected()` and `deletePhoto(String id)` to await the repository:
-   ```dart
-   // For Bulk (List of IDs)
-   await _photoRepository.deletePhotos(_selectedPhotoIds.toList());
-   
-   // For Single (One ID)
-   await _photoRepository.deletePhoto(id); 
-   ```
-2. In `PhotoRepository`, map these to the specific service endpoints.
-3. In `PhotoService`, execute a request to the backend:
-   ```dart
-   Future<void> deletePhotos(List<String> ids) async {
-     await apiClient.post(ApiEndpoints.deletePhotosEndpoint, body: {'ids': ids});
-   }
-   
-   Future<void> deletePhoto(String id) async {
-     await apiClient.delete('\${ApiEndpoints.photosEndpoint}/\$id');
-   }
-   ```
+Both paths are fully wired through all layers:
 
-## 7. How Image Upload Works
+**Single deletion** (from full-photo screen):
+- `GalleryProvider.deletePhoto(id)` → `PhotoRepository.deletePhoto(id)` → `PhotoService.deletePhoto(id)` → `ApiClient.delete('/photos/$id')`
+- After the API call succeeds, the photo is removed from the local list and UI updates.
 
-- The UI trigger lives in the `FloatingActionButton` of `GalleryScreen`.
-- Upon image selection, call `context.read<GalleryProvider>().uploadPhoto(imageFile)`.
-- The provider calls `PhotoRepository.uploadPhoto(File image)`.
-- Integrate `MultipartRequest` logic inside `lib/core/api/api_client.dart`:
+**Bulk deletion** (from multi-select mode):
+- `GalleryProvider.deleteSelected()` → `PhotoRepository.deletePhotos(ids)` → `PhotoService.deletePhotos(ids)` → `ApiClient.post('/photos/delete', body: {ids: [...]})`
+- After the API call succeeds, selected photos are removed locally and selection is cleared.
+
+## 8. How Image Upload Works
+
+- The UI trigger is the `FloatingActionButton` ("Add Media") in `GalleryScreen`.
+- On tap → `GalleryProvider.pickAndUploadMedia()` opens the image picker.
+- For each selected file → `PhotoRepository.uploadPhoto(File)` → `PhotoService.uploadPhoto(filePath)` → `ApiClient.postMultipart('/photos/upload', filePath)`.
+- After all uploads complete → `fetchPhotos()` is called to refresh the list from the server.
+- For real multipart upload, implement in `ApiClient`:
   ```dart
-  Future<Map<String, dynamic>> uploadPhoto(String filePath) async {
-    var request = http.MultipartRequest('POST', Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.uploadEndpoint}'));
+  Future<Map<String, dynamic>> postMultipart(String endpoint, String filePath) async {
+    var request = http.MultipartRequest('POST', Uri.parse('${ApiEndpoints.baseUrl}$endpoint'));
     request.files.add(await http.MultipartFile.fromPath('photo', filePath));
-    // Add auth headers if needed
+    request.headers.addAll(_authHeaders());
     var response = await request.send();
+    var body = await response.stream.bytesToString();
+    return json.decode(body);
   }
   ```
 
-## 8. Authentication Tokens
+## 9. Authentication Tokens
 
 If APIs require Bearer tokens:
 - Add a shared or secure token retrieval method.
-- Inject headers in `ApiService` calls:
+- Inject headers in `ApiClient` calls:
   ```dart
-  headers: {
-    'Authorization': 'Bearer \$YOUR_TOKEN',
-    'Content-Type': 'application/json'
-  }
+  Map<String, String> _authHeaders() => {
+    'Authorization': 'Bearer $YOUR_TOKEN',
+    'Content-Type': 'application/json',
+  };
   ```
 
-## 9. Provider Auto-Updating UI
+## 10. Provider Auto-Updating UI
 
-The frontend currently uses `provider` state management. Once you yield an API result in `ApiService`, the `GalleryProvider` sets `_photos = newPhotos` and calls `notifyListeners()`. The UI automatically rebuilds and renders the new images dynamically.
+The frontend uses `provider` state management. After any API result, the `GalleryProvider` sets `_photos = newPhotos` and calls `notifyListeners()`. The UI automatically rebuilds and renders the new images dynamically.
 
-## 10. Environment Configuration
+## 11. Environment Configuration
 
 - Keep different environment URLs inside `.env` utilizing packages like `flutter_dotenv`.
 - Retrieve them in `ApiEndpoints` based on debug/release modes.
 
-## 11. Testing the Integration
+## 12. Testing the Integration
 
 - Temporarily log incoming HTTP JSON responses prior to `Photo.fromJson` decoding.
 - Verify that UI `CachedNetworkImage` components download images successfully (validate CORS if testing from web).
-- Test failing API routes to verify `GalleryProvider` logs `error` and renders the error component correctly.
+- Test failing API routes to verify `GalleryProvider` sets `error` and renders the error component correctly.
 
-## 12. Scalability Suggestions
+## 13. Scalability Suggestions
 
-For scalable media storage, you should avoid storing Blobs directly in your database.
+For scalable media storage, avoid storing blobs directly in your database.
 - Utilize services like **AWS S3**, **Google Cloud Storage**, or **Cloudinary**.
 - Either have the device upload directly via Presigned URLs provided by your backend and send only the resultant URL to your DB, or pipe the upload POST through your backend to abstract the cloud storage mechanism.
