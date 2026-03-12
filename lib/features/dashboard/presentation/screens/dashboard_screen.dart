@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -54,10 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               constraints: const BoxConstraints(),
             ),
             IconButton(
-              icon: const Icon(
-                Icons.more_horiz,
-                color: Color(0xFF212022),
-              ), // Adjusted back to more_horiz for options
+              icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)), // Adjusted back to more_horiz for options
               onPressed: () {},
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -70,11 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 14,
-                  color: Color(0xFF8B8893),
-                ),
+                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF8B8893)),
                 const SizedBox(width: 4),
                 const Text(
                   'Current Trip',
@@ -107,7 +101,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFC1EAFF), Color(0xFFD9F0FC)],
+          colors: [
+            Color(0xFFC1EAFF),
+            Color(0xFFD9F0FC),
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -201,7 +198,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(
+          color: Colors.white,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF262F40).withValues(alpha: 0.08),
@@ -211,7 +211,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 11))),
+      child: Center(
+        child: Text(emoji, style: const TextStyle(fontSize: 11)),
+      ),
     );
   }
 
@@ -258,16 +260,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               cardBgColor: const Color(0xFFE7F8FA),
             ),
             GestureDetector(
-              onTap: () {
-                // Handled structurally now
-              },
-              child: _buildExploreCard(
-                title: 'Documents',
-                subtitle: 'All your file',
-                icon: Icons.description_outlined,
-                iconBgColor: const Color(0xFFFFE591),
-                cardBgColor: const Color(0xFFFEF9EA),
-              ),
+                onTap: () {
+                    // Handled structurally now
+                },
+                child: _buildExploreCard(
+                  title: 'Documents',
+                  subtitle: 'All your file',
+                  icon: Icons.description_outlined,
+                  iconBgColor: const Color(0xFFFFE591),
+                  cardBgColor: const Color(0xFFFEF9EA),
+                ),
             ),
           ],
         ),
@@ -305,7 +307,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: iconBgColor,
               borderRadius: BorderRadius.circular(15.97),
             ),
-            child: Center(child: Icon(icon, size: 24, color: Colors.white)),
+            child: Center(
+              child: Icon(icon, size: 24, color: Colors.white),
+            ),
           ),
           const Spacer(),
           Text(
@@ -411,4 +415,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+
 }

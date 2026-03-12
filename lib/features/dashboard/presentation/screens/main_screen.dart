@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart';
-import 'documents_screen.dart';
+import 'dashboard_screen.dart';
+import '../../../documents/presentation/screens/documents_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
