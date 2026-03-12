@@ -10,6 +10,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // TODO: Integrate DashboardService to fetch real trip data and activities.
+  // This screen currently uses static UI. Wrap with FutureBuilder similar to AllExpensesList.
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -298,7 +301,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.only(left: 13, top: 9, right: 10, bottom: 9),
+      padding: const EdgeInsets.only(left: 13, top: 6, right: 10, bottom: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -313,7 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Center(child: Icon(icon, size: 24, color: Colors.white)),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             title,
             style: const TextStyle(
@@ -351,6 +354,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        // TODO: Replace with a FutureBuilder or ListView.builder to show real activity.
+        // Endpoint: GET /dashboard/activity
         _buildActivityItem('💵', 'Ronit added ₹10000 for Hotel', '2h ago'),
         const SizedBox(height: 12),
         _buildActivityItem('📷', 'Sarim shared 12 photos', '5h ago'),

@@ -1,52 +1,40 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 
 /// Centralized HTTP client for all API calls.
-///
-/// Usage:
-/// ```dart
-/// final client = ApiClient();
-/// final response = await client.get('/payments');
-/// ```
 class ApiClient {
   final String baseUrl;
-  final HttpClient _httpClient;
+  final http.Client _client;
 
   ApiClient({
     String? baseUrl,
+    http.Client? client,
   })  : baseUrl = baseUrl ?? const String.fromEnvironment(
             'API_BASE_URL',
             defaultValue: 'https://api.travelly.dev/v1',
           ),
-        _httpClient = HttpClient();
+        _client = client ?? http.Client();
 
-  final Map<String, String> _defaultHeaders = {
+  final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
-  /// Set the auth token for all subsequent requests.
   void setAuthToken(String token) {
-    _defaultHeaders['Authorization'] = 'Bearer $token';
+    _headers['Authorization'] = 'Bearer $token';
   }
 
-  /// Remove the auth token.
   void clearAuthToken() {
-    _defaultHeaders.remove('Authorization');
+    _headers.remove('Authorization');
   }
-
-  // ---------------------------------------------------------------------------
-  // HTTP Methods
-  // ---------------------------------------------------------------------------
 
   Future<Map<String, dynamic>> get(
     String endpoint, {
     Map<String, String>? queryParams,
   }) async {
     final uri = _buildUri(endpoint, queryParams);
-    final request = await _httpClient.getUrl(uri);
-    _applyHeaders(request);
-    return _processResponse(await request.close());
+    final response = await _client.get(uri, headers: _headers);
+    return _processResponse(response);
   }
 
   Future<Map<String, dynamic>> post(
@@ -54,12 +42,12 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final uri = _buildUri(endpoint);
-    final request = await _httpClient.postUrl(uri);
-    _applyHeaders(request);
-    if (body != null) {
-      request.write(jsonEncode(body));
-    }
-    return _processResponse(await request.close());
+    final response = await _client.post(
+      uri,
+      headers: _headers,
+      body: body != null ? jsonEncode(body) : null,
+    );
+    return _processResponse(response);
   }
 
   Future<Map<String, dynamic>> put(
@@ -67,24 +55,19 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final uri = _buildUri(endpoint);
-    final request = await _httpClient.putUrl(uri);
-    _applyHeaders(request);
-    if (body != null) {
-      request.write(jsonEncode(body));
-    }
-    return _processResponse(await request.close());
+    final response = await _client.put(
+      uri,
+      headers: _headers,
+      body: body != null ? jsonEncode(body) : null,
+    );
+    return _processResponse(response);
   }
 
   Future<Map<String, dynamic>> delete(String endpoint) async {
     final uri = _buildUri(endpoint);
-    final request = await _httpClient.deleteUrl(uri);
-    _applyHeaders(request);
-    return _processResponse(await request.close());
+    final response = await _client.delete(uri, headers: _headers);
+    return _processResponse(response);
   }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   Uri _buildUri(String endpoint, [Map<String, String>? queryParams]) {
     final url = '$baseUrl$endpoint';
@@ -94,16 +77,8 @@ class ApiClient {
     return Uri.parse(url);
   }
 
-  void _applyHeaders(HttpClientRequest request) {
-    _defaultHeaders.forEach((key, value) {
-      request.headers.set(key, value);
-    });
-  }
-
-  Future<Map<String, dynamic>> _processResponse(
-    HttpClientResponse response,
-  ) async {
-    final body = await response.transform(utf8.decoder).join();
+  Map<String, dynamic> _processResponse(http.Response response) {
+    final body = response.body;
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (body.isEmpty) return {};
@@ -119,7 +94,6 @@ class ApiClient {
   }
 }
 
-/// Exception thrown when an API call fails.
 class ApiException implements Exception {
   final int statusCode;
   final String message;
