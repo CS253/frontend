@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/documents/presentation/screens/documents_screen.dart';
 import '../features/gallery/presentation/screens/gallery_screen.dart';
+import '../features/payments/presentation/screens/payments_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const Scaffold(body: Center(child: Text('Pay'))),
+    const PaymentsScreen(),
     const Scaffold(body: Center(child: Text('Plan'))),
     const GalleryScreen(),
     const DocumentsScreen(),
