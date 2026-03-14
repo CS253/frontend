@@ -36,17 +36,21 @@ class _GalleryScreenState extends State<GalleryScreen> {
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(
-              bottom: BorderSide(
-                color: Color(0xFFEDEDED),
-                width: 0.8,
-              ),
+              bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
             ),
           ),
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 22.0, bottom: 8.0),
-              child: inSelectionMode ? _buildSelectionHeader(provider) : _buildStandardHeader(provider),
+              padding: const EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 22.0,
+                bottom: 8.0,
+              ),
+              child: inSelectionMode
+                  ? _buildSelectionHeader(provider)
+                  : _buildStandardHeader(provider),
             ),
           ),
         ),
@@ -59,9 +63,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               bottom: 24,
               left: 0,
               right: 0,
-              child: Center(
-                child: _buildAddButton(),
-              ),
+              child: Center(child: _buildAddButton()),
             ),
         ],
       ),
@@ -95,11 +97,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
           ],
         ),
-        const Icon(
-          Icons.menu,
-          color: Color(0xFF212022),
-          size: 24,
-        ),
+        const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
       ],
     );
   }
@@ -144,10 +142,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     if (provider.error != null) {
       return Center(
-        child: Text(
-          provider.error!,
-          style: const TextStyle(color: Colors.red),
-        ),
+        child: Text(provider.error!, style: const TextStyle(color: Colors.red)),
       );
     }
 
@@ -156,7 +151,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16).copyWith(bottom: 100),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ).copyWith(bottom: 100),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 16,
@@ -220,4 +218,3 @@ class _GalleryScreenState extends State<GalleryScreen> {
     );
   }
 }
-

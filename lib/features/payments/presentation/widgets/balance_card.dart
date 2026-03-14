@@ -3,13 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// The main balance card shown at the top of the payments screen.
 class BalanceCard extends StatelessWidget {
-  final VoidCallback onSettleTap;
+  final VoidCallback? onSettleTap;
   final bool isOwe;
   final String amount;
 
   const BalanceCard({
     super.key,
-    required this.onSettleTap,
+    this.onSettleTap,
     this.isOwe = true,
     this.amount = '₹690',
   });

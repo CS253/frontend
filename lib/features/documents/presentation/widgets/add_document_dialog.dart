@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:travelly/core/widgets/emoji_picker_dialog.dart';
 
 /// Dialog shown when user taps "Add Document".
 /// Includes a name field, emoji selector, description field,
@@ -114,7 +115,12 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
               children: [
                 // Emoji selector box
                 GestureDetector(
-                  onTap: () => _showEmojiPicker(context),
+                  onTap: () async {
+                    final emoji = await showEmojiPicker(context);
+                    if (emoji != null) {
+                      setState(() => _selectedEmoji = emoji);
+                    }
+                  },
                   child: Container(
                     width: 61,
                     height: 61,
@@ -286,97 +292,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
     );
   }
 
-  // ── Emoji picker ────────────────────────────────────────────────────────
-  void _showEmojiPicker(BuildContext context) {
-    final List<String> emojis = [
-      '📄', '🚂', '✈️', '🏨', '🚌', '🚗', '🎫', '🗺️',
-      '💳', '🧳', '📋', '📑', '🔖', '🛂', '🎟️', '🛳️',
-      '🏠', '📝', '🗓️', '💰', '🧾', '📸', '🏔️', '🏖️',
-      '🍔', '☕', '🎭', '🎢', '⛺', '🚁', '🚲', '⛽',
-      '💊', '🩺', '📞', '🔑', '🪪', '📦', '🎒', '👕',
-    ];
 
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: const Color(0xFFFCFAF8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFFE5E7EB), width: 0.75),
-          ),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.pop(ctx),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Icon(Icons.arrow_back, size: 20, color: Color(0xFF38332E)),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Select Emoji',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: const Color(0xFF38332E),
-                        letterSpacing: -0.38,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 8,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemCount: emojis.length,
-                  itemBuilder: (context, index) {
-                    final emoji = emojis[index];
-                    final isSelected = emoji == _selectedEmoji;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedEmoji = emoji);
-                        Navigator.pop(ctx);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFFF8DA78).withValues(alpha: 0.3)
-                              : const Color(0xFFFDFDFB),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFFF8DA78)
-                                : const Color(0xFFEBE7E0),
-                            width: isSelected ? 1.5 : 0.75,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(emoji, style: const TextStyle(fontSize: 22)),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 /// Custom painter for dashed rounded rectangle border.
