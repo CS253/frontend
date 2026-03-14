@@ -53,10 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        bottom: false,
-        child: _buildBody(provider),
-      ),
+      body: SafeArea(bottom: false, child: _buildBody(provider)),
     );
   }
 
@@ -71,9 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // ── Loading state ──────────────────────────────────────────────
     if (provider.isLoading && !provider.hasData) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF00A2FF),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF00A2FF)),
       );
     }
 
@@ -128,9 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
 
             // ── Trip header with trip name ────────────────────────
-            TripHeader(
-              tripName: provider.currentTrip?.name ?? 'My Trip',
-            ),
+            TripHeader(tripName: provider.currentTrip?.name ?? 'My Trip'),
             const SizedBox(height: 24),
 
             // ── Trip info card with participant avatars ───────────
@@ -149,15 +142,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // ── Explore navigation grid ──────────────────────────
-            ExploreGrid(
-              onNavigate: widget.onNavigate,
-            ),
+            ExploreGrid(onNavigate: widget.onNavigate),
             const SizedBox(height: 24),
 
             // ── Recent activity feed ─────────────────────────────
-            ActivityList(
-              activities: provider.activities,
-            ),
+            ActivityList(activities: provider.activities),
             const SizedBox(height: 32),
           ],
         ),

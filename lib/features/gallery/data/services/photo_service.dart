@@ -8,14 +8,14 @@ class PhotoService {
   PhotoService({required ApiClient apiClient}) : _apiClient = apiClient;
 
   Future<Map<String, dynamic>> fetchPhotos({int page = 1, int limit = 20}) async {
-    return _apiClient.get(
+    return await _apiClient.get(
       ApiEndpoints.photos,
       queryParams: {'page': page.toString(), 'limit': limit.toString()},
-    );
+    ) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> uploadPhoto(String filePath) async {
-    return _apiClient.postMultipart(ApiEndpoints.uploadPhoto, filePath);
+    return await _apiClient.postMultipart(ApiEndpoints.uploadPhoto, filePath) as Map<String, dynamic>;
   }
 
   Future<void> deletePhoto(String id) async {

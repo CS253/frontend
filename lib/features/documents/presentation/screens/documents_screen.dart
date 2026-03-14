@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:travelly/features/documents/presentation/widgets/document_card.dart';
 import 'package:travelly/features/documents/presentation/widgets/add_document_dialog.dart';
 import 'package:travelly/features/documents/data/services/document_service.dart';
-import 'package:travelly/core/widgets/primary_button.dart';
+import 'package:travelly/core/widgets/primary_button.dart'; // PrimaryFabButton
 import 'package:travelly/features/documents/data/services/document_download_service.dart';
 import 'package:travelly/features/documents/presentation/screens/document_viewer_screen.dart';
 
@@ -193,7 +193,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             left: 0,
             right: 0,
             child: Center(
-              child: PrimaryButton(
+              child: PrimaryFabButton(
                 label: 'Add Document',
                 onPressed: () async {
                   final result = await showDialog<Map<String, dynamic>>(
