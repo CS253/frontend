@@ -70,8 +70,8 @@ class PaymentService {
   }
 
   /// Fetch balances with friends.
-  Future<Map<String, dynamic>> fetchBalances() {
-    return _apiClient.get(ApiEndpoints.balances);
+  Future<Map<String, dynamic>> fetchBalances() async {
+    return await _apiClient.get(ApiEndpoints.balances) as Map<String, dynamic>;
   }
 
   /// Fetch full details for a specific expense.
@@ -94,21 +94,21 @@ class PaymentService {
   }
 
   /// Create a new expense.
-  Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) {
+  Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) async {
     // Inject currency symbol dynamically
     body['currency'] = AppCurrency.code;
-    return _apiClient.post(ApiEndpoints.expenses, body: body);
+    return await _apiClient.post(ApiEndpoints.expenses, body: body) as Map<String, dynamic>;
   }
 
   /// Settle a balance.
-  Future<Map<String, dynamic>> settleBalance(Map<String, dynamic> body) {
-    return _apiClient.post(ApiEndpoints.settle, body: body);
+  Future<Map<String, dynamic>> settleBalance(Map<String, dynamic> body) async {
+    return await _apiClient.post(ApiEndpoints.settle, body: body) as Map<String, dynamic>;
   }
 
   /// Mark a payment as paid for approval.
-  Future<Map<String, dynamic>> markAsPaid(Map<String, dynamic> body) {
+  Future<Map<String, dynamic>> markAsPaid(Map<String, dynamic> body) async {
     // TODO: Add proper endpoint in ApiEndpoints if different from settle
-    return _apiClient.post(ApiEndpoints.settle, body: body);
+    return await _apiClient.post(ApiEndpoints.settle, body: body) as Map<String, dynamic>;
   }
 
   /// Fetch trip members. Returns mock data for now.
@@ -132,7 +132,7 @@ class PaymentService {
   }
 
   /// Delete an expense.
-  Future<Map<String, dynamic>> deleteExpense(String id) {
-    return _apiClient.delete(ApiEndpoints.paymentById(id));
+  Future<Map<String, dynamic>> deleteExpense(String id) async {
+    return await _apiClient.delete(ApiEndpoints.paymentById(id)) as Map<String, dynamic>;
   }
 }

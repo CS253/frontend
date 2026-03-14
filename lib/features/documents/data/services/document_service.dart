@@ -55,11 +55,11 @@ class DocumentService {
     return response;
   }
 
-  Future<Map<String, dynamic>> uploadDocument(Map<String, dynamic> body) {
-    return _apiClient.post(ApiEndpoints.documents, body: body);
+  Future<Map<String, dynamic>> uploadDocument(Map<String, dynamic> body) async {
+    return await _apiClient.post(ApiEndpoints.documents, body: body) as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> deleteDocument(String id) {
-    return _apiClient.delete(ApiEndpoints.documentById(id));
+  Future<Map<String, dynamic>> deleteDocument(String id) async {
+    return await _apiClient.delete(ApiEndpoints.documentById(id)) as Map<String, dynamic>;
   }
 }

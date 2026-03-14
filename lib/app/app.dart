@@ -1,6 +1,17 @@
+// =============================================================================
+// App — Root widget for the Travelly application.
+//
+// Configures:
+//   • Provider wrapping via AppProviders
+//   • Theme using AppTheme
+//   • Named routes via AppRoutes
+//   • Initial route (Launch screen)
+// =============================================================================
+
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
-import 'main_screen.dart';
+import '../core/constants/route_constants.dart';
+import 'routes.dart';
 import 'app_providers.dart';
 
 class App extends StatelessWidget {
@@ -8,11 +19,13 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppProviders(
+    return AppProviders.wrap(
       child: MaterialApp(
         title: 'Travelly',
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const MainScreen(),
+        initialRoute: RouteConstants.launch,
+        onGenerateRoute: AppRoutes.generateRoute,
       ),
     );
   }
