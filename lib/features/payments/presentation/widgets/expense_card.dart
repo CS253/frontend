@@ -109,7 +109,6 @@ class ExpenseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPending = status == 'Pending';
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -263,28 +262,6 @@ class ExpenseCard extends StatelessWidget {
                                     : const Color(0xFF339977),
                               ),
                               overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isPending ? const Color(0xFFFDF7E2) : const Color(0xFFE0F5EE),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(isPending ? Icons.access_time : Icons.check_circle_outline,
-                              color: isPending ? const Color(0xFFCFA117) : const Color(0xFF339977), size: 11),
-                          const SizedBox(width: 4),
-                          Text(
-                            status,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 11,
-                              color: isPending ? const Color(0xFFCFA117) : const Color(0xFF339977),
                             ),
                           ),
                         ],

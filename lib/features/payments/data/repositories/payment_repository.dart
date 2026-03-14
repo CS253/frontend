@@ -12,7 +12,7 @@ class PaymentRepository {
   final PaymentService _service;
 
   PaymentRepository({PaymentService? service})
-      : _service = service ?? PaymentService();
+    : _service = service ?? PaymentService();
 
   // ---------------------------------------------------------------------------
   // Mock data (remove when backend is ready)
@@ -125,15 +125,6 @@ class PaymentRepository {
         initials: 'NH',
         avatarColorValue: 0xFFFAE39E,
         statusText: 'Settled',
-        statusColorValue: 0xFFE0F5EE,
-        statusTextColorValue: 0xFF339977,
-      ),
-      BalanceModel(
-        id: '5',
-        name: 'You',
-        initials: 'ME',
-        avatarColorValue: 0xFF87D4F8,
-        statusText: 'Gets ₹50',
         statusColorValue: 0xFFE0F5EE,
         statusTextColorValue: 0xFF339977,
       ),

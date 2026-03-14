@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/features/payments/presentation/widgets/payments_dialogs.dart';
+import 'package:travelly/features/payments/presentation/dialogs/add_payment/add_payment_flow.dart';
+import 'package:travelly/features/payments/presentation/dialogs/settle_balance/settle_balance_flow.dart';
 import 'package:travelly/features/payments/presentation/widgets/balance_card.dart';
 import 'package:travelly/features/payments/presentation/widgets/summary_cards.dart';
 import 'package:travelly/features/payments/presentation/widgets/friend_balances.dart';
@@ -64,18 +65,17 @@ class PaymentsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                Center(child: BalanceCard(onSettleTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => const SettleBalanceDialog(),
-                  );
-                })),
+                const Center(child: BalanceCard()),
                 const SizedBox(height: 12),
                 const Center(child: SummaryCards()),
                 const SizedBox(height: 16),
                 _buildBalancesHeader(),
                 const SizedBox(height: 10),
-                const FriendBalances(),
+                FriendBalances(
+                  onSettle: (name, initials, amount) {
+                    SettleBalanceFlow.show(context, name: name, initials: initials, amount: amount);
+                  },
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'All Expenses',
@@ -118,10 +118,7 @@ class PaymentsScreen extends StatelessWidget {
 
   Widget _buildAddPaymentButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => showDialog(
-        context: context,
-        builder: (ctx) => const AddPaymentDialog(),
-      ),
+      onTap: () => AddPaymentFlow.show(context),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF75CCFE),
