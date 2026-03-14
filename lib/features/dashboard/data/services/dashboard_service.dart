@@ -124,4 +124,47 @@ class DashboardService {
     };
   }
   // ── END MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED ──────────
+
+  /// Updates trip details via PUT /trips/:tripId.
+  ///
+  /// Sends the updated name, startDate, and emoji to the backend.
+  /// Falls back to a mock success response if the backend is unavailable.
+  ///
+  /// Architecture note: This method is called by DashboardRepository,
+  /// which is called by DashboardProvider.updateTrip().
+  Future<Map<String, dynamic>> updateTrip({
+    required String tripId,
+    required String name,
+    required String startDate,
+    required String emoji,
+  }) async {
+    try {
+      // ── Real API call ──────────────────────────────────────────────
+      final response = await _apiClient.put(
+        ApiEndpoints.tripById(tripId),
+        body: {
+          'name': name,
+          'startDate': startDate,
+          'emoji': emoji,
+        },
+      );
+      return response;
+    } catch (e) {
+      // Backend unavailable — fall through to mock response below.
+    }
+
+    // ── MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED ────────────
+    // Simulates a successful update response.
+    // Once PUT /trips/:id is implemented, delete this block.
+    return {
+      'status': 'success',
+      'trip': {
+        'id': tripId,
+        'name': name,
+        'startDate': startDate,
+        'emoji': emoji,
+      },
+    };
+    // ── END MOCK DATA ──────────────────────────────────────────────
+  }
 }

@@ -13,6 +13,7 @@ import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 ///   │  😊 😎 🤗 😄  +2 travelers           │
 ///   └──────────────────────────────────────┘
 ///
+/// Tapping this card opens the [TripDetailsDialog] via [onTap].
 /// This widget is purely presentational.
 class ParticipantRow extends StatelessWidget {
   /// Current trip data for the info card header.
@@ -24,93 +25,102 @@ class ParticipantRow extends StatelessWidget {
   /// Maximum number of avatars to show before "+N travelers" text.
   final int maxVisibleAvatars;
 
+  /// Callback when the entire card is tapped.
+  /// Used to open the Trip Details floating dialog.
+  final VoidCallback? onTap;
+
   const ParticipantRow({
     super.key,
     required this.trip,
     required this.participants,
     this.maxVisibleAvatars = 4,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFC1EAFF), Color(0xFFD9F0FC)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF262F40).withValues(alpha: 0.1),
-            blurRadius: 13.6,
-            offset: const Offset(0, 4),
-            spreadRadius: -6,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFC1EAFF), Color(0xFFD9F0FC)],
           ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        children: [
-          // ── Top row: days remaining + emoji badge ─────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Trip starts in',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0x99212022),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF262F40).withValues(alpha: 0.1),
+              blurRadius: 13.6,
+              offset: const Offset(0, 4),
+              spreadRadius: -6,
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          children: [
+            // ── Top row: days remaining + emoji badge ─────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Trip starts in',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0x99212022),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${trip.daysRemaining} Days',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF212022),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${trip.daysRemaining} Days',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF212022),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              // Emoji badge in frosted container
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF262F40).withValues(alpha: 0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, 3),
-                      spreadRadius: -3,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    trip.emoji,
-                    style: const TextStyle(fontSize: 24),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+                // Emoji badge in frosted container — sized to fill the tile
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF262F40).withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 3),
+                        spreadRadius: -3,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      trip.emoji,
+                      // Enlarged to properly fill the 52×52 tile
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
 
-          // ── Bottom row: participant avatars ───────────────────────
-          _buildAvatarRow(),
-        ],
+            // ── Bottom row: participant avatars ───────────────────────
+            _buildAvatarRow(),
+          ],
+        ),
       ),
     );
   }

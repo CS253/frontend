@@ -19,6 +19,7 @@ The frontend implementation is fully architected and currently operates on **moc
 |--------|-----------------------|--------------------------------------|---------------|
 | GET    | `/dashboard`          | Fetch complete dashboard summary     | ✅ Yes         |
 | GET    | `/dashboard/activity` | Fetch paginated recent activity list | ✅ Yes         |
+| PUT    | `/trips/:id`          | Update trip name, date, emoji        | ✅ Yes         |
 
 ### API Endpoint Constants (Flutter side)
 
@@ -27,6 +28,7 @@ Defined in `core/api/api_endpoints.dart`:
 ```dart
 static const String dashboard = '/dashboard';
 static const String recentActivity = '/dashboard/activity';
+static String tripById(String id) => '/trips/$id';
 ```
 
 ---
@@ -148,6 +150,59 @@ Authorization: Bearer <jwt_token>
     "hasMore": true
   }
 }
+```
+
+---
+
+## PUT /trips/:id (Update Trip Details)
+
+### Request
+
+```http
+PUT /v1/trips/trip123
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "The Lyaari Trip",
+  "startDate": "2026-04-15",
+  "emoji": "✈️"
+}
+```
+
+### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "trip": {
+    "id": "trip123",
+    "name": "The Lyaari Trip",
+    "startDate": "2026-04-15",
+    "emoji": "✈️"
+  }
+}
+```
+
+### Error Responses
+
+| Status | Body                                       | When                        |
+|--------|--------------------------------------------|-----------------------------|
+| 400    | `{ "message": "Invalid date format" }`     | Bad request body            |
+| 401    | `{ "message": "Unauthorized" }`            | Missing/invalid JWT token   |
+| 403    | `{ "message": "Not a trip member" }`       | User lacks edit permission  |
+| 404    | `{ "message": "Trip not found" }`          | Invalid trip ID             |
+
+### Flutter Implementation
+
+```
+TripDetailsDialog (UI)
+  → DashboardProvider.updateTrip()
+    → DashboardRepository.updateTrip()
+      → DashboardService.updateTrip()
+        → ApiClient.put('/trips/:id')
 ```
 
 ---

@@ -5,6 +5,7 @@ import '../widgets/trip_header.dart';
 import '../widgets/participant_row.dart';
 import '../widgets/explore_grid.dart';
 import '../widgets/activity_list.dart';
+import '../dialogs/trip_details_dialog.dart';
 
 /// The main dashboard screen — central navigation hub of the Travelly app.
 ///
@@ -133,10 +134,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // ── Trip info card with participant avatars ───────────
+            // Tapping opens the Trip Details floating dialog
+            // (mirrors the payments feature Add Payment dialog flow)
             if (provider.currentTrip != null)
               ParticipantRow(
                 trip: provider.currentTrip!,
                 participants: provider.participants,
+                onTap: () => TripDetailsDialog.show(
+                  context,
+                  provider.currentTrip!,
+                  provider.participants,
+                ),
               ),
             const SizedBox(height: 24),
 

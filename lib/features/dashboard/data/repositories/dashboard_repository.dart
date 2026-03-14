@@ -30,4 +30,25 @@ class DashboardRepository {
     final response = await _service.fetchDashboard();
     return DashboardResponseModel.fromJson(response);
   }
+
+  /// Updates trip details (name, startDate, emoji) via the service layer.
+  ///
+  /// After a successful update, re-fetches dashboard data so the UI
+  /// reflects the changes without a manual refresh.
+  Future<DashboardResponseModel> updateTrip({
+    required String tripId,
+    required String name,
+    required String startDate,
+    required String emoji,
+  }) async {
+    await _service.updateTrip(
+      tripId: tripId,
+      name: name,
+      startDate: startDate,
+      emoji: emoji,
+    );
+
+    // Re-fetch full dashboard to get consistent state
+    return getDashboard();
+  }
 }

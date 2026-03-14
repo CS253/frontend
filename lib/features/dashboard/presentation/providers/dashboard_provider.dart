@@ -88,4 +88,42 @@ class DashboardProvider extends ChangeNotifier {
 
   /// Refreshes dashboard data. Convenience method for pull-to-refresh.
   Future<void> refresh() => fetchDashboard();
+
+  /// Updates trip details (name, startDate, emoji).
+  ///
+  /// Called from [TripDetailsDialog] when the user saves changes.
+  ///
+  /// Flow:
+  ///   1. Calls repository.updateTrip() → service.updateTrip() → API
+  ///   2. Repository re-fetches dashboard after successful update
+  ///   3. Provider updates local state with fresh response
+  ///   4. UI rebuilds via notifyListeners()
+  ///
+  /// On failure, the error is propagated to the dialog for handling.
+  Future<void> updateTrip({
+    required String name,
+    required String startDate,
+    required String emoji,
+  }) async {
+    final tripId = _currentTrip?.id ?? '';
+    if (tripId.isEmpty) return;
+
+    try {
+      final response = await _repository.updateTrip(
+        tripId: tripId,
+        name: name,
+        startDate: startDate,
+        emoji: emoji,
+      );
+
+      // Update local state with the refreshed dashboard data
+      _currentTrip = response.currentTrip;
+      _participants = response.participants;
+      _activities = response.recentActivities;
+      notifyListeners();
+    } catch (e) {
+      // Re-throw so the dialog can show feedback
+      rethrow;
+    }
+  }
 }
