@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 /// The main balance card shown at the top of the payments screen.
 class BalanceCard extends StatelessWidget {
@@ -7,12 +8,12 @@ class BalanceCard extends StatelessWidget {
   final bool isOwe;
   final String amount;
 
-  const BalanceCard({
+  BalanceCard({
     super.key,
     this.onSettleTap,
     this.isOwe = true,
-    this.amount = '₹690',
-  });
+    String amount = '690',
+  }) : amount = '${AppCurrency.symbol}$amount';
 
   @override
   Widget build(BuildContext context) {

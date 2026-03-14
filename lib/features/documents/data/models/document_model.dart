@@ -4,12 +4,14 @@ class DocumentModel {
   final String emoji;
   final String title;
   final String subtitle;
+  final String? url;
 
   const DocumentModel({
     required this.id,
     required this.emoji,
     required this.title,
     required this.subtitle,
+    this.url,
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,7 @@ class DocumentModel {
       emoji: json['emoji'] as String? ?? '📄',
       title: json['title'] as String? ?? '',
       subtitle: json['subtitle'] as String? ?? '',
+      url: json['url'] as String?,
     );
   }
 
@@ -27,6 +30,7 @@ class DocumentModel {
       'emoji': emoji,
       'title': title,
       'subtitle': subtitle,
+      if (url != null) 'url': url,
     };
   }
 }

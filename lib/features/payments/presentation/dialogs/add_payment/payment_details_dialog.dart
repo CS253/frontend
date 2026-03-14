@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/core/widgets/emoji_picker_dialog.dart';
+import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
@@ -114,7 +115,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               hintText: 'e.g., 2000',
               controller: amountController,
               isNumber: true,
-              prefixText: '₹   ',
+              prefixText: '${AppCurrency.symbol}   ',
             ),
             const SizedBox(height: 16),
             Row(

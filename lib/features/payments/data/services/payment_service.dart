@@ -1,5 +1,6 @@
 import 'package:travelly/core/api/api_client.dart';
 import 'package:travelly/core/api/api_endpoints.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 /// Service layer for payment-related API calls.
 ///
@@ -94,6 +95,8 @@ class PaymentService {
 
   /// Create a new expense.
   Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) {
+    // Inject currency symbol dynamically
+    body['currency'] = AppCurrency.code;
     return _apiClient.post(ApiEndpoints.expenses, body: body);
   }
 

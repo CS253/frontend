@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 class SelectSettleOptionDialog extends StatelessWidget {
   final VoidCallback onPayViaUPI;
@@ -81,7 +82,7 @@ class SelectSettleOptionDialog extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '₹$amount',
+              '${AppCurrency.symbol}$amount',
               style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
                 fontSize: 32,

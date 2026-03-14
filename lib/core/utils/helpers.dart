@@ -1,10 +1,13 @@
+import 'package:travelly/core/constants/currency.dart';
+
 /// Shared utility helpers.
 class Helpers {
   Helpers._();
 
   /// Format a number as a currency string.
   /// Example: `formatCurrency(19400)` → `₹19,400`
-  static String formatCurrency(double amount, {String symbol = '₹'}) {
+  static String formatCurrency(double amount, {String? symbol}) {
+    final currencySymbol = symbol ?? AppCurrency.symbol;
     final isNegative = amount < 0;
     final absAmount = amount.abs();
 
@@ -23,7 +26,7 @@ class Helpers {
     }
 
     final result = hasDecimals ? '$formatted.$decimalPart' : formatted;
-    return '${isNegative ? '-' : ''}$symbol$result';
+    return '${isNegative ? '-' : ''}$currencySymbol$result';
   }
 
   static String _addIndianCommas(String number) {

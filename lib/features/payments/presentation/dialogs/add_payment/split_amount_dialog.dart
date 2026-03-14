@@ -5,6 +5,7 @@ import 'package:travelly/features/payments/data/repositories/payment_repository.
 import 'package:travelly/features/payments/data/services/payment_service.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_split_row.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 class SplitAmountDialog extends StatefulWidget {
   final Map<String, String> paymentDetails;
@@ -181,7 +182,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
                     ),
                   ),
                   Text(
-                    '₹${widget.paymentDetails['amount']}',
+                    '${AppCurrency.symbol}${widget.paymentDetails['amount']}',
                     style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,

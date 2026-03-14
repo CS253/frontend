@@ -24,6 +24,7 @@ class DocumentService {
         "emoji": "✈️",
         "title": "Flight Tickets.pdf",
         "subtitle": "1.2 MB · pdf · 12 Mar",
+        "url": "https://pdfobject.com/pdf/sample.pdf",
         "uploadedAt": "2026-03-12T10:00:00Z"
       },
       {
@@ -43,7 +44,9 @@ class DocumentService {
     ];
 
     if (response['documents'] != null && response['documents'] is List) {
-      response['documents'] = [...mockDocuments, ...(response['documents'] as List)];
+      final existingIds = (response['documents'] as List).map((e) => e['id']).toSet();
+      final filteredMocks = mockDocuments.where((mock) => !existingIds.contains(mock['id'])).toList();
+      response['documents'] = [...filteredMocks, ...(response['documents'] as List)];
     } else {
       response['documents'] = mockDocuments;
     }

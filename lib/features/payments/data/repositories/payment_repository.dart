@@ -1,6 +1,7 @@
 import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/data/models/balance_model.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
+import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
 
 /// Repository that converts API responses into typed models.
@@ -91,13 +92,13 @@ class PaymentRepository {
     // final response = await _service.fetchBalances();
     // return (response['data'] as List).map((e) => BalanceModel.fromJson(e)).toList();
 
-    return const [
+    return [
       BalanceModel(
         id: '1',
         name: 'Ashish',
         initials: 'AS',
         avatarColorValue: 0xFF9FDFCA,
-        statusText: 'You owe ₹500',
+        statusText: 'You owe ${AppCurrency.symbol}500',
         statusColorValue: 0xFFFBE9EC,
         statusTextColorValue: 0xFFD1475E,
       ),
@@ -106,7 +107,7 @@ class PaymentRepository {
         name: 'Priya',
         initials: 'PR',
         avatarColorValue: 0xFFFABD9E,
-        statusText: 'Owes You ₹800',
+        statusText: 'Owes You ${AppCurrency.symbol}800',
         statusColorValue: 0xFFE0F5EE,
         statusTextColorValue: 0xFF339977,
       ),
@@ -115,7 +116,7 @@ class PaymentRepository {
         name: 'Rahul',
         initials: 'RA',
         avatarColorValue: 0xFFCCB3E6,
-        statusText: 'You owe ₹200',
+        statusText: 'You owe ${AppCurrency.symbol}200',
         statusColorValue: 0xFFFBE9EC,
         statusTextColorValue: 0xFFD1475E,
       ),

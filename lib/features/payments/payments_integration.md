@@ -43,7 +43,7 @@ PaymentsScreen
   "name": "Ashish",
   "initials": "AS",
   "avatar_color": 10469322,
-  "status_text": "You owe ₹500",
+  "status_text": "You owe ${AppCurrency.symbol}500",
   "status_color": 16509420,
   "status_text_color": 13714526
 }
