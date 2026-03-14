@@ -1,5 +1,12 @@
+// =============================================================================
+// Launch Screen — Landing page for the Travelly app.
+//
+// No backend required for this screen.
+// Navigates to Login screen on "Start Your Trip" button press.
+// =============================================================================
+
 import 'package:flutter/material.dart';
-import 'sign_in_screen.dart';
+import '../../../../core/constants/route_constants.dart';
 
 class LaunchScreen extends StatelessWidget {
   const LaunchScreen({super.key});
@@ -45,12 +52,8 @@ class LaunchScreen extends StatelessWidget {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SignInScreen(),
-                      ),
-                    );
+                    // Navigate to Login screen using named routes
+                    Navigator.pushNamed(context, RouteConstants.login);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6BB5E5),

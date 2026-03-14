@@ -1,5 +1,44 @@
+// =============================================================================
+// Create Trip Dialog — 3-step trip creation wizard.
+//
+// VALIDATION (Step 1 — Trip Details):
+//   • Trip Name *       — Required, min 2 characters
+//   • Destination *     — Required
+//   • Start Date *      — Required
+//   • End Date *        — Required, must be after start date
+//   • Trip Type *       — Required (pre-selected)
+//   • Cover Photo *     — Optional but labeled with (*)
+//   • Continue button BLOCKED if validation fails
+//
+// VALIDATION (Step 2 — Add Members):
+//   • Member Name *     — Required
+//   • Phone Number *    — Required, valid phone
+//   • Add Member button BLOCKED if fields empty
+//
+// IMAGE UPLOAD:
+//   • Uses file_picker package to select image from laptop
+//   • Selected image stored in TripsProvider.newTripCoverImagePath
+//   • On create, sent as multipart/form-data to POST /trips
+//
+// BACKEND CALL: TripsProvider.createTrip() → TripsRepository → TripsService
+//   • Triggers POST /trips (multipart/form-data with coverImage file)
+//   • TODO: Replace mock data once backend API is connected
+//
+// Data Flow:
+//   Step 1: updateTripDetails() → TripsProvider (local state)
+//   Step 2: addMemberToNewTrip() → TripsProvider (local state)
+//   Step 3: createTrip() → TripsProvider → TripsRepository → TripsService → API
+// =============================================================================
+
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import '../../../trips/presentation/providers/trips_provider.dart';
+import '../../../trips/data/models/member_model.dart';
+import '../../../../core/utils/helpers.dart';
+import '../../../../core/utils/validators.dart';
 
 class CreateTripDialog extends StatefulWidget {
   const CreateTripDialog({super.key});
@@ -12,13 +51,78 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
 
+  /// Form keys for multi-step validation.
+  /// Step 1 and Step 2 each have their own form key.
+  final _step1FormKey = GlobalKey<FormState>();
+  final _step2FormKey = GlobalKey<FormState>();
+
+  // Step 1 controllers
+  final _tripNameController = TextEditingController();
+  final _destinationController = TextEditingController();
+  String _selectedTripType = 'Beach';
+  DateTime? _fromDate;
+  DateTime? _toDate;
+
+  // Step 1 — selected cover image file path (from file_picker)
+  String? _coverImagePath;
+
+  // Step 1 — date validation error displayed inline
+  String? _dateError;
+
+  // Step 2 controllers
+  final _memberNameController = TextEditingController();
+  final _memberPhoneController = TextEditingController();
+
   @override
   void dispose() {
     _pageController.dispose();
+    _tripNameController.dispose();
+    _destinationController.dispose();
+    _memberNameController.dispose();
+    _memberPhoneController.dispose();
     super.dispose();
   }
 
+  /// Validates Step 1 fields including date validation:
+  /// - End date must be after start date
+  bool _validateStep1() {
+    bool isValid = _step1FormKey.currentState?.validate() ?? false;
+
+    // Date validation
+    String? dateErr;
+    if (_fromDate == null) {
+      dateErr = 'Start date is required';
+    } else if (_toDate == null) {
+      dateErr = 'End date is required';
+    } else if (!_toDate!.isAfter(_fromDate!)) {
+      dateErr = 'End date must be after start date';
+    }
+
+    setState(() {
+      _dateError = dateErr;
+    });
+
+    return isValid && dateErr == null;
+  }
+
+  /// Moves to the next step, saving data to the provider at each step.
   void _nextStep() {
+    if (_currentStep == 0) {
+      // Validate Step 1 — Trip details
+      if (!_validateStep1()) return;
+
+      // Save trip details to provider
+      final tripsProvider = context.read<TripsProvider>();
+      tripsProvider.updateTripDetails(
+        name: _tripNameController.text,
+        destination: _destinationController.text,
+        startDate: _fromDate,
+        endDate: _toDate,
+        tripType: _selectedTripType,
+        coverImagePath: _coverImagePath,
+      );
+    }
+
     if (_currentStep < 2) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -28,7 +132,8 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
         _currentStep++;
       });
     } else {
-      Navigator.pop(context); // Close after 3rd step
+      // Final step — create the trip via provider
+      _handleCreateTrip();
     }
   }
 
@@ -42,8 +147,147 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
         _currentStep--;
       });
     } else {
-      Navigator.pop(context); // Close if on 1st step
+      context.read<TripsProvider>().cancelCreation();
+      Navigator.pop(context);
     }
+  }
+
+  /// Handles the final trip creation via TripsProvider.
+  ///
+  /// BACKEND CALL: Sends trip creation request to server
+  /// POST /trips with multipart/form-data (name, destination, dates, type, coverImage file)
+  /// TODO: Replace mock data once backend API is connected
+  Future<void> _handleCreateTrip() async {
+    // BACKEND CALL: TripsProvider.createTrip() → TripsRepository → TripsService → POST /trips
+    final tripsProvider = context.read<TripsProvider>();
+    await tripsProvider.createTrip();
+
+    if (!mounted) return;
+
+    if (tripsProvider.errorMessage != null) {
+      Helpers.showErrorSnackbar(context, tripsProvider.errorMessage!);
+    } else {
+      Navigator.pop(context);
+      Helpers.showSuccessSnackbar(context, 'Trip created successfully!');
+    }
+  }
+
+  /// Handles adding a member with validation.
+  ///
+  /// VALIDATION:
+  ///   • Member Name * — Required
+  ///   • Phone Number * — Required, valid phone format
+  ///   • Cannot add member if fields are empty
+  void _handleAddMember() {
+    // Validate Step 2 form
+    if (!(_step2FormKey.currentState?.validate() ?? false)) return;
+
+    final name = _memberNameController.text.trim();
+    final phone = _memberPhoneController.text.trim();
+
+    final member = MemberModel(
+      id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      phone: phone.isNotEmpty ? phone : null,
+    );
+
+    context.read<TripsProvider>().addMemberToNewTrip(member);
+    _memberNameController.clear();
+    _memberPhoneController.clear();
+
+    // Reset form validation state after adding
+    _step2FormKey.currentState?.reset();
+  }
+
+  /// Opens file picker to select a cover image from the user's laptop.
+  ///
+  /// Rules:
+  ///   • Allowed types: jpg, jpeg, png
+  ///   • Max size: 5 MB
+  ///
+  /// Selected image is previewed and stored in TripsProvider via updateTripDetails().
+  Future<void> _pickCoverImage() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final platformFile = result.files.first;
+        final extension = platformFile.extension?.toLowerCase();
+        final sizeInBytes = platformFile.size;
+
+        // 1. Validate File Type
+        final allowedExtensions = ['jpg', 'jpeg', 'png'];
+        if (extension == null || !allowedExtensions.contains(extension)) {
+          if (!mounted) return;
+          Helpers.showErrorSnackbar(context, 'Invalid file type. Allowed: jpg, jpeg, png');
+          return;
+        }
+
+        // 2. Validate File Size (5 MB limit)
+        const int maxBytes = 5 * 1024 * 1024; // 5 MB
+        if (sizeInBytes > maxBytes) {
+          if (!mounted) return;
+          Helpers.showErrorSnackbar(context, 'File too large. Max size: 5 MB');
+          return;
+        }
+
+        setState(() {
+          _coverImagePath = platformFile.path!;
+        });
+
+        // Store selected file path in TripsProvider state
+        if (!mounted) return;
+        context.read<TripsProvider>().updateTripDetails(
+          coverImagePath: _coverImagePath,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Helpers.showErrorSnackbar(context, 'Error picking image: $e');
+      }
+    }
+  }
+
+  /// Builds a required field label with a red asterisk (*) using RichText + TextSpan.
+  Widget _buildRequiredLabel(String label, {IconData? icon}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: const Color(0xFF6BB5E5)),
+            const SizedBox(width: 6),
+          ],
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: label,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF5A7184),
+                  ),
+                ),
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -55,7 +299,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
       clipBehavior: Clip.hardEdge,
       child: SizedBox(
         width: MediaQuery.of(context).size.width,
-        height: 650, // Fixed height for modal flow
+        height: 650,
         child: Column(
           children: [
             // Header
@@ -86,14 +330,17 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      context.read<TripsProvider>().cancelCreation();
+                      Navigator.pop(context);
+                    },
                     child: const Icon(Icons.close, size: 24, color: Color(0xFF5A7184)),
                   ),
                 ],
               ),
             ),
             const Divider(height: 1, color: Color(0xFFE5EAF4)),
-            
+
             // Progress Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -117,11 +364,11 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // Disable swiping
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
-                   _buildStep1Details(),
-                   _buildStep2Members(),
-                   _buildStep3Review(),
+                  _buildStep1Details(),
+                  _buildStep2Members(),
+                  _buildStep3Review(),
                 ],
               ),
             ),
@@ -131,114 +378,251 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     );
   }
 
+  // ===========================================================================
+  // Step 1 — Trip Details (with Form validation)
+  // ===========================================================================
   Widget _buildStep1Details() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildTextFieldLabel('Trip Name'),
-          _buildTextField(),
-          const SizedBox(height: 16),
-          _buildTextFieldLabel('Destination', icon: Icons.location_on_outlined),
-          _buildTextField(),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextFieldLabel('From', icon: Icons.calendar_today_outlined),
-                    _buildTextField(),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextFieldLabel('To'),
-                    _buildTextField(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildTextFieldLabel('Trip Type'),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-               _buildTypeChip('Beach', '🏖️', true),
-               _buildTypeChip('Mountain', '⛰️', false),
-               _buildTypeChip('City', '🏙️', false),
-               _buildTypeChip('Nature', '🌿', false),
-               _buildTypeChip('Island', '🏝️', false),
-               _buildTypeChip('Other', '🌍', false),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildTextFieldLabel('Cover Photo', icon: Icons.camera_alt_outlined),
-          const SizedBox(height: 8),
-          Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFCFCFC),
-              border: Border.all(color: const Color(0xFFEBEBEB), style: BorderStyle.none),
-              borderRadius: BorderRadius.circular(12),
+      child: Form(
+        key: _step1FormKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Trip Name * — Required, min 2 characters
+            _buildRequiredLabel('Trip Name'),
+            TextFormField(
+              controller: _tripNameController,
+              validator: Validators.validateTripName,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+              decoration: _inputDecoration('Enter trip name'),
             ),
-            child: Stack(
+            const SizedBox(height: 16),
+
+            // Destination * — Required
+            _buildRequiredLabel('Destination', icon: Icons.location_on_outlined),
+            TextFormField(
+              controller: _destinationController,
+              validator: Validators.validateDestination,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+              decoration: _inputDecoration('Enter destination'),
+            ),
+            const SizedBox(height: 16),
+
+            // Dates — Start Date * and End Date *
+            Row(
               children: [
-                 Positioned.fill(
-                   child: CustomPaint(
-                     painter: DashedRectPainter(color: const Color(0xFFE0E0E0)),
-                   ),
-                 ),
-                 Center(
+                Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                       Icon(Icons.upload_outlined, color: Color(0xFF828282)),
-                       SizedBox(height: 8),
-                       Text(
-                         'Tap to upload',
-                         style: TextStyle(
-                           fontFamily: 'Inter',
-                           fontSize: 12,
-                           color: Color(0xFF828282),
-                         ),
-                       ),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildRequiredLabel('Start Date', icon: Icons.calendar_today_outlined),
+                      _buildDateField(isFrom: true),
                     ],
                   ),
-                 ),
-              ]
-            )
-          ),
-          const SizedBox(height: 32),
-          _buildPrimaryButton('Continue', _nextStep),
-        ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildRequiredLabel('End Date'),
+                      _buildDateField(isFrom: false),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Date validation error — "End date must be after start date"
+            if (_dateError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Text(
+                  _dateError!,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 16),
+
+            // Trip Type * — Required (pre-selected)
+            _buildRequiredLabel('Trip Type'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTypeChip('Beach', '🏖️', _selectedTripType == 'Beach'),
+                _buildTypeChip('Mountain', '⛰️', _selectedTripType == 'Mountain'),
+                _buildTypeChip('City', '🏙️', _selectedTripType == 'City'),
+                _buildTypeChip('Nature', '🌿', _selectedTripType == 'Nature'),
+                _buildTypeChip('Island', '🏝️', _selectedTripType == 'Island'),
+                _buildTypeChip('Other', '🌍', _selectedTripType == 'Other'),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Cover Photo * — Image upload from laptop using file_picker
+            _buildRequiredLabel('Cover Photo', icon: Icons.camera_alt_outlined),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _pickCoverImage,
+              child: Container(
+                height: 120,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFCFCFC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: _coverImagePath != null
+                    // Preview selected image with option to replace
+                    ? Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_coverImagePath!),
+                              height: 120,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          // Replace image button
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: _pickCoverImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.swap_horiz,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    // Upload placeholder with dashed border
+                    : Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: DashedRectPainter(color: const Color(0xFFE0E0E0)),
+                            ),
+                          ),
+                          const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.upload_outlined, color: Color(0xFF828282)),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Tap to upload',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 12,
+                                    color: Color(0xFF828282),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            _buildPrimaryButton('Continue', _nextStep),
+          ],
+        ),
       ),
     );
   }
 
+  // ===========================================================================
+  // Step 2 — Add Members (with Form validation)
+  // ===========================================================================
   Widget _buildStep2Members() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextFieldLabel('Name'),
-          _buildTextField(),
+          Form(
+            key: _step2FormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Member Name * — Required
+                _buildRequiredLabel('Name'),
+                TextFormField(
+                  controller: _memberNameController,
+                  validator: Validators.validateMemberName,
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                  decoration: _inputDecoration('Enter member name'),
+                ),
+                const SizedBox(height: 16),
+
+                // Phone Number * — Required, valid phone
+                _buildRequiredLabel('Phone Number'),
+                TextFormField(
+                  controller: _memberPhoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: Validators.validatePhone,
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                  decoration: _inputDecoration('Enter phone number'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Add Member Button — BLOCKED if validation fails
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: _handleAddMember,
+              icon: const Icon(Icons.add, size: 18, color: Color(0xFF6BB5E5)),
+              label: const Text(
+                'Add Member',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: Color(0xFF6BB5E5),
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF6BB5E5)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          _buildTextFieldLabel('Phone Number'),
-          _buildTextField(),
-          const SizedBox(height: 16),
-          _buildTextFieldLabel('Or Add from Contacts'),
+
+          const Text(
+            'Or Add from Contacts',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF5A7184),
+            ),
+          ),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -258,243 +642,415 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     color: Color(0xFF333333),
-                    fontWeight: FontWeight.w500
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 48),
-          Center(
-            child: Column(
-              children: [
-                const Icon(Icons.people_outline, size: 48, color: Color(0xFFB0B0B0)),
-                const SizedBox(height: 16),
-                const Text(
-                  'No members added yet',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Color(0xFF828282),
-                    fontWeight: FontWeight.w500
+          const SizedBox(height: 24),
+
+          // Members list from provider
+          Consumer<TripsProvider>(
+            builder: (context, tripsProvider, _) {
+              if (tripsProvider.newTripMembers.isEmpty) {
+                return const Center(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 24),
+                      Icon(Icons.people_outline, size: 48, color: Color(0xFFB0B0B0)),
+                      SizedBox(height: 16),
+                      Text(
+                        'No members added yet',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: Color(0xFF828282),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'You can always add them later',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: Color(0xFFB0B0B0),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'You can always add them later',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: Color(0xFFB0B0B0),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${tripsProvider.newTripMembers.length} member(s) added',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      color: Color(0xFF828282),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 8),
+                  ...tripsProvider.newTripMembers.map((member) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F7F7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.person_outline, size: 18, color: Color(0xFF6BB5E5)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  member.name,
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (member.phone != null)
+                                  Text(
+                                    member.phone!,
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 11,
+                                      color: Color(0xFF828282),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => tripsProvider.removeMemberFromNewTrip(member.id),
+                            child: const Icon(Icons.close, size: 16, color: Color(0xFF828282)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 48), // Padding before button
+
+          const SizedBox(height: 24),
           _buildPrimaryButton('Continue', _nextStep),
         ],
       ),
     );
   }
 
+  // ===========================================================================
+  // Step 3 — Review & Create
+  // ===========================================================================
   Widget _buildStep3Review() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Banner Image Card
-          Container(
-             clipBehavior: Clip.hardEdge,
-             decoration: BoxDecoration(
-               color: Colors.white,
-               borderRadius: BorderRadius.circular(16),
-               border: Border.all(color: const Color(0xFFF3F3F3)),
-             ),
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 Container(
-                   height: 120,
-                   width: double.infinity,
-                   color: const Color(0xFFFAF1ED),
-                   child: const Center(
-                     child: Text('🏖️', style: TextStyle(fontSize: 32)),
-                   ),
-                 ),
-                 Padding(
-                   padding: const EdgeInsets.all(16.0),
-                   child: Column(
-                     crossAxisAlignment: CrossAxisAlignment.start,
-                     children: [
-                       const Text(
-                         'Kashish\'s Wedding',
-                         style: TextStyle(
-                           fontFamily: 'Inter',
-                           fontSize: 16,
-                           fontWeight: FontWeight.w700,
-                           color: Color(0xFF282828),
-                         ),
-                       ),
-                       const SizedBox(height: 8),
-                       Row(
-                         children: const [
-                           Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF828282)),
-                           SizedBox(width: 4),
-                           Text(
-                             'Lyaari',
-                             style: TextStyle(
-                               fontFamily: 'Inter',
-                               fontSize: 12,
-                               color: Color(0xFF828282),
-                             ),
-                           ),
-                         ],
-                       ),
-                       const SizedBox(height: 8),
-                       Row(
-                         children: [
-                           Row(
-                             children: const [
-                               Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF828282)),
-                               SizedBox(width: 4),
-                               Text(
-                                 'Dec 31 - Jan 22',
-                                 style: TextStyle(
-                                   fontFamily: 'Inter',
-                                   fontSize: 12,
-                                   color: Color(0xFF828282),
-                                 ),
-                               ),
-                             ],
-                           ),
-                           const SizedBox(width: 16),
-                           Row(
-                             children: const [
-                               Icon(Icons.people_outline, size: 14, color: Color(0xFF828282)),
-                               SizedBox(width: 4),
-                               Text(
-                                 '10 members',
-                                 style: TextStyle(
-                                   fontFamily: 'Inter',
-                                   fontSize: 12,
-                                   color: Color(0xFF828282),
-                                 ),
-                               ),
-                             ],
-                           ),
-                         ],
-                       )
-                     ],
-                   ),
-                 )
-               ],
-             ),
+    return Consumer<TripsProvider>(
+      builder: (context, tripsProvider, _) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Banner Image Card — shows data from provider
+              Container(
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF3F3F3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Show uploaded cover image or emoji placeholder
+                    Container(
+                      height: 120,
+                      width: double.infinity,
+                      color: const Color(0xFFFAF1ED),
+                      child: _coverImagePath != null
+                          ? Image.file(
+                              File(_coverImagePath!),
+                              fit: BoxFit.cover,
+                            )
+                          : Center(
+                              child: Text(
+                                _getEmojiForTripType(tripsProvider.newTripType),
+                                style: const TextStyle(fontSize: 32),
+                              ),
+                            ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tripsProvider.newTripName ?? 'Untitled Trip',
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF282828),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF828282)),
+                              const SizedBox(width: 4),
+                              Text(
+                                tripsProvider.newTripDestination ?? 'No destination',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  color: Color(0xFF828282),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF828282)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatDateRange(tripsProvider.newTripStartDate, tripsProvider.newTripEndDate),
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: Color(0xFF828282),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 16),
+                              Row(
+                                children: [
+                                  const Icon(Icons.people_outline, size: 14, color: Color(0xFF828282)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${tripsProvider.newTripMembers.length} members',
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: Color(0xFF828282),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildChecklistItem('Trip details', tripsProvider.newTripName != null),
+              const SizedBox(height: 8),
+              _buildChecklistItem('Dates set', tripsProvider.newTripStartDate != null),
+              const SizedBox(height: 8),
+              _buildChecklistItem('Trip type selected', true),
+              const SizedBox(height: 8),
+              _buildChecklistItem('Cover photo uploaded', _coverImagePath != null),
+              const SizedBox(height: 8),
+              _buildChecklistItem('Members invited', tripsProvider.newTripMembers.isNotEmpty),
+
+              const SizedBox(height: 32),
+
+              // Create Trip button with loading state
+              // BACKEND CALL: Sends POST /trips with multipart/form-data
+              tripsProvider.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6BB5E5)),
+                      ),
+                    )
+                  : _buildPrimaryButton('Create Trip', _nextStep),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildChecklistItem('Trip details'),
-          const SizedBox(height: 8),
-          _buildChecklistItem('Dates set'),
-          const SizedBox(height: 8),
-          _buildChecklistItem('Trip type selected'),
-          const SizedBox(height: 8),
-          _buildChecklistItem('Members invited'),
-          
-          const SizedBox(height: 32),
-          _buildPrimaryButton('Create Trip', _nextStep),
-        ],
+        );
+      },
+    );
+  }
+
+  // ===========================================================================
+  // Helper Widgets
+  // ===========================================================================
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF828282)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFF3F3F3)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF6BB5E5)),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
       ),
     );
   }
 
-  Widget _buildChecklistItem(String title) {
+  String _getEmojiForTripType(String type) {
+    switch (type) {
+      case 'Beach': return '🏖️';
+      case 'Mountain': return '⛰️';
+      case 'City': return '🏙️';
+      case 'Nature': return '🌿';
+      case 'Island': return '🏝️';
+      default: return '🌍';
+    }
+  }
+
+  String _formatDateRange(DateTime? start, DateTime? end) {
+    if (start == null || end == null) return 'Not set';
+    return Helpers.formatDateRange(start, end);
+  }
+
+  Widget _buildChecklistItem(String title, bool isComplete) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEBF6F0),
+        color: isComplete ? const Color(0xFFEBF6F0) : const Color(0xFFF7F7F7),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-           const Icon(Icons.check_circle, color: Color(0xFF20B95B), size: 20),
-           const SizedBox(width: 12),
-           Text(
-             title,
-             style: const TextStyle(
-               fontFamily: 'Inter',
-               fontSize: 13,
-               color: Color(0xFF4A4A4A),
-             ),
-           )
+          Icon(
+            isComplete ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: isComplete ? const Color(0xFF20B95B) : const Color(0xFFB0B0B0),
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              color: isComplete ? const Color(0xFF4A4A4A) : const Color(0xFFB0B0B0),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTypeChip(String label, String emoji, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF6BB5E5) : const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(20),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTripType = label;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6BB5E5) : const Color(0xFFF7F7F7),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: isSelected ? Colors.white : const Color(0xFF6A6A6A),
+                fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 6),
-          Text(
-            label,
+    );
+  }
+
+  Widget _buildDateField({required bool isFrom}) {
+    final date = isFrom ? _fromDate : _toDate;
+    final hasError = _dateError != null;
+
+    // Date constraints
+    final now = DateTime.now();
+    final firstDate = isFrom ? now : (_fromDate ?? now);
+    final initialDate = date ?? (isFrom ? now : (_fromDate ?? now));
+
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: initialDate,
+          firstDate: firstDate,
+          lastDate: DateTime(2100),
+          // Disable end dates before selected start date visually in the picker
+          selectableDayPredicate: (DateTime day) {
+            if (!isFrom && _fromDate != null) {
+              return !day.isBefore(_fromDate!);
+            }
+            return true;
+          },
+        );
+        if (picked != null) {
+          setState(() {
+            if (isFrom) {
+              _fromDate = picked;
+              // If start date moves past end date, clear end date
+              if (_toDate != null && _toDate!.isBefore(_fromDate!)) {
+                _toDate = null;
+              }
+            } else {
+              _toDate = picked;
+            }
+            // Clear date error when user picks a new date
+            _dateError = null;
+          });
+        }
+      },
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: hasError ? Colors.red : const Color(0xFFF3F3F3)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            date != null
+                ? Helpers.formatDisplayDate(date)
+                : isFrom ? 'Start date' : 'End date',
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 13,
-              color: isSelected ? Colors.white : const Color(0xFF6A6A6A),
-              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal
+              fontSize: 14,
+              color: date != null ? Colors.black : const Color(0xFF828282),
             ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextFieldLabel(String label, {IconData? icon}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        children: [
-          if (icon != null) ...[
-             Icon(icon, size: 14, color: const Color(0xFF6BB5E5)),
-             const SizedBox(width: 6),
-          ],
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF5A7184),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField() {
-    return SizedBox(
-      height: 48,
-      child: TextField(
-        style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFF3F3F3)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF6BB5E5)),
           ),
         ),
       ),
@@ -528,6 +1084,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   }
 }
 
+// =============================================================================
+// Custom Painter — Dashed border for image upload area
+// =============================================================================
 class DashedRectPainter extends CustomPainter {
   final Color color;
   DashedRectPainter({required this.color});
@@ -538,19 +1097,19 @@ class DashedRectPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
-    
+
     final RRect rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height), 
-      const Radius.circular(12)
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      const Radius.circular(12),
     );
-    
+
     Path path = Path()..addRRect(rrect);
     Path dashPath = Path();
-    
+
     double defaultDashLength = 6.0;
     double defaultDashSpace = 6.0;
     double distance = 0.0;
-    
+
     for (PathMetric pathMetric in path.computeMetrics()) {
       while (distance < pathMetric.length) {
         dashPath.addPath(
@@ -561,7 +1120,7 @@ class DashedRectPainter extends CustomPainter {
       }
       distance = 0.0;
     }
-    
+
     canvas.drawPath(dashPath, paint);
   }
 

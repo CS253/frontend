@@ -1,24 +1,22 @@
+// =============================================================================
+// Main Entry Point — Travelly App
+//
+// Initializes the app with:
+//   • MultiProvider wrapping (all providers registered in app_providers.dart)
+//   • TravellyApp root widget (routes, theme configured in app.dart)
+//
+// Architecture: main.dart → AppProviders.wrap() → TravellyApp → Screens
+// =============================================================================
+
 import 'package:flutter/material.dart';
-import 'features/intro/presentation/screens/launch_screen.dart';
+import 'app/app_providers.dart';
+import 'app/app.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    AppProviders.wrap(
+      child: const TravellyApp(),
+    ),
+  );
 }
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Travelly',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const LaunchScreen(),
-    );
-  }
-}
-
