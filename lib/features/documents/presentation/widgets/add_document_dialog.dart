@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:travelly/core/widgets/emoji_picker_dialog.dart';
+import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 
 /// Dialog shown when user taps "Add Document".
 /// Includes a name field, emoji selector, description field,
@@ -35,12 +36,13 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
         side: const BorderSide(color: Color(0xFFE5E7EB), width: 0.75),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: KeyboardSafeDialog(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // ── Header ──────────────────────────────────────────────
             Row(
               children: [
@@ -289,8 +291,9 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
 
 }

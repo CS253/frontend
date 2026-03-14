@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 import 'payment_details_dialog.dart';
 import 'select_people_dialog.dart';
 import 'split_amount_dialog.dart';
@@ -11,11 +12,13 @@ class AddPaymentFlow {
   static void _showDetails(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => PaymentDetailsDialog(
-        onContinue: (details) {
-          Navigator.pop(context);
-          _showSelectPeople(context, details);
-        },
+      builder: (context) => KeyboardSafeDialog(
+        child: PaymentDetailsDialog(
+          onContinue: (details) {
+            Navigator.pop(context);
+            _showSelectPeople(context, details);
+          },
+        ),
       ),
     );
   }
@@ -23,15 +26,17 @@ class AddPaymentFlow {
   static void _showSelectPeople(BuildContext context, Map<String, String> details) {
     showDialog(
       context: context,
-      builder: (context) => SelectPeopleDialog(
-        onBack: () {
-          Navigator.pop(context);
-          _showDetails(context);
-        },
-        onContinue: (people) {
-          Navigator.pop(context);
-          _showSplitAmount(context, details, people);
-        },
+      builder: (context) => KeyboardSafeDialog(
+        child: SelectPeopleDialog(
+          onBack: () {
+            Navigator.pop(context);
+            _showDetails(context);
+          },
+          onContinue: (people) {
+            Navigator.pop(context);
+            _showSplitAmount(context, details, people);
+          },
+        ),
       ),
     );
   }
@@ -43,13 +48,15 @@ class AddPaymentFlow {
   ) {
     showDialog(
       context: context,
-      builder: (context) => SplitAmountDialog(
-        paymentDetails: details,
-        selectedPeopleNames: people,
-        onBack: () {
-          Navigator.pop(context);
-          _showSelectPeople(context, details);
-        },
+      builder: (context) => KeyboardSafeDialog(
+        child: SplitAmountDialog(
+          paymentDetails: details,
+          selectedPeopleNames: people,
+          onBack: () {
+            Navigator.pop(context);
+            _showSelectPeople(context, details);
+          },
+        ),
       ),
     );
   }
