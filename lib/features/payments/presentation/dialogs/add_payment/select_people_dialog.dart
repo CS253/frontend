@@ -6,11 +6,13 @@ import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_p
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_user_tile.dart';
 
 class SelectPeopleDialog extends StatefulWidget {
+  final List<String>? initialPeople;
   final VoidCallback onBack;
   final Function(List<String>) onContinue;
 
   const SelectPeopleDialog({
     super.key,
+    this.initialPeople,
     required this.onBack,
     required this.onContinue,
   });
@@ -27,8 +29,9 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
   @override
   void initState() {
     super.initState();
-    // Default selections from original code
-    selectedNames.addAll(['Kashish', 'Rushabh', 'Ashish', 'Hipalantya', 'Aman', 'Suresh']);
+    if (widget.initialPeople != null) {
+      selectedNames.addAll(widget.initialPeople!);
+    }
     _fetchMembers();
   }
 
@@ -124,6 +127,12 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
             DialogPrimaryButton(
               text: 'Continue',
               onPressed: () {
+                if (selectedNames.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select at least one person')),
+                  );
+                  return;
+                }
                 widget.onContinue(selectedNames.toList());
               },
             ),

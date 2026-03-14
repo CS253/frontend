@@ -73,6 +73,25 @@ class PaymentService {
     return _apiClient.get(ApiEndpoints.balances);
   }
 
+  /// Fetch full details for a specific expense.
+  /// MOCK DATA: Simulating a backend call.
+  /// TODO: Replace with real API call when backend is ready
+  Future<Map<String, dynamic>> fetchExpenseDetails(String id) async {
+    await Future.delayed(const Duration(milliseconds: 600)); // Simulate network delay
+    // In a real scenario, we'll do: return _apiClient.get(ApiEndpoints.paymentById(id));
+    return {
+      'title': 'Dinner at Cafe',
+      'amount': '1500',
+      'payer_name': 'Kashish',
+      'date': 'Jan 12',
+      'splits': [
+        {'name': 'Kashish', 'amount': '500'},
+        {'name': 'Rushabh', 'amount': '500'},
+        {'name': 'You', 'amount': '500'},
+      ]
+    };
+  }
+
   /// Create a new expense.
   Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) {
     return _apiClient.post(ApiEndpoints.expenses, body: body);

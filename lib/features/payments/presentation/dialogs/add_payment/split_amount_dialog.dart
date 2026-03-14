@@ -73,6 +73,19 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   }
 
   Future<void> _submitExpense() async {
+    double total = double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
+    double currentSum = 0.0;
+    for (var controller in controllers.values) {
+      currentSum += double.tryParse(controller.text) ?? 0.0;
+    }
+
+    if (currentSum != total) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Split amounts must equal total payment amount')),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     final body = {

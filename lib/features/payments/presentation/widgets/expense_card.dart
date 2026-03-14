@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
+import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
 
 /// List of all expense cards with dynamic data fetching.
 class AllExpensesList extends StatefulWidget {
@@ -109,17 +110,24 @@ class ExpenseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDFDFB),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color.fromRGBO(235, 231, 224, 0.5), width: 1),
-        boxShadow: const [
-          BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.08), blurRadius: 18, offset: Offset(0, 3.6))
-        ],
-      ),
-      child: Row(
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => PaymentDetailsDialog(expenseId: id),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDFDFB),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color.fromRGBO(235, 231, 224, 0.5), width: 1),
+          boxShadow: const [
+            BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.08), blurRadius: 18, offset: Offset(0, 3.6))
+          ],
+        ),
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
@@ -274,6 +282,6 @@ class ExpenseCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
