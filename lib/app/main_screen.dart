@@ -14,8 +14,19 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
+  /// Navigates to a specific tab by index.
+  /// Called by DashboardScreen's explore card navigation.
+  void _navigateToTab(int index) {
+    if (index >= 0 && index < _screens.length) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
+
+  /// Screen list built lazily so the navigation callback is available.
+  late final List<Widget> _screens = [
+    DashboardScreen(onNavigate: _navigateToTab),
     const PaymentsScreen(),
     const Scaffold(body: Center(child: Text('Plan'))),
     const GalleryScreen(),
