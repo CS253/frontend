@@ -17,7 +17,7 @@ class MarkAsPaidDialog extends StatefulWidget {
 
 class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
   final TextEditingController txnController = TextEditingController();
-  final TextEditingController dateController = TextEditingController(text: '31 Jan 2026, 03:02 am');
+  final TextEditingController dateController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
   bool _isLoading = false;
 
@@ -30,6 +30,13 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
   }
 
   Future<void> _markAsPaid() async {
+    if (dateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select Date & Time')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final body = {
@@ -133,9 +140,31 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
             _buildLabel('Date & Time'),
             const SizedBox(height: 8),
             _buildTextField(
-              hintText: '31 Jan 2026, 03:02 am',
+              hintText: 'Select Date & Time',
               filledColor: const Color(0xFFF3F2F0),
               controller: dateController,
+              readOnly: true,
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) {
+                  if (!context.mounted) return;
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (time != null && context.mounted) {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    setState(() {
+                      dateController.text = "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}, ${time.format(context)}";
+                    });
+                  }
+                }
+              },
             ),
             const SizedBox(height: 16),
             _buildLabel('Notes', optional: true),
@@ -176,11 +205,13 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
     );
   }
 
-  Widget _buildTextField({required String hintText, Color? filledColor, TextEditingController? controller}) {
+  Widget _buildTextField({required String hintText, Color? filledColor, TextEditingController? controller, bool readOnly = false, VoidCallback? onTap}) {
     return SizedBox(
       height: 42,
       child: TextField(
         controller: controller,
+        readOnly: readOnly,
+        onTap: onTap,
         decoration: InputDecoration(
           filled: true,
           fillColor: filledColor ?? const Color(0xFFFCFAF8),
@@ -197,7 +228,10 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(9),
-            borderSide: const BorderSide(color: Color(0xFF6BB5E5), width: 1),
+            borderSide: BorderSide(
+              color: readOnly ? const Color(0xFFEBE7E0) : const Color(0xFF6BB5E5),
+              width: readOnly ? 0.75 : 1,
+            ),
           ),
         ),
       ),

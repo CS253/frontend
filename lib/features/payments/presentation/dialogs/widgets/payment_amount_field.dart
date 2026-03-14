@@ -10,6 +10,8 @@ class PaymentAmountField extends StatelessWidget {
   final String? prefixText;
   final Color? filledColor;
   final int maxLines;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const PaymentAmountField({
     super.key,
@@ -20,6 +22,8 @@ class PaymentAmountField extends StatelessWidget {
     this.prefixText,
     this.filledColor,
     this.maxLines = 1,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -34,6 +38,8 @@ class PaymentAmountField extends StatelessWidget {
           child: TextField(
             controller: controller,
             maxLines: maxLines,
+            readOnly: readOnly,
+            onTap: onTap,
             keyboardType: isNumber ? TextInputType.number : TextInputType.text,
             inputFormatters: isNumber
                 ? [FilteringTextInputFormatter.digitsOnly]
@@ -63,7 +69,10 @@ class PaymentAmountField extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(9),
-                borderSide: const BorderSide(color: Color(0xFF6BB5E5), width: 1),
+                borderSide: BorderSide(
+                  color: readOnly ? const Color(0xFFEBE7E0) : const Color(0xFF6BB5E5),
+                  width: readOnly ? 0.75 : 1,
+                ),
               ),
             ),
             style: GoogleFonts.plusJakartaSans(

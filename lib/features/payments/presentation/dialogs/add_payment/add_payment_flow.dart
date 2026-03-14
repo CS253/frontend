@@ -6,31 +6,41 @@ import 'split_amount_dialog.dart';
 
 class AddPaymentFlow {
   static void show(BuildContext context) {
-    _showDetails(context);
+    _showDetails(context, null, null);
   }
 
-  static void _showDetails(BuildContext context) {
+  static void _showDetails(
+    BuildContext context,
+    Map<String, String>? initialDetails,
+    List<String>? initialPeople,
+  ) {
     showDialog(
       context: context,
       builder: (context) => KeyboardSafeDialog(
         child: PaymentDetailsDialog(
+          initialDetails: initialDetails,
           onContinue: (details) {
             Navigator.pop(context);
-            _showSelectPeople(context, details);
+            _showSelectPeople(context, details, initialPeople);
           },
         ),
       ),
     );
   }
 
-  static void _showSelectPeople(BuildContext context, Map<String, String> details) {
+  static void _showSelectPeople(
+    BuildContext context,
+    Map<String, String> details,
+    List<String>? initialPeople,
+  ) {
     showDialog(
       context: context,
       builder: (context) => KeyboardSafeDialog(
         child: SelectPeopleDialog(
+          initialPeople: initialPeople,
           onBack: () {
             Navigator.pop(context);
-            _showDetails(context);
+            _showDetails(context, details, initialPeople);
           },
           onContinue: (people) {
             Navigator.pop(context);
@@ -54,7 +64,7 @@ class AddPaymentFlow {
           selectedPeopleNames: people,
           onBack: () {
             Navigator.pop(context);
-            _showSelectPeople(context, details);
+            _showSelectPeople(context, details, people);
           },
         ),
       ),
