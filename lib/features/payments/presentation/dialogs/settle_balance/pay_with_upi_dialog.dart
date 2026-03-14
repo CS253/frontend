@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 class PayWithUPIDialog extends StatelessWidget {
   final VoidCallback onBack;
@@ -59,7 +60,7 @@ class PayWithUPIDialog extends StatelessWidget {
                 children: [
                   const TextSpan(text: "You're paying "),
                   TextSpan(
-                    text: '₹$amount',
+                    text: '${AppCurrency.symbol}$amount',
                     style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFFD1475E),

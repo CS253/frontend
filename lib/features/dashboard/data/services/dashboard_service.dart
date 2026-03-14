@@ -1,5 +1,6 @@
 import 'package:travelly/core/api/api_client.dart';
 import 'package:travelly/core/api/api_endpoints.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 /// Service layer responsible for fetching dashboard data from the backend.
 ///
@@ -100,7 +101,7 @@ class DashboardService {
           'id': 'activity_mock_1',
           'type': 'payment_added',
           'actor': 'Ronit',
-          'description': 'added ₹10000 for Hotel',
+          'description': 'added ${AppCurrency.symbol}10000 for Hotel',
           'timestamp': DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
           'iconType': 'payment',
         },

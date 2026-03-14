@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 class PaymentDetailsDialog extends StatefulWidget {
   final String expenseId;
@@ -96,7 +97,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(s['name'].toString(), style: GoogleFonts.plusJakartaSans()),
-                  Text('₹${s['amount']}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500)),
+                  Text('${AppCurrency.symbol}${s['amount']}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500)),
                 ],
               ),
             )),
@@ -107,7 +108,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Total:', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                Text('₹$amount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('${AppCurrency.symbol}$amount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
           ],

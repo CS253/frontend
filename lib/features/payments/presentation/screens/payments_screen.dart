@@ -65,7 +65,7 @@ class PaymentsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                const Center(child: BalanceCard()),
+                BalanceCard(),
                 const SizedBox(height: 12),
                 const Center(child: SummaryCards()),
                 const SizedBox(height: 16),

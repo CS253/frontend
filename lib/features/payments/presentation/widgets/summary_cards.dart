@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 /// Summary cards row (Total Expense, You Paid, Top Spender).
 class SummaryCards extends StatelessWidget {
@@ -9,21 +10,47 @@ class SummaryCards extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _card(
+        _buildSummaryCard(
+          context: context,
           iconBoxColor: const Color(0xFFD8F1FD), iconColor: Colors.blueAccent,
-          icon: Icons.account_balance_wallet_outlined, title: 'Total Expense', amount: '₹19,400',
-        )),
-        const SizedBox(width: 10),
-        Expanded(child: _card(
+          icon: Icons.account_balance_wallet_outlined, title: 'Total Expense', amount: '${AppCurrency.symbol}19,400',
+        ),
+        const SizedBox(width: 8),
+        _buildSummaryCard(
+          context: context,
           iconBoxColor: const Color(0xFFE0F5EE), iconColor: const Color(0xFF339977),
-          icon: Icons.trending_up, title: 'You Paid', amount: '₹5,000', hasProgressBar: true,
-        )),
-        const SizedBox(width: 10),
-        Expanded(child: _card(
+          icon: Icons.trending_up, title: 'You Paid', amount: '${AppCurrency.symbol}5,000', hasProgressBar: true,
+        ),
+        const SizedBox(width: 8),
+        _buildSummaryCard(
+          context: context,
           iconBoxColor: const Color(0xFFF0E8F7), iconColor: Colors.purpleAccent,
-          icon: Icons.people_outline, title: 'Top Spender', amount: '₹8,000', dynamicSubtitle: 'Ashish',
-        )),
+          icon: Icons.people_outline, title: 'Top Spender', amount: '${AppCurrency.symbol}8,000', dynamicSubtitle: 'Ashish',
+        ),
       ],
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required BuildContext context,
+    required Color iconBoxColor,
+    required Color iconColor,
+    required IconData icon,
+    required String title,
+    required String amount,
+    bool hasProgressBar = false,
+    String? dynamicSubtitle,
+  }) {
+    return Expanded(
+      child: _card(
+        iconBoxColor: iconBoxColor,
+        iconColor: iconColor,
+        icon: icon,
+        title: title,
+        amount: amount,
+        hasProgressBar: hasProgressBar,
+        dynamicSubtitle: dynamicSubtitle,
+      ),
     );
   }
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/data/models/balance_model.dart';
+import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 /// Horizontal scrollable friend balance cards with dynamic data.
 class FriendBalances extends StatefulWidget {
@@ -54,8 +55,8 @@ class _FriendBalancesState extends State<FriendBalances> {
               final isOwe = balance.statusText.toLowerCase().contains('you owe');
               String amount = '';
               if (isOwe) {
-                // Extract amount from "You owe ₹500"
-                amount = balance.statusText.split('₹').last;
+                // Extract amount from "You owe ₹500" or similar
+                amount = balance.statusText.split(AppCurrency.symbol).last;
               }
 
               return Padding(

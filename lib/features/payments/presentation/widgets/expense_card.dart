@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
+import 'package:travelly/core/constants/currency.dart';
 
 /// List of all expense cards with dynamic data fetching.
 class AllExpensesList extends StatefulWidget {
@@ -160,7 +161,7 @@ class ExpenseCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          amount,
+                          '${AppCurrency.symbol}$amount',
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.bold,
                             fontSize: 16.5,
@@ -261,7 +262,7 @@ class ExpenseCard extends StatelessWidget {
                             ),
                           Flexible(
                             child: Text(
-                              shareTextPrefix == 'Your share: ' ? yourShare : '$shareTextPrefix $yourShare',
+                              shareTextPrefix == 'Your share: ' ? '${AppCurrency.symbol}$yourShare' : '$shareTextPrefix ${AppCurrency.symbol}$yourShare',
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12.8,

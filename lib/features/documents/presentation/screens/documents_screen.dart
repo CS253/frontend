@@ -3,6 +3,8 @@ import 'package:travelly/features/documents/presentation/widgets/document_card.d
 import 'package:travelly/features/documents/presentation/widgets/add_document_dialog.dart';
 import 'package:travelly/features/documents/data/services/document_service.dart';
 import 'package:travelly/core/widgets/primary_button.dart';
+import 'package:travelly/features/documents/data/services/document_download_service.dart';
+import 'package:travelly/features/documents/presentation/screens/document_viewer_screen.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -14,6 +16,10 @@ class DocumentsScreen extends StatefulWidget {
 class _DocumentsScreenState extends State<DocumentsScreen> {
   late Future<Map<String, dynamic>> _documentsFuture;
   final DocumentService _documentService = DocumentService();
+  final DocumentDownloadService _downloadService = DocumentDownloadService();
+  
+  // Track downloading states by document ID
+  final Map<String, bool> _downloadingIds = {};
 
   @override
   void initState() {
@@ -41,6 +47,36 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting document: $e')),
         );
+      }
+    }
+  }
+
+  Future<void> _downloadDocument(String id, String url, String title) async {
+    if (_downloadingIds[id] == true) return;
+
+    setState(() {
+      _downloadingIds[id] = true;
+    });
+
+    try {
+      final savedPath = await _downloadService.downloadDocument(url, title);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(savedPath != null ? 'Downloaded to \$savedPath' : 'Download cancelled or failed.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error downloading: \$e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _downloadingIds[id] = false;
+        });
       }
     }
   }
@@ -133,6 +169,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       emoji: doc['emoji'],
                       title: doc['title'],
                       subtitle: doc['subtitle'],
+                      onView: doc['url'] != null ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DocumentViewerScreen(
+                              url: doc['url'],
+                              title: doc['title'],
+                            ),
+                          ),
+                        );
+                      } : null,
+                      onDownload: doc['url'] != null ? () => _downloadDocument(doc['id'], doc['url'], doc['title']) : null,
                       onDelete: () => _deleteDocument(doc['id']),
                     ),
                   );
