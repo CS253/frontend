@@ -1,33 +1,288 @@
+// =============================================================================
+// API Client — Centralized HTTP client for all backend communication.
+//
+// This class provides a reusable, interceptor-ready HTTP client with:
+//   • Auth token injection (Bearer token)
+//   • Request/response logging (debug mode)
+//   • Standardized error handling via ApiException
+//   • Multipart file upload support
+//
+// TODO: Replace baseUrl with real backend URL once backend is deployed.
+// =============================================================================
+
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+/// Custom exception for API errors with structured error data.
+class ApiException implements Exception {
+  final int statusCode;
+  final String message;
+  final dynamic data;
+
+  ApiException({
+    required this.statusCode,
+    required this.message,
+    this.data,
+  });
+
+  @override
+  String toString() => 'ApiException($statusCode): $message';
+}
+
+/// Centralized API client for all HTTP requests.
+///
+/// Usage:
+/// ```dart
+/// final client = ApiClient(baseUrl: 'https://api.travelly.dev');
+/// client.setAuthToken('jwt-token-here');
+/// final result = await client.get('/trips');
+/// ```
 class ApiClient {
   final String baseUrl;
+  String? _authToken;
 
   ApiClient({required this.baseUrl});
 
-  Future<dynamic> get(String endpoint, {Map<String, String>? headers}) async {
-    final response = await http.get(Uri.parse('$baseUrl$endpoint'), headers: headers);
-    return _handleResponse(response);
+  // ---------------------------------------------------------------------------
+  // Auth Token Management
+  // ---------------------------------------------------------------------------
+
+  /// Sets the JWT auth token for authenticated requests.
+  /// Called after successful login/register.
+  void setAuthToken(String token) {
+    _authToken = token;
   }
 
-  Future<dynamic> post(String endpoint, {Map<String, String>? headers, dynamic body}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: headers ?? {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
-    return _handleResponse(response);
+  /// Clears the auth token on logout.
+  void clearAuthToken() {
+    _authToken = null;
   }
 
+  /// Returns true if the client has an auth token set.
+  bool get isAuthenticated => _authToken != null;
+
+  // ---------------------------------------------------------------------------
+  // Request Headers
+  // ---------------------------------------------------------------------------
+
+  /// Builds default headers with optional auth token injection.
+  Map<String, String> _buildHeaders({Map<String, String>? customHeaders}) {
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    // Inject Bearer token if available
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+
+    // Merge any custom headers (custom headers take precedence)
+    if (customHeaders != null) {
+      headers.addAll(customHeaders);
+    }
+
+    return headers;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Logging (Debug Only)
+  // ---------------------------------------------------------------------------
+
+  /// Logs request details in debug mode.
+  void _logRequest(String method, String url, {dynamic body}) {
+    if (kDebugMode) {
+      debugPrint('┌── API REQUEST ──────────────────────────────');
+      debugPrint('│ $method $url');
+      if (body != null) {
+        debugPrint('│ Body: ${jsonEncode(body)}');
+      }
+      debugPrint('└─────────────────────────────────────────────');
+    }
+  }
+
+  /// Logs response details in debug mode.
+  void _logResponse(http.Response response) {
+    if (kDebugMode) {
+      debugPrint('┌── API RESPONSE ─────────────────────────────');
+      debugPrint('│ Status: ${response.statusCode}');
+      debugPrint('│ Body: ${response.body.length > 500 ? '${response.body.substring(0, 500)}...' : response.body}');
+      debugPrint('└─────────────────────────────────────────────');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // HTTP Methods
+  // ---------------------------------------------------------------------------
+
+  /// Performs a GET request.
+  Future<dynamic> get(
+    String endpoint, {
+    Map<String, String>? headers,
+    Map<String, String>? queryParams,
+  }) async {
+    final uri = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams);
+    _logRequest('GET', uri.toString());
+
+    try {
+      final response = await http.get(uri, headers: _buildHeaders(customHeaders: headers));
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw ApiException(statusCode: 0, message: 'No internet connection');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
+    }
+  }
+
+  /// Performs a POST request.
+  Future<dynamic> post(
+    String endpoint, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    _logRequest('POST', url, body: body);
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: _buildHeaders(customHeaders: headers),
+        body: body != null ? jsonEncode(body) : null,
+      );
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw ApiException(statusCode: 0, message: 'No internet connection');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
+    }
+  }
+
+  /// Performs a PUT request.
+  Future<dynamic> put(
+    String endpoint, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    _logRequest('PUT', url, body: body);
+
+    try {
+      final response = await http.put(
+        Uri.parse(url),
+        headers: _buildHeaders(customHeaders: headers),
+        body: body != null ? jsonEncode(body) : null,
+      );
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw ApiException(statusCode: 0, message: 'No internet connection');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
+    }
+  }
+
+  /// Performs a DELETE request.
+  Future<dynamic> delete(
+    String endpoint, {
+    Map<String, String>? headers,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    _logRequest('DELETE', url);
+
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: _buildHeaders(customHeaders: headers),
+      );
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw ApiException(statusCode: 0, message: 'No internet connection');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
+    }
+  }
+
+  /// Performs a multipart POST request (for file uploads).
+  ///
+  /// Used for trip cover image uploads.
+  /// TODO: Replace with real file upload logic once backend supports it.
+  Future<dynamic> uploadMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileFieldName,
+    required String filePath,
+    Map<String, String>? headers,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    _logRequest('MULTIPART POST', url, body: fields);
+
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+
+      // Add auth headers
+      final authHeaders = _buildHeaders(customHeaders: headers);
+      authHeaders.remove('Content-Type'); // Let multipart set its own content-type
+      request.headers.addAll(authHeaders);
+
+      // Add text fields
+      request.fields.addAll(fields);
+
+      // Add file
+      request.files.add(await http.MultipartFile.fromPath(fileFieldName, filePath));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw ApiException(statusCode: 0, message: 'No internet connection');
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Upload failed: $e');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Response Handling
+  // ---------------------------------------------------------------------------
+
+  /// Handles HTTP response and throws [ApiException] on error status codes.
   dynamic _handleResponse(http.Response response) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    final statusCode = response.statusCode;
+
+    if (statusCode >= 200 && statusCode < 300) {
+      // Success — parse JSON body
       if (response.body.isNotEmpty) {
         return jsonDecode(response.body);
       }
       return null;
-    } else {
-      throw Exception('Failed with status code: ${response.statusCode}');
     }
+
+    // Error — attempt to parse error message from response body
+    String errorMessage = 'Request failed with status $statusCode';
+    dynamic errorData;
+
+    try {
+      final errorBody = jsonDecode(response.body);
+      errorMessage = errorBody['message'] ?? errorBody['error'] ?? errorMessage;
+      errorData = errorBody;
+    } catch (_) {
+      // Response body is not JSON, use default message
+    }
+
+    throw ApiException(
+      statusCode: statusCode,
+      message: errorMessage,
+      data: errorData,
+    );
   }
 }

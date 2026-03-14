@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../dashboard/presentation/screens/main_screen.dart';
+import '../../../../core/constants/route_constants.dart';
 
 class TripCard extends StatelessWidget {
   final BuildContext parentContext;
@@ -33,11 +33,10 @@ class TripCard extends StatelessWidget {
       right: right,
       child: GestureDetector(
         onTap: () {
-          Navigator.push(
+          // Navigate using named routes instead of direct widget import
+          Navigator.pushNamed(
             parentContext,
-            MaterialPageRoute(
-              builder: (context) => const MainScreen(),
-            ),
+            RouteConstants.dashboard,
           );
         },
         child: Row(
@@ -139,22 +138,4 @@ class TripCard extends StatelessWidget {
   }
 }
 
-class PathPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = const Color(0xFFE5E5E5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
 
-    var path = Path();
-    path.moveTo(size.width * 0.5, 0);
-    path.quadraticBezierTo(size.width * 0.2, size.height * 0.3, size.width * 0.8, size.height * 0.6);
-    path.quadraticBezierTo(size.width * 1.1, size.height * 0.8, size.width * 0.5, size.height);
-    
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
