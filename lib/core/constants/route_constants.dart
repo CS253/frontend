@@ -15,7 +15,7 @@ class RouteConstants {
   static const String launch = '/';
   static const String login = '/login';
   static const String register = '/register';
-  static const String otp = '/otp';
+  static const String verifyEmail = '/verify-email';
   static const String createPassword = '/create-password';
   static const String googleSignIn = '/google-sign-in';
 

@@ -55,36 +55,30 @@ class AuthRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Register
+  // Register (Magic Link)
   // ---------------------------------------------------------------------------
 
-  /// Registers a new user and returns a temporary token for OTP verification.
-  Future<String> register({
-    required String email,
-    required String phone,
-  }) async {
+  /// Sends a sign-in link to the email.
+  Future<void> sendSignInLink(String email) async {
     try {
-      final rawData = await service.register(email: email, phone: phone);
-      return rawData['tempToken'] as String;
+      await service.sendSignInLink(email);
     } catch (e) {
-      throw Exception('Registration failed: $e');
+      throw Exception('Failed to send magic link: $e');
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Verify OTP
-  // ---------------------------------------------------------------------------
-
-  /// Verifies OTP and returns whether verification succeeded.
-  Future<bool> verifyOtp({
-    required String otp,
-    required String tempToken,
-  }) async {
+  /// Completes sign-in with the email link.
+  Future<AuthResponse> signInWithEmailLink(String email, String emailLink) async {
     try {
-      final rawData = await service.verifyOtp(otp: otp, tempToken: tempToken);
-      return rawData['verified'] as bool;
+      final rawData = await service.signInWithEmailLink(email, emailLink);
+      final authResponse = AuthResponse.fromJson(rawData);
+
+      // Set auth token for subsequent API calls
+      apiClient.setAuthToken(authResponse.token);
+
+      return authResponse;
     } catch (e) {
-      throw Exception('OTP verification failed: $e');
+      throw Exception('Email link sign-in failed: $e');
     }
   }
 
