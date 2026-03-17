@@ -20,7 +20,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   late Future<Map<String, dynamic>> _documentsFuture;
   final DocumentService _documentService = DocumentService();
   final DocumentDownloadService _downloadService = DocumentDownloadService();
-
+  
   // Track downloading states by document ID
   final Map<String, bool> _downloadingIds = {};
 
@@ -47,9 +47,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting document: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting document: $e')),
+        );
       }
     }
   }
@@ -63,23 +63,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
     try {
       final savedPath = await _downloadService.downloadDocument(url, title);
-
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              savedPath != null
-                  ? 'Downloaded to \$savedPath'
-                  : 'Download cancelled or failed.',
-            ),
-          ),
+          SnackBar(content: Text(savedPath != null ? 'Downloaded to \$savedPath' : 'Download cancelled or failed.')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error downloading: \$e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error downloading: \$e')),
+        );
       }
     } finally {
       if (mounted) {
@@ -116,14 +110,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFF212022),
-                      size: 22,
-                    ),
-                    onPressed:
-                        widget.onBackPressed ??
-                        () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
+                    onPressed: widget.onBackPressed ?? () => Navigator.of(context).pop(),
                   ),
                   Expanded(
                     child: Column(
@@ -142,9 +130,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         FutureBuilder<Map<String, dynamic>>(
                           future: _documentsFuture,
                           builder: (context, snapshot) {
-                            final count = snapshot.hasData
-                                ? (snapshot.data!['documents'] as List).length
-                                : 0;
+                            final count = snapshot.hasData ? (snapshot.data!['documents'] as List).length : 0;
                             return Text(
                               '$count Documents Uploaded',
                               style: const TextStyle(
@@ -161,7 +147,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   IconButton(
                     icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
                     onPressed: () {
-                      Scaffold.of(context).openEndDrawer();
+                      context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
                     },
                   ),
                 ],
@@ -179,18 +165,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 return const Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData ||
-                  (snapshot.data!['documents'] as List).isEmpty) {
+              } else if (!snapshot.hasData || (snapshot.data!['documents'] as List).isEmpty) {
                 return const Center(child: Text('No documents found.'));
               }
 
               final documents = snapshot.data!['documents'] as List;
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 itemCount: documents.length,
                 itemBuilder: (context, index) {
                   final doc = documents[index];
@@ -201,26 +183,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       emoji: doc['emoji'],
                       title: doc['title'],
                       subtitle: doc['subtitle'],
-                      onView: doc['url'] != null
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => DocumentViewerScreen(
-                                    url: doc['url'],
-                                    title: doc['title'],
-                                  ),
-                                ),
-                              );
-                            }
-                          : null,
-                      onDownload: doc['url'] != null
-                          ? () => _downloadDocument(
-                              doc['id'],
-                              doc['url'],
-                              doc['title'],
-                            )
-                          : null,
+                      onView: doc['url'] != null ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DocumentViewerScreen(
+                              url: doc['url'],
+                              title: doc['title'],
+                            ),
+                          ),
+                        );
+                      } : null,
+                      onDownload: doc['url'] != null ? () => _downloadDocument(doc['id'], doc['url'], doc['title']) : null,
                       onDelete: () => _deleteDocument(doc['id']),
                     ),
                   );
@@ -247,9 +221,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       if (!context.mounted) return;
                       _refreshDocuments();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Document uploaded successfully'),
-                        ),
+                        const SnackBar(content: Text('Document uploaded successfully')),
                       );
                     } catch (e) {
                       if (!context.mounted) return;

@@ -39,7 +39,7 @@ class PaymentsScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
+                    icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
                     onPressed: onBackPressed ?? () => Navigator.maybePop(context),
                   ),
                   Expanded(
@@ -70,7 +70,7 @@ class PaymentsScreen extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
                     onPressed: () {
-                      Scaffold.of(context).openEndDrawer();
+                      context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
                     },
                   ),
                 ],

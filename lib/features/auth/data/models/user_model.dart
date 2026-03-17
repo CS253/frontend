@@ -18,6 +18,7 @@ class UserModel {
   final String email;
   final String? phone;
   final String? avatarUrl;
+  final bool isEmailVerified;
 
   UserModel({
     required this.id,
@@ -25,6 +26,7 @@ class UserModel {
     required this.email,
     this.phone,
     this.avatarUrl,
+    this.isEmailVerified = false,
   });
 
   /// Creates a UserModel from API JSON response.
@@ -36,6 +38,7 @@ class UserModel {
       email: json['email'] as String,
       phone: json['phone'] as String?,
       avatarUrl: json['avatarUrl'] as String?,
+      isEmailVerified: json['isEmailVerified'] as bool? ?? false,
     );
   }
 
@@ -47,6 +50,7 @@ class UserModel {
       'email': email,
       'phone': phone,
       'avatarUrl': avatarUrl,
+      'isEmailVerified': isEmailVerified,
     };
   }
 
@@ -57,6 +61,7 @@ class UserModel {
     String? email,
     String? phone,
     String? avatarUrl,
+    bool? isEmailVerified,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class UserModel {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
     );
   }
 
