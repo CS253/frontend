@@ -156,6 +156,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: !_isPasswordVisible,
                     validator: (v) => Validators.validateConfirmPassword(v, _passwordController.text),
                   ),
+                  const SizedBox(height: 16),
+
+                  // Phone Number Field
+                  _buildTextField(
+                    controller: _phoneController,
+                    hintText: 'Phone Number',
+                    keyboardType: TextInputType.phone,
+                    validator: Validators.validatePhone,
+                  ),
                   const SizedBox(height: 24),
 
                   // Register Button
