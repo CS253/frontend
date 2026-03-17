@@ -125,6 +125,7 @@ class AuthProvider with ChangeNotifier {
     required String email, 
     required String password,
     String? name,
+    String? phone,
   }) async {
     _setLoading(true);
     _clearError();
@@ -134,6 +135,7 @@ class AuthProvider with ChangeNotifier {
         email: email,
         password: password,
         name: name,
+        phone: phone,
       );
 
       _token = response.token;

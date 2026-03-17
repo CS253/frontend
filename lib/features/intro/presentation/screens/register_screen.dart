@@ -32,6 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   bool _isPasswordVisible = false;
 
@@ -41,6 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -50,6 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text;
 
     final authProvider = context.read<AuthProvider>();
@@ -57,6 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: email,
       password: password,
       name: name,
+      phone: phone,
     );
 
     if (!mounted) return;
