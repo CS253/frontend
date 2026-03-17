@@ -8,7 +8,7 @@ import '../providers/gallery_provider.dart';
 class FullPhotoScreen extends StatefulWidget {
   final int initialIndex;
 
-  const FullPhotoScreen({Key? key, required this.initialIndex}) : super(key: key);
+  const FullPhotoScreen({super.key, required this.initialIndex});
 
   @override
   State<FullPhotoScreen> createState() => _FullPhotoScreenState();

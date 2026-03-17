@@ -142,7 +142,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
+                    onPressed: () {
+                      context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
+                    },
+                  ),
                 ],
               ),
             ),
