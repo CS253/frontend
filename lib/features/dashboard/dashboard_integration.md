@@ -309,25 +309,32 @@ User taps "Cover Photo" → file_picker opens
 ```
 
 ### Trip Info Card Display Logic
+
 ```
-if trip.coverImage exists:
-  Show cover photo as card background
-  Apply dark gradient overlay for text readability
-  Use white text colors
-else:
-  Show trip-type themed gradient background
-  Use dark text colors
+1. Custom Cover Photo: User-uploaded (network or local file)
+2. Stock Photo Fallback: If no coverImage, system loads a high-quality 
+   stock photo based on tripType from Unsplash.
+3. Gradient Fallback: If network images fail to load, a themed gradient
+   is shown as a last resort.
 ```
 
-### Trip-Type Default Gradients
-| Trip Type | Gradient Start | Gradient End |
-|-----------|---------------|--------------|
-| Beach     | #FFE4B5       | #F4A460      |
-| Mountain  | #A8D5BA       | #4A8C6F      |
-| City      | #B0C4DE       | #6A89CC      |
-| Nature    | #C8E6C9       | #66BB6A      |
-| Island    | #B2EBF2       | #26C6DA      |
-| Other     | #C1EAFF       | #D9F0FC      |
+### Stock Photo Fallback URLs
+
+| Trip Type | Unsplash URL (Stock Fallback) |
+|-----------|-------------------------------|
+| Beach     | `https://images.unsplash.com/photo-1507525428034-b723cf961d3e` |
+| Mountain  | `https://images.unsplash.com/photo-1464822759023-fed622ff2c3b` |
+| City      | `https://images.unsplash.com/photo-1449824913935-59a10b8d2000` |
+| Nature    | `https://images.unsplash.com/photo-1441974231531-c6227db76b6e` |
+| Island    | `https://images.unsplash.com/photo-1559128192-d7379f65c711` |
+| Other     | `https://images.unsplash.com/photo-1488646953014-85cb44e25828` |
+
+### Dash of Premium UI (Glassmorphic Bar & Overlay)
+
+Regardless of the background image, several premium UI elements ensure readability and consistency:
+- **Dark Gradient Overlay**: A multi-stop black overlay (0% to 60% opacity) is applied at the card layer.
+- **Backdrop Blur**: Destination pill and info bar use `ImageFilter.blur` for a frosted-glass effect.
+- **Glassmorphic Objects**: Contain white text and icons with semi-transparent borders.
 
 ---
 

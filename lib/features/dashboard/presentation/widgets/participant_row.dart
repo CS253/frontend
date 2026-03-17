@@ -9,11 +9,16 @@ import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 // ParticipantRow — Premium trip info card on the dashboard.
 //
 // Visual Design:
-//   • Cover photo or trip-type gradient as background
+//   • Cover photo or stock fallback as background
 //   • Always-present dark gradient overlay ensures text readability
 //   • Frosted-glass pill for destination at the top
 //   • Bold trip duration headline
 //   • Glassmorphic info bar with date range + member count at the bottom
+//
+// Fallback Logic:
+//   1. Custom Cover Photo: User-uploaded (network or local file)
+//   2. Stock Photo: High-quality Unsplash image based on tripType
+//   3. Gradient fallback: Last resort if network fails
 //
 // Layout:
 //   ┌──────────────────────────────────────┐
@@ -27,12 +32,11 @@ import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 //   └──────────────────────────────────────┘
 // =============================================================================
 
-/// Premium trip info card with cover photo / gradient background,
+/// Premium trip info card with dynamic background (Cover photo or Stock fallback),
 /// destination pill, trip duration, and glassmorphic info bar.
 ///
-/// Text is always white with a dark gradient overlay applied
-/// regardless of whether a cover photo or gradient BG is used,
-/// ensuring consistent readability.
+/// Text is always white with a dark gradient overlay applied regardless
+/// of the background, ensuring premium aesthetics and consistent readability.
 ///
 /// Tapping opens the [TripDetailsDialog] via [onTap].
 class ParticipantRow extends StatelessWidget {
@@ -49,7 +53,29 @@ class ParticipantRow extends StatelessWidget {
     this.onTap,
   });
 
-  // ── Trip-type gradient mapping ──────────────────────────────────────
+  // ── Stock Photo Mapping ─────────────────────────────────────────────
+
+  /// Defines high-quality stock photo URLs for each trip type.
+  /// Used as a fallback when no custom cover photo is uploaded.
+  String _getStockPhotoForTripType(String tripType) {
+    switch (tripType) {
+      case 'Beach':
+        return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80';
+      case 'Mountain':
+        return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+      case 'City':
+        return 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80';
+      case 'Nature':
+        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
+      case 'Island':
+        return 'https://images.unsplash.com/photo-1559128192-d7379f65c711?auto=format&fit=crop&w=800&q=80';
+      case 'Other':
+      default:
+        return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+    }
+  }
+
+  // ── Gradient Mapping (Last resort fallback) ──────────────────────────
 
   List<Color> _getGradientForTripType(String tripType) {
     switch (tripType) {
@@ -117,7 +143,7 @@ class ParticipantRow extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // ── Layer 1: Background image or gradient ─────────────
+            // ── Layer 1: Background photo (Cover or Stock) ───────────
             _buildBackground(),
 
             // ── Layer 2: Dark gradient overlay (always present) ───
@@ -305,8 +331,12 @@ class ParticipantRow extends StatelessWidget {
 
   // ── Background builders ─────────────────────────────────────────────
 
-  /// Cover photo or trip-type gradient.
+  /// Builds the background layer:
+  /// 1. User specified Cover Photo (Custom)
+  /// 2. Stock Photo Fallback based on tripType (Dynamic)
+  /// 3. Gradient Fallback (Last resort)
   Widget _buildBackground() {
+    // 1. Check for user-uploaded cover photo
     if (_hasCoverImage) {
       final coverImage = trip.coverImage!;
 
@@ -314,21 +344,36 @@ class ParticipantRow extends StatelessWidget {
         return CachedNetworkImage(
           imageUrl: coverImage,
           fit: BoxFit.cover,
-          placeholder: (context, url) => _buildGradientBackground(),
-          errorWidget: (context, url, error) => _buildGradientBackground(),
+          placeholder: (context, url) => _buildStockFallback(),
+          errorWidget: (context, url, error) => _buildStockFallback(),
         );
       }
 
       return Image.file(
         File(coverImage),
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildGradientBackground(),
+        errorBuilder: (context, error, stackTrace) => _buildStockFallback(),
       );
     }
 
-    return _buildGradientBackground();
+    // 2 & 3. Fallback to Stock Photo or Gradient
+    return _buildStockFallback();
   }
 
+  /// Builds the stock photo fallback based on tripType.
+  /// Falls back to gradient if network image fails.
+  Widget _buildStockFallback() {
+    final stockUrl = _getStockPhotoForTripType(trip.tripType);
+
+    return CachedNetworkImage(
+      imageUrl: stockUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => _buildGradientBackground(),
+      errorWidget: (context, url, error) => _buildGradientBackground(),
+    );
+  }
+
+  /// Last resort gradient fallback.
   Widget _buildGradientBackground() {
     final gradientColors = _getGradientForTripType(trip.tripType);
     return Container(
