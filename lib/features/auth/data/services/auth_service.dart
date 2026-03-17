@@ -47,60 +47,58 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------------
-  // Register (Phone Verification)
+  // Register (Email Magic Link)
   // ---------------------------------------------------------------------------
 
-  Future<Map<String, dynamic>> register({
-    required String email,
-    required String phone,
-  }) async {
-    final completer = Completer<Map<String, dynamic>>();
-
+  /// Sends a Passwordless Sign-in link to the user's email.
+  Future<void> sendSignInLink(String email) async {
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phone,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // This can happen automatically on some Android devices
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          completer.completeError(Exception(e.message ?? 'Verification failed'));
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          completer.complete({
-            'message': 'OTP sent successfully',
-            'tempToken': verificationId, // Use verificationId as tempToken
-          });
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
+      var actionCodeSettings = ActionCodeSettings(
+        url: 'https://travelly-66659.firebaseapp.com/login', // Must match Firebase Console
+        handleCodeInApp: true,
+        androidPackageName: 'com.10bit.travelly',
+        androidMinimumVersion: '21',
+        androidInstallApp: true,
+        iOSBundleId: 'com.10bit.travelly',
       );
-      return completer.future;
-    } catch (e) {
-      throw Exception('Registration failed: $e');
+
+      await _auth.sendSignInLinkToEmail(
+        email: email, 
+        actionCodeSettings: actionCodeSettings,
+      );
+      
+      // We must save the email locally because we need it to complete sign-in later
+      // when the user clicks the link.
+      debugPrint('Magic link sent to $email');
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Failed to send magic link');
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Verify OTP
-  // ---------------------------------------------------------------------------
-
-  Future<Map<String, dynamic>> verifyOtp({
-    required String otp,
-    required String tempToken,
-  }) async {
+  /// Completes the sign-in process after the user clicks the link in their email.
+  Future<Map<String, dynamic>> signInWithEmailLink(String email, String emailLink) async {
     try {
-      final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: tempToken,
-        smsCode: otp,
-      );
+      if (_auth.isSignInWithEmailLink(emailLink)) {
+        final userCredential = await _auth.signInWithEmailLink(
+          email: email,
+          emailLink: emailLink,
+        );
 
-      final userCredential = await _auth.signInWithCredential(credential);
-      
-      return {
-        'verified': true,
-        'user': userCredential.user,
-      };
+        final user = userCredential.user;
+        final token = await user?.getIdToken();
+
+        return {
+          'token': token,
+          'user': {
+            'id': user?.uid,
+            'name': user?.displayName ?? email.split('@').first,
+            'email': user?.email,
+          },
+        };
+      }
+      throw Exception('Invalid or expired magic link');
     } on FirebaseAuthException catch (e) {
-      throw Exception(e.message ?? 'OTP verification failed');
+      throw Exception(e.message ?? 'Magic link sign-in failed');
     }
   }
 
