@@ -31,21 +31,33 @@ class DashboardRepository {
     return DashboardResponseModel.fromJson(response);
   }
 
-  /// Updates trip details (name, startDate, emoji) via the service layer.
+  /// Updates trip details via the service layer.
+  ///
+  /// Accepts all editable trip fields (matching the Trip Details dialog):
+  ///   • name, destination, startDate, endDate, tripType, emoji
+  ///   • coverImagePath (optional) — local file path for cover photo upload
   ///
   /// After a successful update, re-fetches dashboard data so the UI
   /// reflects the changes without a manual refresh.
   Future<DashboardResponseModel> updateTrip({
     required String tripId,
     required String name,
+    required String destination,
     required String startDate,
+    required String endDate,
+    required String tripType,
     required String emoji,
+    String? coverImagePath,
   }) async {
     await _service.updateTrip(
       tripId: tripId,
       name: name,
+      destination: destination,
       startDate: startDate,
+      endDate: endDate,
+      tripType: tripType,
       emoji: emoji,
+      coverImagePath: coverImagePath,
     );
 
     // Re-fetch full dashboard to get consistent state
