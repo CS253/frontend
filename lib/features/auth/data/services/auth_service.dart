@@ -39,6 +39,7 @@ class AuthService {
           'name': user?.displayName ?? email.split('@').first,
           'email': user?.email,
           'phone': user?.phoneNumber,
+          'avatarUrl': user?.photoURL,
         },
       };
     } on FirebaseAuthException catch (e) {
@@ -82,6 +83,7 @@ class AuthService {
           'name': user?.displayName ?? name ?? email.split('@').first,
           'email': user?.email,
           'phone': phone ?? user?.phoneNumber,
+          'avatarUrl': user?.photoURL,
           'isEmailVerified': user?.emailVerified ?? false,
         },
       };
@@ -165,6 +167,7 @@ class AuthService {
           'id': user?.uid,
           'name': user?.displayName,
           'email': user?.email,
+          'avatarUrl': user?.photoURL,
         },
       };
     } on FirebaseAuthException catch (e) {

@@ -2,6 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
+import 'package:travelly/features/account_settings/data/models/user_profile.dart';
+import 'package:travelly/core/constants/route_constants.dart';
 import '../providers/account_settings_provider.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/setting_item.dart';
@@ -35,8 +38,16 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           children: [
             _buildHeader(),
             Expanded(
-              child: Consumer<AccountSettingsProvider>(
-                builder: (context, provider, child) {
+              child: Consumer2<AccountSettingsProvider, AuthProvider>(
+                builder: (context, provider, authProvider, child) {
+                  final firebaseUser = authProvider.user;
+                  final profile = provider.userProfile;
+
+                  // Use Firebase details if local profile is still loading or doesn't have them
+                  final displayEmail = firebaseUser?.email ?? profile?.email ?? 'Loading...';
+                  final displayName = profile?.name ?? firebaseUser?.name ?? 'Traveller';
+                  final displayImageUrl = profile?.imageUrl ?? firebaseUser?.avatarUrl;
+
                   return SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -56,8 +67,21 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                             ),
 
                           ProfileCard(
-                            userProfile: provider.userProfile,
-                            isLoading: provider.isLoading,
+                            userProfile: profile?.copyWith(
+                              email: displayEmail,
+                              name: displayName,
+                              imageUrl: displayImageUrl,
+                            ) ?? UserProfile(
+                              id: '',
+                              name: displayName,
+                              email: displayEmail,
+                              imageUrl: displayImageUrl,
+                              phone: '',
+                              address: '',
+                              upiId: '',
+                              notificationsEnabled: true,
+                            ),
+                            isLoading: provider.isLoading && profile == null,
                           ),
                           const SizedBox(height: 32),
                           _buildSectionHeader('APP OPTIONS'),
@@ -130,7 +154,15 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                 iconBgColor: const Color(0xFFF6EADB),
                                 iconColor: const Color(0xFFAE9079),
                                 showChevron: false,
-                                onTap: () {},
+                                 onTap: () async {
+                                  await authProvider.logout();
+                                  if (context.mounted) {
+                                    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                                      RouteConstants.login,
+                                      (route) => false,
+                                    );
+                                  }
+                                },
                               ),
                             ],
                           ),
