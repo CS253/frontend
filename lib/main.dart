@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
-import 'screens/main_screen.dart';
+import 'package:provider/provider.dart';
+
+import 'core/api/api_client.dart';
+import 'features/account_settings/data/repositories/account_settings_repository.dart';
+import 'features/account_settings/data/services/account_settings_service.dart';
+import 'features/account_settings/presentation/providers/account_settings_provider.dart';
+import 'app/main_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AccountSettingsProvider(
+            AccountSettingsRepository(AccountSettingsService(ApiClient())),
+          ),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -21,4 +37,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
