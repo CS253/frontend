@@ -5,6 +5,7 @@ import 'package:travelly/features/documents/data/services/document_service.dart'
 import 'package:travelly/core/widgets/primary_button.dart'; // PrimaryFabButton
 import 'package:travelly/features/documents/data/services/document_download_service.dart';
 import 'package:travelly/features/documents/presentation/screens/document_viewer_screen.dart';
+import 'package:travelly/core/widgets/app_sidebar.dart';
 
 class DocumentsScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
@@ -93,6 +94,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      endDrawer: const AppSidebar(),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(74.0),
         child: Container(
@@ -156,7 +158,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
+                    onPressed: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                  ),
                 ],
               ),
             ),
