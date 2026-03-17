@@ -52,7 +52,7 @@ class ManageMembersScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMembersHeader(),
+              _buildMembersHeader(context),
               const SizedBox(height: 12),
               _buildAdminCard(
                 context: context,
@@ -114,7 +114,7 @@ class ManageMembersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMembersHeader() {
+  Widget _buildMembersHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -138,7 +138,7 @@ class ManageMembersScreen extends StatelessWidget {
           ],
         ),
         TextButton.icon(
-          onPressed: () {},
+          onPressed: () => _showAddMemberSheet(context),
           icon: const Icon(
             Icons.person_add_outlined,
             color: Color(0xFF6CB4E6),
@@ -360,6 +360,139 @@ class ManageMembersScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showAddMemberSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E4E9),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Add New Member',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Nunito',
+                    color: Color(0xFF1F242E),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Enter the phone number of the person you want to add to this trip.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'Nunito',
+                    color: Color(0xFF737B8C),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 14,
+                    color: Color(0xFF1F242E),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Phone Number',
+                    hintStyle: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 14,
+                      color: Color(0xFF8B8893),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.phone_outlined,
+                      color: Color(0xFF8B8893),
+                      size: 20,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E4E9)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E4E9)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF6CB4E6)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Member added successfully',
+                          style: TextStyle(fontFamily: 'Nunito'),
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Color(0xFF2EB867),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6CB4E6),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Add Member',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showMemberOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -369,10 +502,12 @@ class ManageMembersScreen extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+            const SizedBox(height: 12),
             Container(
               width: 40,
               height: 4,
@@ -381,53 +516,45 @@ class ManageMembersScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading:
-                  const Icon(Icons.person_outline, color: Color(0xFF212022)),
-              title: const Text(
-                'View Profile',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.admin_panel_settings_outlined,
-                  color: Color(0xFF212022)),
-              title: const Text(
-                'Make Admin',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading:
-                  const Icon(Icons.delete_outline, color: Color(0xFFD1475E)),
-              title: const Text(
-                'Remove from Trip',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
+            const SizedBox(height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showPendingPaymentsAlert(context);
+                },
+                icon: const Icon(
+                  Icons.delete_outline,
                   color: Color(0xFFD1475E),
+                  size: 20,
+                ),
+                label: const Text(
+                  'Remove from Trip',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Nunito',
+                    color: Color(0xFFD1475E),
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFDE8E8),
+                  minimumSize: const Size(double.infinity, 64),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
                 ),
               ),
-              onTap: () {
-                Navigator.pop(context);
-                _showPendingPaymentsAlert(context);
-              },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 64),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showPendingPaymentsAlert(BuildContext context) {
     showDialog(
@@ -471,7 +598,7 @@ class ManageMembersScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Plus Jakarta Sans',
+                                fontFamily: 'Nunito',
                                 color: Color(0xFF1F242E),
                               ),
                             ),
@@ -479,7 +606,7 @@ class ManageMembersScreen extends StatelessWidget {
                               'This member has unsettled expenses',
                               style: TextStyle(
                                 fontSize: 11,
-                                fontFamily: 'Plus Jakarta Sans',
+                                fontFamily: 'Nunito',
                                 color: Color(0xFF737B8C),
                               ),
                             ),
@@ -503,7 +630,8 @@ class ManageMembersScreen extends StatelessWidget {
                             const CircleAvatar(
                               radius: 16,
                               backgroundImage: NetworkImage(
-                                  'https://ui-avatars.com/api/?name=Marcus+Johnson&background=8E8E8E&color=fff'),
+                                'https://ui-avatars.com/api/?name=Marcus+Johnson&background=8E8E8E&color=fff',
+                              ),
                             ),
                             const SizedBox(width: 12),
                             const Expanded(
@@ -515,7 +643,7 @@ class ManageMembersScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Plus Jakarta Sans',
+                                      fontFamily: 'Nunito',
                                       color: Color(0xFF1F242E),
                                     ),
                                   ),
@@ -524,7 +652,7 @@ class ManageMembersScreen extends StatelessWidget {
                                       text: 'Owes ',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontFamily: 'Plus Jakarta Sans',
+                                        fontFamily: 'Nunito',
                                         color: Color(0xFF737B8C),
                                       ),
                                       children: [
@@ -550,7 +678,7 @@ class ManageMembersScreen extends StatelessWidget {
                           'Pending with:',
                           style: TextStyle(
                             fontSize: 10,
-                            fontFamily: 'Plus Jakarta Sans',
+                            fontFamily: 'Nunito',
                             color: Color(0xFF737B8C),
                           ),
                         ),
@@ -574,7 +702,7 @@ class ManageMembersScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Plus Jakarta Sans',
+                        fontFamily: 'Nunito',
                         color: Colors.white,
                       ),
                     ),
@@ -590,14 +718,17 @@ class ManageMembersScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.delete_outline,
-                        color: Color(0xFFD1475E), size: 16),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFD1475E),
+                      size: 16,
+                    ),
                     label: const Text(
                       'Remove Anyway',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Plus Jakarta Sans',
+                        fontFamily: 'Nunito',
                         color: Color(0xFFD1475E),
                       ),
                     ),
@@ -617,7 +748,7 @@ class ManageMembersScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Plus Jakarta Sans',
+                        fontFamily: 'Nunito',
                         color: Color(0xFF1F242E),
                       ),
                     ),
@@ -629,7 +760,11 @@ class ManageMembersScreen extends StatelessWidget {
               top: 12,
               right: 12,
               child: IconButton(
-                icon: const Icon(Icons.close, color: Color(0xFF737B8C), size: 16),
+                icon: const Icon(
+                  Icons.close,
+                  color: Color(0xFF737B8C),
+                  size: 16,
+                ),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -653,7 +788,7 @@ class ManageMembersScreen extends StatelessWidget {
         text,
         style: const TextStyle(
           fontSize: 11,
-          fontFamily: 'Plus Jakarta Sans',
+          fontFamily: 'Nunito',
           color: Color(0xFF1F242E),
         ),
       ),

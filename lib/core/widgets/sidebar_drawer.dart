@@ -160,32 +160,6 @@ class SidebarDrawer extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              _buildDarkModeToggle(),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF262F40).withValues(alpha: 0.08),
-                      blurRadius: 15,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: _buildMenuItem(
-                  icon: Icons.logout_outlined,
-                  iconBackgroundColor: const Color(0xFFF6EADB),
-                  iconColor: const Color(0xFFAE9079),
-                  title: 'Logout',
-                  subtitle: 'Sign out of your account',
-                  titleColor: const Color(0xFFAE9079),
-                  showArrow: false,
-                  onTap: () {},
-                ),
-              ),
             ],
           ),
         ),
@@ -251,81 +225,6 @@ class SidebarDrawer extends StatelessWidget {
                 color: Color(0xFFC7C7CC),
                 size: 20,
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDarkModeToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF262F40).withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3D9F2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.nightlight_outlined,
-                color: Color(0xFF8757C3), // Purple
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Dark Mode',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Nunito',
-                      color: Color(0xFF212022),
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Your vibe, your theme',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: 'Nunito',
-                      color: Color(0xFF8B8893),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 24,
-              width: 40,
-              child: Switch(
-                value: false,
-                onChanged: (value) {},
-                activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF90CDEF),
-                inactiveThumbColor: Colors.white,
-                inactiveTrackColor: const Color(0xFFCACCCE),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
           ],
         ),
       ),
