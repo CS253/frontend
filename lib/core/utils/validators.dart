@@ -56,9 +56,10 @@ class Validators {
   }
 
   /// Validates phone number (basic — digits only, min 10 chars).
+  /// Optional field.
   static String? validatePhone(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Phone number is required';
+      return null;
     }
     final phoneRegex = RegExp(r'^\+?[\d\s-]{10,}$');
     if (!phoneRegex.hasMatch(value.trim())) {

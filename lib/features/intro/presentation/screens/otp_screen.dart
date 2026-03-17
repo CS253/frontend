@@ -122,7 +122,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Enter OTP',
+                    'Verification',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 16,
