@@ -55,9 +55,9 @@ class DashboardService {
     return {
       'currentTrip': {
         'id': 'trip_mock_001',
-        'name': 'The Lyaari Trip',
-        'location': 'Pakistan',
-        'destination': 'Lahore, Pakistan',
+        'name': 'Goa Trip',
+        'location': 'Goa',
+        'destination': 'Goa, India',
         'startDate': '2026-04-10',
         'endDate': '2026-04-20',
         'daysRemaining': 5,
