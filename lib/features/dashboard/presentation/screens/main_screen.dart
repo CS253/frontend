@@ -36,10 +36,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -74,12 +71,14 @@ class _MainScreenState extends State<MainScreen> {
             icon: Container(
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
-                color: _selectedIndex == 0 
-                  ? const Color(0xFFD9F0FC).withValues(alpha: 0.54)
-                  : Colors.transparent,
+                color: _selectedIndex == 0
+                    ? const Color(0xFFD9F0FC).withValues(alpha: 0.54)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(9.66),
                 border: Border.all(
-                  color: _selectedIndex == 0 ? const Color(0xFFF3F3F3) : Colors.transparent,
+                  color: _selectedIndex == 0
+                      ? const Color(0xFFF3F3F3)
+                      : Colors.transparent,
                 ),
               ),
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
@@ -89,39 +88,41 @@ class _MainScreenState extends State<MainScreen> {
           ),
           const BottomNavigationBarItem(
             icon: Padding(
-               padding: EdgeInsets.only(bottom: 4),
-               child: Icon(Icons.payment_outlined, size: 20),
+              padding: EdgeInsets.only(bottom: 4),
+              child: Icon(Icons.payment_outlined, size: 20),
             ),
             label: 'Pay',
           ),
           const BottomNavigationBarItem(
             icon: Padding(
-               padding: EdgeInsets.only(bottom: 4),
-               child: Icon(Icons.map_outlined, size: 20),
+              padding: EdgeInsets.only(bottom: 4),
+              child: Icon(Icons.map_outlined, size: 20),
             ),
             label: 'Plan',
           ),
           const BottomNavigationBarItem(
             icon: Padding(
-               padding: EdgeInsets.only(bottom: 4),
-               child: Icon(Icons.image_outlined, size: 20),
+              padding: EdgeInsets.only(bottom: 4),
+              child: Icon(Icons.image_outlined, size: 20),
             ),
             label: 'Gallery',
           ),
           BottomNavigationBarItem(
-             icon: Container(
+            icon: Container(
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
-                color: _selectedIndex == 4 
-                  ? const Color(0xFFD9F0FC).withValues(alpha: 0.54)
-                  : Colors.transparent,
+                color: _selectedIndex == 4
+                    ? const Color(0xFFD9F0FC).withValues(alpha: 0.54)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(9.66),
                 border: Border.all(
-                  color: _selectedIndex == 4 ? const Color(0xFFF3F3F3) : Colors.transparent,
+                  color: _selectedIndex == 4
+                      ? const Color(0xFFF3F3F3)
+                      : Colors.transparent,
                 ),
               ),
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-              child: const Icon(Icons.description_outlined, size: 20), 
+              child: const Icon(Icons.description_outlined, size: 20),
             ),
             label: 'Docs',
           ),
