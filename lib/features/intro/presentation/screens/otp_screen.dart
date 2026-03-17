@@ -97,7 +97,9 @@ class _OtpScreenState extends State<OtpScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const BackButton(color: Colors.black),
+        leading: Navigator.canPop(context) 
+            ? const BackButton(color: Colors.black) 
+            : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
