@@ -42,17 +42,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white,
-                const Color(0xFFF3F9FD).withValues(alpha: 0.5),
-                const Color(0xFFEBF5FB),
-              ],
-            ),
-          ),
+          color: Colors.white,
           child: Stack(
           children: [
             // Background Design — subtle dots pattern
@@ -125,11 +115,11 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                         constraints: const BoxConstraints(),
                         onSelected: (value) async {
                           if (value == 'account_settings') {
-                            Navigator.of(context).pushNamed(RouteConstants.accountSettings);
+                            Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.accountSettings);
                           } else if (value == 'logout') {
                             await context.read<AuthProvider>().logout();
                             if (context.mounted) {
-                              Navigator.of(context).pushNamedAndRemoveUntil(
+                              Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
                                 RouteConstants.login,
                                 (route) => false,
                               );

@@ -19,7 +19,7 @@ class ApiEndpoints {
 
   /// Base URL for the API server.
   /// TODO: Replace with real backend URL before production deployment.
-  static const String baseUrl = 'https://api.travelly.app/v1';
+  static const String baseUrl = 'https://api.travelly.dev/v1';
 
   // ---------------------------------------------------------------------------
   // Auth Endpoints
@@ -59,10 +59,6 @@ class ApiEndpoints {
   /// Headers: `Authorization: Bearer <token>`
   /// Response: { "user": { "id", "name", "email", "phone" } }
   static const String profile = '/auth/profile';
-
-  // User Profile from HEAD
-  static const String userProfile = '$baseUrl/users/profile';
-  static const String updatePreferences = '$baseUrl/users/profile/preferences';
 
   /// POST — Logout and invalidate token.
   /// Headers: `Authorization: Bearer <token>`

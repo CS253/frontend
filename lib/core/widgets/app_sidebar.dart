@@ -55,7 +55,10 @@ class AppSidebar extends StatelessWidget {
                     iconColor: const Color(0xFF00A2FF),
                     title: 'Account Settings',
                     subtitle: 'Name, phone, address',
-                    onTap: () => Navigator.of(context).pushNamed(RouteConstants.accountSettings),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.accountSettings);
+                    },
                   ),
                   _SidebarItem(
                     icon: Icons.settings_outlined,
@@ -63,7 +66,10 @@ class AppSidebar extends StatelessWidget {
                     iconColor: const Color(0xFF8B8893),
                     title: 'Trip Settings',
                     subtitle: 'Alerts, Splits...',
-                    onTap: () => Navigator.of(context).pushNamed(RouteConstants.tripSettings),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.tripSettings);
+                    },
                   ),
                 ],
               ),
@@ -83,7 +89,7 @@ class AppSidebar extends StatelessWidget {
                   onTap: () async {
                     await authProvider.logout();
                     if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
+                      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
                         RouteConstants.login,
                         (route) => false,
                       );

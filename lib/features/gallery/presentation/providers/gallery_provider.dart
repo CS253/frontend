@@ -11,7 +11,7 @@ class GalleryProvider with ChangeNotifier {
     : _photoRepository = photoRepository;
 
   List<Photo> _photos = [];
-  Set<String> _selectedPhotoIds = {};
+  final Set<String> _selectedPhotoIds = {};
   bool _isLoading = false;
   String? _error;
 

@@ -33,16 +33,6 @@ import '../features/dashboard/presentation/providers/dashboard_provider.dart';
 import '../features/dashboard/data/repositories/dashboard_repository.dart';
 import '../features/dashboard/data/services/dashboard_service.dart';
 
-// Account Settings feature
-import '../features/account_settings/presentation/providers/account_settings_provider.dart';
-import '../features/account_settings/data/repositories/account_settings_repository.dart';
-import '../features/account_settings/data/services/account_settings_service.dart';
-
-// Trip Settings feature
-import '../features/trip_settings/presentation/providers/trip_settings_provider.dart';
-import '../features/trip_settings/data/repositories/trip_settings_repository.dart';
-import '../features/trip_settings/data/services/trip_settings_api_service.dart';
-
 /// Creates the shared ApiClient instance.
 ///
 /// TODO: Update ApiEndpoints.baseUrl with real backend URL before deployment.
@@ -109,28 +99,6 @@ class AppProviders {
           create: (_) => DashboardProvider(
             repository: DashboardRepository(
               service: DashboardService(apiClient: apiClient),
-            ),
-          ),
-        ),
-
-        // -----------------------------------------------------------------------
-        // Account Settings Feature Providers
-        // -----------------------------------------------------------------------
-        ChangeNotifierProvider<AccountSettingsProvider>(
-          create: (_) => AccountSettingsProvider(
-            AccountSettingsRepository(
-              AccountSettingsService(apiClient),
-            ),
-          ),
-        ),
-
-        // -----------------------------------------------------------------------
-        // Trip Settings Feature Providers
-        // -----------------------------------------------------------------------
-        ChangeNotifierProvider<TripSettingsProvider>(
-          create: (_) => TripSettingsProvider(
-            TripSettingsRepository(
-              TripSettingsApiService(),
             ),
           ),
         ),

@@ -77,8 +77,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
     return Row(
       children: [
         IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
-          onPressed: widget.onBackPressed ?? () => Navigator.maybePop(context),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
+          onPressed: widget.onBackPressed ?? () => Navigator.of(context).pop(),
         ),
         Expanded(
           child: Column(
@@ -108,7 +108,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
         IconButton(
           icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
           onPressed: () {
-            Scaffold.of(context).openEndDrawer();
+            context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
           },
         ),
       ],
