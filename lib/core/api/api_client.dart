@@ -37,7 +37,7 @@ class ApiException implements Exception {
 ///
 /// Usage:
 /// ```dart
-/// final client = ApiClient(baseUrl: 'https://api.travelly.app/v1');
+/// final client = ApiClient(baseUrl: 'https://api.travelly.dev');
 /// client.setAuthToken('jwt-token-here');
 /// final result = await client.get('/trips');
 /// ```
@@ -168,31 +168,6 @@ class ApiClient {
 
     try {
       final response = await _client.post(
-        Uri.parse(url),
-        headers: _buildHeaders(customHeaders: headers),
-        body: body != null ? jsonEncode(body) : null,
-      );
-      _logResponse(response);
-      return _handleResponse(response);
-    } on SocketException {
-      throw ApiException(statusCode: 0, message: 'No internet connection');
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
-    }
-  }
-
-  /// Performs a PATCH request from HEAD.
-  Future<dynamic> patch(
-    String endpoint, {
-    Map<String, String>? headers,
-    dynamic body,
-  }) async {
-    final url = '$baseUrl$endpoint';
-    _logRequest('PATCH', url, body: body);
-
-    try {
-      final response = await _client.patch(
         Uri.parse(url),
         headers: _buildHeaders(customHeaders: headers),
         body: body != null ? jsonEncode(body) : null,

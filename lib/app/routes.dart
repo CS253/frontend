@@ -21,14 +21,6 @@ import '../features/trips/presentation/screens/my_trips_screen.dart';
 // Dashboard screens
 import '../features/dashboard/presentation/screens/main_screen.dart';
 
-// Settings screens
-import '../features/account_settings/presentation/screens/account_settings_screen.dart';
-import '../features/account_settings/presentation/screens/personal_info_screen.dart';
-import '../features/account_settings/presentation/screens/change_password_screen.dart';
-import '../features/trip_settings/presentation/screens/trip_settings_screen.dart';
-import '../features/trip_settings/presentation/screens/notification_settings_screen.dart';
-import '../features/trip_settings/presentation/screens/manage_members_screen.dart';
-
 class AppRoutes {
   // Prevent instantiation
   AppRoutes._();
@@ -67,25 +59,6 @@ class AppRoutes {
       // Dashboard (main screen with bottom navigation)
       case RouteConstants.dashboard:
         return _buildRoute(const MainScreen(), settings);
-
-      // Settings
-      case RouteConstants.accountSettings:
-        return _buildRoute(const AccountSettingsScreen(), settings);
-
-      case RouteConstants.personalInfo:
-        return _buildRoute(const PersonalInfoScreen(), settings);
-
-      case RouteConstants.changePassword:
-        return _buildRoute(const ChangePasswordScreen(), settings);
-
-      case RouteConstants.tripSettings:
-        return _buildRoute(const TripSettingsScreen(), settings);
-
-      case RouteConstants.tripNotifications:
-        return _buildRoute(const NotificationSettingsScreen(), settings);
-
-      case RouteConstants.manageMembers:
-        return _buildRoute(const ManageMembersScreen(), settings);
 
       // Default — 404
       default:
