@@ -125,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // ── Trip header with trip name ────────────────────────
             TripHeader(
               tripName: provider.currentTrip?.name ?? 'My Trip',
-              onBackPressed: () => Navigator.of(context).pop(),
+              onBackPressed: () => Navigator.of(context, rootNavigator: true).pop(),
             ),
             const SizedBox(height: 24),
 

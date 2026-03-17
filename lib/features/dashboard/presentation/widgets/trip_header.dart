@@ -27,63 +27,69 @@ class TripHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // ── Left/Right action buttons ──────────────────────────────
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // ── Centered trip info ─────────────────────────────────────
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 14,
+                    color: Color(0xFF8B8893),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Current Trip',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF8B8893),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                tripName,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF212022),
+                ),
+              ),
+            ],
+          ),
+
+          // ── Left/Right action buttons ──────────────────────────────
+          Positioned(
+            left: 0,
+            child: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
               onPressed: onBackPressed,
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerLeft,
               constraints: const BoxConstraints(),
             ),
-            IconButton(
+          ),
+          Positioned(
+            right: 0,
+            child: IconButton(
               icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)),
               onPressed: onOptionsPressed,
               padding: EdgeInsets.zero,
+              alignment: Alignment.centerRight,
               constraints: const BoxConstraints(),
             ),
-          ],
-        ),
-
-        // ── Centered trip info ─────────────────────────────────────
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 14,
-                  color: Color(0xFF8B8893),
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'Current Trip',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF8B8893),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Text(
-              tripName,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF212022),
-              ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
