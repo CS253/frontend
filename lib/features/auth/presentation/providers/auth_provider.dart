@@ -73,6 +73,7 @@ class AuthProvider with ChangeNotifier {
         name: currentUser.displayName ?? 'Traveller',
         email: currentUser.email ?? '',
         phone: currentUser.phoneNumber,
+        avatarUrl: currentUser.photoURL,
         isEmailVerified: currentUser.emailVerified,
       );
       _status = AuthStatus.authenticated;

@@ -32,6 +32,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     // Load trips when screen initializes — this calls the provider
     // which calls the repository → service → API (or mock).
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().initialize();
       context.read<TripsProvider>().loadTrips(refresh: true);
     });
   }

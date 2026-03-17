@@ -32,7 +32,11 @@ class AppSidebar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Profile Header ─────────────────────────────────────────────
-              _buildProfileHeader(user?.name ?? 'Traveller', user?.email ?? ''),
+              _buildProfileHeader(
+                user?.name ?? 'Traveller', 
+                user?.email ?? '',
+                user?.avatarUrl
+              ),
               const SizedBox(height: 32),
 
               // ── App Options Section ────────────────────────────────────────
@@ -105,7 +109,7 @@ class AppSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(String name, String email) {
+  Widget _buildProfileHeader(String name, String email, String? avatarUrl) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -132,10 +136,12 @@ class AppSidebar extends StatelessWidget {
             ),
             child: Container(
               margin: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 image: DecorationImage(
-                  image: AssetImage('assets/images/signin_icon.png'), // Placeholder
+                  image: (avatarUrl != null && avatarUrl.isNotEmpty) 
+                    ? NetworkImage(avatarUrl) 
+                    : const AssetImage('assets/images/signin_icon.png') as ImageProvider,
                   fit: BoxFit.cover,
                 ),
               ),
