@@ -16,8 +16,7 @@
 // NOTE: Uncomment when real multipart API calls are enabled.
 // import 'package:http/http.dart' as http;
 import '../../../../core/api/api_client.dart';
-// NOTE: ApiEndpoints import should be uncommented when real API calls are enabled.
-// import '../../../../core/api/api_endpoints.dart';
+import '../../../../core/api/api_endpoints.dart';
 
 class TripsService {
   final ApiClient apiClient;
@@ -35,85 +34,17 @@ class TripsService {
   ///
   /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> getTrips({int page = 1, int limit = 10}) async {
-    // -------------------------------------------------------------------------
-    // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
-    // TODO: Replace mock data once backend API is connected
-    // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(seconds: 1));
-    return {
-      'trips': [
-        {
-          'id': 'trip-001',
-          'name': 'Santorini Dreams',
-          'destination': 'Santorini, Greece',
-          'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-05-01',
-          'endDate': '2024-05-15',
-          'tripType': 'Beach',
-          'membersCount': 5,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-002',
-          'name': 'Paris Escape',
-          'destination': 'Paris, France',
-          'coverImage': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-07-01',
-          'endDate': '2024-07-10',
-          'tripType': 'City',
-          'membersCount': 3,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-003',
-          'name': 'Mountain Trek',
-          'destination': 'Swiss Alps',
-          'coverImage': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-06-01',
-          'endDate': '2024-06-10',
-          'tripType': 'Mountain',
-          'membersCount': 8,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-004',
-          'name': 'Jungle Safari',
-          'destination': 'Costa Rica',
-          'coverImage': 'https://images.unsplash.com/photo-1518182170546-076616fd6cbf?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-03-01',
-          'endDate': '2024-03-12',
-          'tripType': 'Nature',
-          'membersCount': 6,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-005',
-          'name': 'Beach Bliss',
-          'destination': 'Maldives',
-          'coverImage': 'https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-01-01',
-          'endDate': '2024-01-14',
-          'tripType': 'Island',
-          'membersCount': 4,
-          'createdBy': 'user-001',
-        },
-      ],
-      'total': 5,
-      'page': page,
-      'limit': limit,
-    };
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
     // BACKEND CALL: GET /trips with pagination query params
-    // return await apiClient.get(
-    //   ApiEndpoints.trips,
-    //   queryParams: {
-    //     'page': page.toString(),
-    //     'limit': limit.toString(),
-    //   },
-    // );
-    // -------------------------------------------------------------------------
+    final response = await apiClient.get(
+      ApiEndpoints.trips,
+      queryParams: {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      },
+    );
+    
+    // The API client returns the parsed body
+    return response as Map<String, dynamic>;
   }
 
   // ---------------------------------------------------------------------------

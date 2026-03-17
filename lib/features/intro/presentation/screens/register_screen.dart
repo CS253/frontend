@@ -57,18 +57,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
-    // Combine country code with phone number
-    final phoneNum = _phoneController.text.trim();
-    final phone = phoneNum.isEmpty ? '' : '$_selectedCountryCode$phoneNum';
 
-    // BACKEND CALL: AuthProvider.register() → AuthRepository → AuthService → POST /auth/register
+    // BACKEND CALL: AuthProvider.sendSignInLink() → AuthRepository → AuthService → POST /auth/send-link
     final authProvider = context.read<AuthProvider>();
-    await authProvider.register(email: email, phone: phone);
+    await authProvider.sendSignInLink(email);
 
     if (!mounted) return;
 
-    if (authProvider.tempToken != null) {
-      Navigator.pushNamed(context, RouteConstants.otp);
+    if (authProvider.linkSent) {
+      // Navigate to the "Check Email" screen (formerly OTP screen)
+      Navigator.pushNamed(context, RouteConstants.verifyEmail);
     } else if (authProvider.errorMessage != null) {
       Helpers.showErrorSnackbar(context, authProvider.errorMessage!);
     }

@@ -47,7 +47,7 @@ class AppRoutes {
       case RouteConstants.register:
         return _buildRoute(const RegisterScreen(), settings);
 
-      case RouteConstants.otp:
+      case RouteConstants.verifyEmail:
         return _buildRoute(const OtpScreen(), settings);
 
       case RouteConstants.createPassword:

@@ -10,9 +10,8 @@
 //
 // BACKEND TRIGGER POINTS (UI Action → Provider Method → API Endpoint):
 //   • Login Button    → login()          → POST /auth/login
-//   • Register Button → register()       → POST /auth/register
-//   • OTP Continue    → verifyOtp()      → POST /auth/verify-otp
-//   • Start Travelling→ createPassword() → POST /auth/create-password
+//   • Register Button → sendSignInLink()   → GET /auth/send-link
+//   • Link Clicked     → signInWithEmailLink() → GET /auth/verify-link
 //   • Google Button   → googleSignIn()   → POST /auth/google
 //   • Logout Button   → logout()         → POST /auth/logout
 //
@@ -69,13 +68,13 @@ class AuthProvider with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  /// Temporary token used during registration flow (register → OTP → create password).
-  String? _tempToken;
-  String? get tempToken => _tempToken;
+  /// Email to which the magic link was sent.
+  String? _magicLinkEmail;
+  String? get magicLinkEmail => _magicLinkEmail;
 
-  /// Whether OTP has been verified (used in registration flow).
-  bool _isOtpVerified = false;
-  bool get isOtpVerified => _isOtpVerified;
+  /// Whether a magic link has been sent successfully.
+  bool _linkSent = false;
+  bool get linkSent => _linkSent;
 
   // ---------------------------------------------------------------------------
   // Session Persistence
@@ -149,60 +148,42 @@ class AuthProvider with ChangeNotifier {
   // Register
   // ---------------------------------------------------------------------------
 
-  /// Registers a new user and stores the temp token for OTP flow.
-  ///
-  /// BACKEND CALL: Register Button → AuthProvider.register()
-  ///   → AuthRepository.register() → AuthService.register()
-  ///   → POST /auth/register with { email, phone }
-  ///
-  /// After calling this, navigate to the OTP screen.
-  Future<void> register({
-    required String email,
-    required String phone,
-  }) async {
+  // ---------------------------------------------------------------------------
+  // Register (Magic Link)
+  // ---------------------------------------------------------------------------
+
+  /// Sends a magic link to the provided email.
+  Future<void> sendSignInLink(String email) async {
     _setLoading(true);
     _clearError();
 
     try {
-      _tempToken = await repository.register(email: email, phone: phone);
+      await repository.sendSignInLink(email);
+      _magicLinkEmail = email;
+      _linkSent = true;
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
+      _linkSent = false;
     }
 
     _setLoading(false);
   }
 
-  // ---------------------------------------------------------------------------
-  // Verify OTP
-  // ---------------------------------------------------------------------------
-
-  /// Verifies the OTP entered by the user.
-  ///
-  /// BACKEND CALL: OTP Continue → AuthProvider.verifyOtp()
-  ///   → AuthRepository.verifyOtp() → AuthService.verifyOtp()
-  ///   → POST /auth/verify-otp with { otp, tempToken }
-  ///
-  /// After calling this, navigate to the Create Password screen.
-  Future<void> verifyOtp({required String otp}) async {
+  /// Completes sign-in using the email link received in the email.
+  Future<void> signInWithEmailLink(String email, String emailLink) async {
     _setLoading(true);
     _clearError();
 
     try {
-      if (_tempToken == null) {
-        throw Exception('No registration session found. Please register again.');
-      }
-
-      _isOtpVerified = await repository.verifyOtp(
-        otp: otp,
-        tempToken: _tempToken!,
-      );
-
-      if (!_isOtpVerified) {
-        _errorMessage = 'Invalid OTP. Please try again.';
-      }
+      final AuthResponse response = await repository.signInWithEmailLink(email, emailLink);
+      _token = response.token;
+      _user = response.user;
+      _status = AuthStatus.authenticated;
+      _linkSent = false;
+      _magicLinkEmail = null;
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
-      _isOtpVerified = false;
+      _status = AuthStatus.unauthenticated;
     }
 
     _setLoading(false);
@@ -227,23 +208,23 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      if (_tempToken == null) {
+      if (_magicLinkEmail == null) {
         throw Exception('No registration session found. Please register again.');
       }
 
       final AuthResponse response = await repository.createPassword(
         password: password,
         confirmPassword: confirmPassword,
-        tempToken: _tempToken!,
+        tempToken: _magicLinkEmail!,
       );
 
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
 
-      // Clear registration flow data
-      _tempToken = null;
-      _isOtpVerified = false;
+    // Reset registration flow data
+    _magicLinkEmail = null;
+    _linkSent = false;
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
     }
@@ -298,8 +279,8 @@ class AuthProvider with ChangeNotifier {
 
     _user = null;
     _token = null;
-    _tempToken = null;
-    _isOtpVerified = false;
+    _magicLinkEmail = null;
+    _linkSent = false;
     _status = AuthStatus.unauthenticated;
     _setLoading(false);
   }
