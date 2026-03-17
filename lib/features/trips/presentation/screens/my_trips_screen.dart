@@ -42,17 +42,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white,
-                const Color(0xFFF3F9FD).withValues(alpha: 0.5),
-                const Color(0xFFEBF5FB),
-              ],
-            ),
-          ),
+          color: Colors.white,
           child: Stack(
           children: [
             // Background Design — subtle dots pattern
