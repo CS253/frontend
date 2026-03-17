@@ -8,27 +8,30 @@ class DocumentsScreen extends StatefulWidget {
 }
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(74.0), // Increased height for more top spacing
+        preferredSize: const Size.fromHeight(
+          74.0,
+        ), // Increased height for more top spacing
         child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(
-              bottom: BorderSide(
-                color: Color(0xFFEDEDED),
-                width: 0.8,
-              ),
+              bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
             ),
           ),
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 22.0, bottom: 8.0), // Increased top padding here
+              padding: const EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 22.0,
+                bottom: 8.0,
+              ), // Increased top padding here
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -55,11 +58,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       ),
                     ],
                   ),
-                  const Icon(
-                    Icons.menu,
-                    color: Color(0xFF212022),
-                    size: 24,
-                  ),
+                  const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
                 ],
               ),
             ),
@@ -94,16 +93,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 title: 'Hawkins Pass Permit',
                 subtitle: 'Jan 16, 2024 · By Priya',
               ),
-              const SizedBox(height: 100), // Additional padding for FAB and bottom navbar
+              const SizedBox(
+                height: 100,
+              ), // Additional padding for FAB and bottom navbar
             ],
           ),
           Positioned(
             bottom: 24,
             left: 0,
             right: 0,
-            child: Center(
-              child: _buildAddButton(),
-            ),
+            child: Center(child: _buildAddButton()),
           ),
         ],
       ),
@@ -139,10 +138,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               borderRadius: BorderRadius.circular(9.68),
             ),
             child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 20),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 20)),
             ),
           ),
           const SizedBox(width: 12),
@@ -181,13 +177,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               Container(
                 width: 25.8,
                 height: 25.8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(shape: BoxShape.circle),
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.remove_red_eye_outlined, size: 12.9, color: Color(0xFF8B8893)),
+                  icon: const Icon(
+                    Icons.remove_red_eye_outlined,
+                    size: 12.9,
+                    color: Color(0xFF8B8893),
+                  ),
                   onPressed: () {},
                 ),
               ),
@@ -195,13 +193,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               Container(
                 width: 25.8,
                 height: 25.8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(shape: BoxShape.circle),
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.download_outlined, size: 12.9, color: Color(0xFF8B8893)),
+                  icon: const Icon(
+                    Icons.download_outlined,
+                    size: 12.9,
+                    color: Color(0xFF8B8893),
+                  ),
                   onPressed: () {},
                 ),
               ),
@@ -244,6 +244,4 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
     );
   }
-
-
 }
