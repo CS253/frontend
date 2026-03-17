@@ -14,7 +14,7 @@
 // =============================================================================
 
 // NOTE: Uncomment when real multipart API calls are enabled.
-// import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 
@@ -34,7 +34,55 @@ class TripsService {
   ///
   /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> getTrips({int page = 1, int limit = 10}) async {
-    // BACKEND CALL: GET /trips with pagination query params
+    // -------------------------------------------------------------------------
+    // MOCK DATA — Active by default
+    // -------------------------------------------------------------------------
+    await Future.delayed(const Duration(milliseconds: 800));
+    return {
+      'trips': [
+        {
+          'id': 'trip-001',
+          'name': 'Santorini Dreams',
+          'destination': 'Santorini, Greece',
+          'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'startDate': '2024-05-01',
+          'endDate': '2024-05-15',
+          'tripType': 'Beach',
+          'membersCount': 5,
+          'createdBy': 'user-001',
+        },
+        {
+          'id': 'trip-002',
+          'name': 'Paris Escape',
+          'destination': 'Paris, France',
+          'coverImage': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'startDate': '2024-07-01',
+          'endDate': '2024-07-10',
+          'tripType': 'City',
+          'membersCount': 3,
+          'createdBy': 'user-001',
+        },
+        {
+          'id': 'trip-003',
+          'name': 'Mountain Trek',
+          'destination': 'Swiss Alps',
+          'coverImage': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'startDate': '2024-06-01',
+          'endDate': '2024-06-10',
+          'tripType': 'Mountain',
+          'membersCount': 8,
+          'createdBy': 'user-001',
+        },
+      ],
+      'total': 3,
+      'page': page,
+      'limit': limit,
+    };
+
+    // -------------------------------------------------------------------------
+    // REAL API CALL — Commented out until backend is ready
+    // -------------------------------------------------------------------------
+    /*
     final response = await apiClient.get(
       ApiEndpoints.trips,
       queryParams: {
@@ -42,9 +90,8 @@ class TripsService {
         'limit': limit.toString(),
       },
     );
-    
-    // The API client returns the parsed body
     return response as Map<String, dynamic>;
+    */
   }
 
   // ---------------------------------------------------------------------------

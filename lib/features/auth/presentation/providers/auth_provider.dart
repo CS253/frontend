@@ -83,8 +83,29 @@ class AuthProvider with ChangeNotifier {
   /// Checks if a user is already logged in on app startup.
   Future<void> initialize() async {
     _status = AuthStatus.initial;
-    final currentUser = repository.service.currentUser;
+    
+    // 1. Check if we arrived via a Magic Link (Web support)
+    final String currentUrl = Uri.base.toString();
+    if (repository.service.isSignInWithEmailLink(currentUrl)) {
+      _setLoading(true);
+      try {
+        final persistedEmail = await repository.service.getPersistedEmail();
+        if (persistedEmail != null) {
+          final response = await repository.signInWithEmailLink(persistedEmail, currentUrl);
+          _token = response.token;
+          _user = response.user;
+          _status = AuthStatus.authenticated;
+          _setLoading(false);
+          return;
+        }
+      } catch (e) {
+        debugPrint('Magic link initialization failed: $e');
+      }
+      _setLoading(false);
+    }
 
+    // 2. Fallback to session check
+    final currentUser = repository.service.currentUser;
     if (currentUser != null) {
       final token = await currentUser.getIdToken();
       _token = token;

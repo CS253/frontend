@@ -14,6 +14,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/constants/route_constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -24,6 +25,54 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen for authentication changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _listenToAuth();
+    });
+  }
+
+  void _listenToAuth() {
+    if (!mounted) return;
+    final authProvider = context.read<AuthProvider>();
+    
+    // Check initial state
+    if (authProvider.isAuthenticated) {
+      _navigateToCreatePassword();
+      return;
+    }
+
+    // Listen for future changes
+    authProvider.addListener(_onAuthChanged);
+  }
+
+  void _onAuthChanged() {
+    if (!mounted) return;
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.isAuthenticated) {
+      authProvider.removeListener(_onAuthChanged);
+      _navigateToCreatePassword();
+    }
+  }
+
+  void _navigateToCreatePassword() {
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      RouteConstants.createPassword,
+      (route) => false,
+    );
+  }
+
+  @override
+  void dispose() {
+    // Make sure to remove listener to avoid memory leaks
+    context.read<AuthProvider>().removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
