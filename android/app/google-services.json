@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "545892068210",
+    "project_id": "travelly-66659",
+    "storage_bucket": "travelly-66659.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545892068210:android:100ec316dd08631fac8beb",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "545892068210-o9v4bg899bcse590tp7qmgftcc7lfs8a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.frontend",
+            "certificate_hash": "640eaaaef74af1531368ff022b0b6b89761f8b5c"
+          }
+        },
+        {
+          "client_id": "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBb5o8xaPQUrWL9QKyDE1O7Zf9yGyXvzTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

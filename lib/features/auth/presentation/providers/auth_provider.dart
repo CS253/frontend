@@ -78,6 +78,32 @@ class AuthProvider with ChangeNotifier {
   bool get isOtpVerified => _isOtpVerified;
 
   // ---------------------------------------------------------------------------
+  // Session Persistence
+  // ---------------------------------------------------------------------------
+  
+  /// Checks if a user is already logged in on app startup.
+  Future<void> initialize() async {
+    _status = AuthStatus.initial;
+    final currentUser = repository.service.currentUser;
+
+    if (currentUser != null) {
+      final token = await currentUser.getIdToken();
+      _token = token;
+      _user = UserModel(
+        id: currentUser.uid,
+        name: currentUser.displayName ?? 'Traveller',
+        email: currentUser.email ?? '',
+        phone: currentUser.phoneNumber,
+      );
+      _status = AuthStatus.authenticated;
+      repository.apiClient.setAuthToken(token ?? '');
+    } else {
+      _status = AuthStatus.unauthenticated;
+    }
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
   // Computed Properties
   // ---------------------------------------------------------------------------
 
@@ -234,12 +260,12 @@ class AuthProvider with ChangeNotifier {
   /// BACKEND CALL: Google Button → AuthProvider.googleSignIn()
   ///   → AuthRepository.googleSignIn() → AuthService.googleSignIn()
   ///   → POST /auth/google with { idToken }
-  Future<void> googleSignIn({required String idToken}) async {
+  Future<void> googleSignIn() async {
     _setLoading(true);
     _clearError();
 
     try {
-      final AuthResponse response = await repository.googleSignIn(idToken: idToken);
+      final AuthResponse response = await repository.googleSignIn();
 
       _token = response.token;
       _user = response.user;

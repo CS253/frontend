@@ -6,10 +6,40 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/route_constants.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
-class LaunchScreen extends StatelessWidget {
+class LaunchScreen extends StatefulWidget {
   const LaunchScreen({super.key});
+
+  @override
+  State<LaunchScreen> createState() => _LaunchScreenState();
+}
+
+class _LaunchScreenState extends State<LaunchScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Check if user is already logged in on startup
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkAuthStatus());
+  }
+
+  Future<void> _checkAuthStatus() async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.initialize();
+
+    if (!mounted) return;
+
+    // If user is already authenticated (from Firebase session), skip launch screen
+    if (authProvider.isAuthenticated) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        RouteConstants.trips,
+        (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
