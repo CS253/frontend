@@ -1,47 +1,26 @@
+// =============================================================================
+// Main Entry Point — Travelly App
+//
+// Initializes the app with:
+//   • MultiProvider wrapping (all providers registered in app_providers.dart)
+//   • TravellyApp root widget (routes, theme configured in app.dart)
+//
+// Architecture: main.dart → AppProviders.wrap() → TravellyApp → Screens
+// =============================================================================
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'app/app.dart';
 
-import 'core/api/api_client.dart';
-import 'features/account_settings/data/repositories/account_settings_repository.dart';
-import 'features/account_settings/data/services/account_settings_service.dart';
-import 'features/account_settings/presentation/providers/account_settings_provider.dart';
-import 'features/trip_settings/data/repositories/trip_settings_repository.dart';
-import 'features/trip_settings/data/services/trip_settings_api_service.dart';
-import 'features/trip_settings/presentation/providers/trip_settings_provider.dart';
-import 'app/main_screen.dart';
+// Set this to true to bypass auth flow and start directly on the My Trips screen
+const bool kStartFromTrips = false;
 
-void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => AccountSettingsProvider(
-            AccountSettingsRepository(AccountSettingsService(ApiClient())),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => TripSettingsProvider(
-            TripSettingsRepository(TripSettingsApiService()),
-          ),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
-}
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // Initialize Firebase for all platforms
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Travelly',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const MainScreen(),
-    );
-  }
+  runApp(const App(startFromTrips: kStartFromTrips));
 }

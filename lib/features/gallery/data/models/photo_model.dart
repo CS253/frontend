@@ -1,31 +1,40 @@
-class PhotoModel {
+class Photo {
   final String id;
-  final String url;
-  final String uploadedBy;
-  final DateTime uploadedAt;
+  final String imageUrl;
+  final String? title;
+  final String? createdAt;
 
-  PhotoModel({
+  // Additional fields based on Figma design: User's name
+  final String authorName;
+  final String? localPath; // For rendering newly picked media
+
+  Photo({
     required this.id,
-    required this.url,
-    required this.uploadedBy,
-    required this.uploadedAt,
+    required this.imageUrl,
+    this.title,
+    this.createdAt,
+    required this.authorName,
+    this.localPath,
   });
 
-  factory PhotoModel.fromJson(Map<String, dynamic> json) {
-    return PhotoModel(
+  factory Photo.fromJson(Map<String, dynamic> json) {
+    return Photo(
       id: json['id'] as String,
-      url: json['url'] as String,
-      uploadedBy: json['uploaded_by'] as String,
-      uploadedAt: DateTime.parse(json['uploaded_at'] as String),
+      imageUrl: json['imageUrl'] as String,
+      title: json['title'] as String?,
+      createdAt: json['createdAt'] as String?,
+      authorName: json['authorName'] as String? ?? 'Unknown',
+      localPath: json['localPath'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'url': url,
-      'uploaded_by': uploadedBy,
-      'uploaded_at': uploadedAt.toIso8601String(),
+      'imageUrl': imageUrl,
+      'title': title,
+      'createdAt': createdAt,
+      'authorName': authorName,
     };
   }
 }
