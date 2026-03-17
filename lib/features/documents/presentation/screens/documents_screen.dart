@@ -7,7 +7,9 @@ import 'package:travelly/features/documents/data/services/document_download_serv
 import 'package:travelly/features/documents/presentation/screens/document_viewer_screen.dart';
 
 class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key});
+  final VoidCallback? onBackPressed;
+
+  const DocumentsScreen({super.key, this.onBackPressed});
 
   @override
   State<DocumentsScreen> createState() => _DocumentsScreenState();
@@ -98,42 +100,47 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.only(
-                left: 16.0,
+                left: 4.0,
                 right: 16.0,
                 top: 22.0,
                 bottom: 8.0,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Documents',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF212022),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
+                    onPressed: widget.onBackPressed ?? () => Navigator.maybePop(context),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Documents',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF212022),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      FutureBuilder<Map<String, dynamic>>(
-                        future: _documentsFuture,
-                        builder: (context, snapshot) {
-                          final count = snapshot.hasData ? (snapshot.data!['documents'] as List).length : 0;
-                          return Text(
-                            '$count Documents Uploaded',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF8B8893),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: _documentsFuture,
+                          builder: (context, snapshot) {
+                            final count = snapshot.hasData ? (snapshot.data!['documents'] as List).length : 0;
+                            return Text(
+                              '$count Documents Uploaded',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF8B8893),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
                 ],
