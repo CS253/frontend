@@ -88,13 +88,11 @@ class AuthService {
     required String tempToken,
   }) async {
     try {
-      // tempToken is the verificationId
       final PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: tempToken,
         smsCode: otp,
       );
 
-      // Sign in or Link
       final userCredential = await _auth.signInWithCredential(credential);
       
       return {
