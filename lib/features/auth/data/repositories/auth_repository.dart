@@ -122,9 +122,9 @@ class AuthRepository {
   // ---------------------------------------------------------------------------
 
   /// Authenticates with Google and returns [AuthResponse].
-  Future<AuthResponse> googleSignIn({required String idToken}) async {
+  Future<AuthResponse> googleSignIn() async {
     try {
-      final rawData = await service.googleSignIn(idToken: idToken);
+      final rawData = await service.googleSignIn();
       final authResponse = AuthResponse.fromJson(rawData);
 
       apiClient.setAuthToken(authResponse.token);

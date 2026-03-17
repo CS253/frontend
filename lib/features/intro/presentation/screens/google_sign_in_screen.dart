@@ -1,7 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/constants/route_constants.dart';
+import '../../../../core/utils/helpers.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
-class GoogleSignInScreen extends StatelessWidget {
+class GoogleSignInScreen extends StatefulWidget {
   const GoogleSignInScreen({super.key});
+
+  @override
+  State<GoogleSignInScreen> createState() => _GoogleSignInScreenState();
+}
+
+class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Start Google Sign-In process as soon as the screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleGoogleSignIn());
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    final authProvider = context.read<AuthProvider>();
+    
+    await authProvider.googleSignIn();
+
+    if (!mounted) return;
+
+    if (authProvider.isAuthenticated) {
+      // Success: Navigate to Trips screen
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        RouteConstants.trips,
+        (route) => false,
+      );
+    } else {
+      // Failure: Show error and go back
+      if (authProvider.errorMessage != null) {
+        Helpers.showErrorSnackbar(context, authProvider.errorMessage!);
+      }
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
