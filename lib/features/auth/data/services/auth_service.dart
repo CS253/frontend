@@ -5,13 +5,23 @@ import 'dart:async';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: kIsWeb 
-      ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com" 
-      : null,
-  );
+  
+  // GoogleSignIn is now a singleton in version 7.x
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _isGoogleSignInInitialized = false;
 
   AuthService({required dynamic apiClient}); // Keep constructor for compatibility
+
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (_isGoogleSignInInitialized) return;
+    
+    await _googleSignIn.initialize(
+      clientId: kIsWeb 
+        ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com" 
+        : null,
+    );
+    _isGoogleSignInInitialized = true;
+  }
  
    User? get currentUser => _auth.currentUser;
 
@@ -148,12 +158,12 @@ class AuthService {
 
   Future<Map<String, dynamic>> googleSignIn() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) throw Exception('Google sign-in cancelled');
+      await _ensureGoogleSignInInitialized();
+      
+      final googleUser = await _googleSignIn.authenticate();
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -181,6 +191,7 @@ class AuthService {
 
   Future<void> logout() async {
     await _auth.signOut();
+    await _ensureGoogleSignInInitialized();
     await _googleSignIn.signOut();
   }
 }
