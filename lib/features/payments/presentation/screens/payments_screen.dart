@@ -8,52 +8,67 @@ import 'package:travelly/features/payments/presentation/widgets/friend_balances.
 import 'package:travelly/features/payments/presentation/widgets/expense_card.dart';
 
 class PaymentsScreen extends StatelessWidget {
-  const PaymentsScreen({super.key});
+  final VoidCallback? onBackPressed;
+
+  const PaymentsScreen({super.key, this.onBackPressed});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFCFAF8),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        automaticallyImplyLeading: false,
-        titleSpacing: 14.6,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Payments & Expenses',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: const Color(0xFF38332E),
-                letterSpacing: -0.3,
-              ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(74.0),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
             ),
-            Text(
-              'The Manali Trip',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.normal,
-                fontSize: 11,
-                color: const Color(0xFF8A8075),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Color(0xFF38332E)),
-            onPressed: () {},
           ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: const Color.fromRGBO(235, 231, 224, 0.5),
-            height: 1,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 4.0,
+                right: 16.0,
+                top: 22.0,
+                bottom: 8.0,
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
+                    onPressed: onBackPressed ?? () => Navigator.maybePop(context),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          'Payments & Expenses',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF212022),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Track and split expenses',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF8B8893),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
+                ],
+              ),
+            ),
           ),
         ),
       ),

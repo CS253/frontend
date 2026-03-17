@@ -7,7 +7,9 @@ import '../providers/gallery_provider.dart';
 import '../widgets/photo_card.dart';
 
 class GalleryScreen extends StatefulWidget {
-  const GalleryScreen({Key? key}) : super(key: key);
+  final VoidCallback? onBackPressed;
+
+  const GalleryScreen({Key? key, this.onBackPressed}) : super(key: key);
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -43,7 +45,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.only(
-                left: 16.0,
+                left: 4.0,
                 right: 16.0,
                 top: 22.0,
                 bottom: 8.0,
@@ -72,30 +74,35 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   Widget _buildStandardHeader(GalleryProvider provider) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Gallery',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF212022),
+        IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
+          onPressed: widget.onBackPressed ?? () => Navigator.maybePop(context),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Gallery',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF212022),
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              '${provider.photos.length} photos shared',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF8B8893),
+              const SizedBox(height: 2),
+              Text(
+                '${provider.photos.length} photos shared',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF8B8893),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
       ],
