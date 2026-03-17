@@ -82,7 +82,9 @@ class TripHeader extends StatelessWidget {
             right: 0,
             child: IconButton(
               icon: const Icon(Icons.more_horiz, color: Color(0xFF212022)),
-              onPressed: onOptionsPressed,
+              onPressed: () {
+                context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
+              },
               padding: EdgeInsets.zero,
               alignment: Alignment.centerRight,
               constraints: const BoxConstraints(),

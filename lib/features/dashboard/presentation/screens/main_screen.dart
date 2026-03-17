@@ -4,6 +4,7 @@ import '../../../../features/dashboard/presentation/screens/dashboard_screen.dar
 import '../../../../features/documents/presentation/screens/documents_screen.dart';
 import '../../../../features/gallery/presentation/screens/gallery_screen.dart';
 import '../../../../features/payments/presentation/screens/payments_screen.dart';
+import '../../../../core/widgets/app_sidebar.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -84,6 +85,7 @@ class _MainScreenState extends State<MainScreen> {
         }
       },
       child: Scaffold(
+        endDrawer: const AppSidebar(),
         body: Navigator(
           key: _navigatorKey,
           initialRoute: '/',

@@ -40,9 +40,9 @@ class _OtpScreenState extends State<OtpScreen> {
   Future<void> _checkStatus() async {
     if (!mounted) return;
     final authProvider = context.read<AuthProvider>();
-    
+
     await authProvider.checkVerificationStatus();
-    
+
     if (authProvider.isEmailVerified && mounted) {
       _pollingTimer?.cancel();
       _navigateToHome();
@@ -60,7 +60,7 @@ class _OtpScreenState extends State<OtpScreen> {
   Future<void> _resendVerification() async {
     final authProvider = context.read<AuthProvider>();
     await authProvider.resendVerificationEmail();
-    
+
     if (!mounted) return;
     if (authProvider.errorMessage == null) {
       Helpers.showSuccessSnackbar(context, 'Verification email resent!');
@@ -88,9 +88,10 @@ class _OtpScreenState extends State<OtpScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () async {
+            final navigator = Navigator.of(context);
             await context.read<AuthProvider>().logout();
             if (mounted) {
-              Navigator.pushReplacementNamed(context, RouteConstants.launch);
+              navigator.pushReplacementNamed(RouteConstants.launch);
             }
           },
         ),
@@ -132,7 +133,9 @@ class _OtpScreenState extends State<OtpScreen> {
                     height: 1.5,
                   ),
                   children: [
-                    const TextSpan(text: 'We\'ve sent a verification email to\n'),
+                    const TextSpan(
+                      text: 'We\'ve sent a verification email to\n',
+                    ),
                     TextSpan(
                       text: email,
                       style: const TextStyle(
@@ -155,7 +158,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
               ),
               const Spacer(),
-              
+
               // Loading/Checking Indicator
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -165,7 +168,9 @@ class _OtpScreenState extends State<OtpScreen> {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6BB5E5)),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF6BB5E5),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

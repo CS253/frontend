@@ -10,7 +10,7 @@ import '../screens/full_photo_screen.dart';
 class PhotoCard extends StatelessWidget {
   final Photo photo;
 
-  const PhotoCard({Key? key, required this.photo}) : super(key: key);
+  const PhotoCard({super.key, required this.photo});
 
   @override
   Widget build(BuildContext context) {

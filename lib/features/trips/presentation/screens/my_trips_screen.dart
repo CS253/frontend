@@ -114,10 +114,12 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onSelected: (value) async {
-                          if (value == 'logout') {
+                          if (value == 'account_settings') {
+                            Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.accountSettings);
+                          } else if (value == 'logout') {
                             await context.read<AuthProvider>().logout();
                             if (context.mounted) {
-                              Navigator.of(context).pushNamedAndRemoveUntil(
+                              Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
                                 RouteConstants.login,
                                 (route) => false,
                               );
@@ -125,6 +127,24 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                           }
                         },
                         itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'account_settings',
+                            height: 40,
+                            child: Row(
+                              children: [
+                                Icon(Icons.settings_outlined, color: Color(0xFF4A4A4A), size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Account Settings', 
+                                  style: TextStyle(
+                                    color: Color(0xFF4A4A4A),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           PopupMenuItem(
                             value: 'logout',
                             height: 40,

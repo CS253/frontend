@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
@@ -9,7 +8,7 @@ import '../widgets/photo_card.dart';
 class GalleryScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
 
-  const GalleryScreen({Key? key, this.onBackPressed}) : super(key: key);
+  const GalleryScreen({super.key, this.onBackPressed});
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -104,7 +103,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ],
           ),
         ),
-        const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
+        IconButton(
+          icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
+          onPressed: () {
+            context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
+          },
+        ),
       ],
     );
   }
