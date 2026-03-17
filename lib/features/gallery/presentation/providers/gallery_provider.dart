@@ -8,7 +8,7 @@ class GalleryProvider with ChangeNotifier {
   final PhotoRepository _photoRepository;
 
   GalleryProvider({required PhotoRepository photoRepository})
-      : _photoRepository = photoRepository;
+    : _photoRepository = photoRepository;
 
   List<Photo> _photos = [];
   Set<String> _selectedPhotoIds = {};
@@ -95,7 +95,10 @@ class GalleryProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final fetchedPhotos = await _photoRepository.fetchPhotos(page: 1, limit: 20);
+      final fetchedPhotos = await _photoRepository.fetchPhotos(
+        page: 1,
+        limit: 20,
+      );
       _photos = fetchedPhotos;
     } catch (e) {
       _error = e.toString();
@@ -108,7 +111,7 @@ class GalleryProvider with ChangeNotifier {
   Future<void> uploadPhoto(File image) async {
     try {
       await _photoRepository.uploadPhoto(image);
-      await fetchPhotos(); 
+      await fetchPhotos();
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -116,4 +119,3 @@ class GalleryProvider with ChangeNotifier {
     }
   }
 }
-

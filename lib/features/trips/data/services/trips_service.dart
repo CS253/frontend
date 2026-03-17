@@ -14,9 +14,7 @@
 // =============================================================================
 
 // NOTE: Uncomment when real multipart API calls are enabled.
-import 'package:flutter/foundation.dart';
 import '../../../../core/api/api_client.dart';
-import '../../../../core/api/api_endpoints.dart';
 
 class TripsService {
   final ApiClient apiClient;
