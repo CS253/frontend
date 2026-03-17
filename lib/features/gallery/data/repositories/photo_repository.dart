@@ -7,14 +7,11 @@ class PhotoRepository {
   final PhotoService _photoService;
 
   PhotoRepository({required ApiClient apiClient})
-    : _photoService = PhotoService(apiClient: apiClient);
+      : _photoService = PhotoService(apiClient: apiClient);
 
   Future<List<Photo>> fetchPhotos({int page = 1, int limit = 20}) async {
     try {
-      final response = await _photoService.fetchPhotos(
-        page: page,
-        limit: limit,
-      );
+      final response = await _photoService.fetchPhotos(page: page, limit: limit);
 
       final List<dynamic> data = response['data'];
       return data.map((json) => Photo.fromJson(json)).toList();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/route_constants.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/trip_header.dart';
 import '../widgets/participant_row.dart';
@@ -127,7 +126,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             TripHeader(
               tripName: provider.currentTrip?.name ?? 'My Trip',
               onBackPressed: () => Navigator.of(context).pop(),
-              onOptionsPressed: () => Navigator.of(context).pushNamed(RouteConstants.tripSettings),
             ),
             const SizedBox(height: 24),
 

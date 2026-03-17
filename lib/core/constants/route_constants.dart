@@ -42,16 +42,4 @@ class RouteConstants {
   static const String plan = '/plan';
   static const String gallery = '/gallery';
   static const String documents = '/documents';
-
-  // ---------------------------------------------------------------------------
-  // Settings Routes
-  // ---------------------------------------------------------------------------
-
-  static const String accountSettings = '/account-settings';
-  static const String personalInfo = '/account-settings/personal-info';
-  static const String changePassword = '/account-settings/change-password';
-
-  static const String tripSettings = '/trip-settings';
-  static const String tripNotifications = '/trip-settings/notifications';
-  static const String manageMembers = '/trip-settings/members';
 }
