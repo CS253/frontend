@@ -5,7 +5,7 @@
 The Dashboard feature is the central navigation hub of the Travelly app. It displays:
 
 - **Current Trip Header** — active trip name and location
-- **Trip Info Card** — days remaining, emoji badge, participant avatars
+- **Trip Info Card** — cover photo (or trip-type gradient), days remaining, emoji badge, participant avatars
 - **Explore Grid** — 4 navigation cards (Payments, Gallery, Plan, Documents)
 - **Recent Activity Feed** — chronological list of trip-related events
 
@@ -19,7 +19,7 @@ The frontend implementation is fully architected and currently operates on **moc
 |--------|-----------------------|--------------------------------------|---------------|
 | GET    | `/dashboard`          | Fetch complete dashboard summary     | ✅ Yes         |
 | GET    | `/dashboard/activity` | Fetch paginated recent activity list | ✅ Yes         |
-| PUT    | `/trips/:id`          | Update trip name, date, emoji        | ✅ Yes         |
+| PUT    | `/trips/:id`          | Update trip details (all fields)     | ✅ Yes         |
 
 ### API Endpoint Constants (Flutter side)
 
@@ -57,9 +57,13 @@ Content-Type: application/json
     "id": "trip123",
     "name": "The Lyaari Trip",
     "location": "Pakistan",
+    "destination": "Lahore, Pakistan",
     "startDate": "2026-04-10",
+    "endDate": "2026-04-20",
     "daysRemaining": 5,
     "emoji": "♠️",
+    "tripType": "City",
+    "coverImage": "https://storage.travelly.dev/covers/trip123.jpg",
     "participants": [
       {
         "id": "user1",
@@ -156,7 +160,9 @@ Authorization: Bearer <jwt_token>
 
 ## PUT /trips/:id (Update Trip Details)
 
-### Request
+Updates all editable trip fields from the Trip Details dialog.
+
+### Request (JSON body — no cover photo change)
 
 ```http
 PUT /v1/trips/trip123
@@ -167,10 +173,31 @@ Content-Type: application/json
 ```json
 {
   "name": "The Lyaari Trip",
+  "destination": "Lahore, Pakistan",
   "startDate": "2026-04-15",
+  "endDate": "2026-04-25",
+  "tripType": "City",
   "emoji": "✈️"
 }
 ```
+
+### Request (multipart/form-data — with cover photo upload)
+
+```http
+PUT /v1/trips/trip123
+Authorization: Bearer <jwt_token>
+Content-Type: multipart/form-data
+```
+
+| Field         | Type   | Description                            |
+|---------------|--------|----------------------------------------|
+| `name`        | String | Trip display name                      |
+| `destination` | String | Trip destination                       |
+| `startDate`   | String | ISO-8601 date (YYYY-MM-DD)             |
+| `endDate`     | String | ISO-8601 date (YYYY-MM-DD)             |
+| `tripType`    | String | Beach/Mountain/City/Nature/Island/Other|
+| `emoji`       | String | Emoji identifier for badge             |
+| `coverImage`  | File   | Cover photo file (jpg/jpeg/png, max 5MB)|
 
 ### Response (200 OK)
 
@@ -180,8 +207,12 @@ Content-Type: application/json
   "trip": {
     "id": "trip123",
     "name": "The Lyaari Trip",
+    "destination": "Lahore, Pakistan",
     "startDate": "2026-04-15",
-    "emoji": "✈️"
+    "endDate": "2026-04-25",
+    "tripType": "City",
+    "emoji": "✈️",
+    "coverImage": "https://storage.travelly.dev/covers/trip123.jpg"
   }
 }
 ```
@@ -191,6 +222,7 @@ Content-Type: application/json
 | Status | Body                                       | When                        |
 |--------|--------------------------------------------|-----------------------------|
 | 400    | `{ "message": "Invalid date format" }`     | Bad request body            |
+| 400    | `{ "message": "End date must be after start date" }` | Date validation fails |
 | 401    | `{ "message": "Unauthorized" }`            | Missing/invalid JWT token   |
 | 403    | `{ "message": "Not a trip member" }`       | User lacks edit permission  |
 | 404    | `{ "message": "Trip not found" }`          | Invalid trip ID             |
@@ -215,8 +247,12 @@ TripDetailsDialog (UI)
 |--------------|-----------|--------------------------------|
 | id           | UUID (PK) | Auto-generated                 |
 | name         | VARCHAR   | Trip display name              |
-| location     | VARCHAR   | Destination / location string  |
+| location     | VARCHAR   | Short location string          |
+| destination  | VARCHAR   | Detailed destination string    |
 | start_date   | DATE      | Trip start date                |
+| end_date     | DATE      | Trip end date                  |
+| trip_type    | VARCHAR   | Beach/Mountain/City/Nature/Island/Other |
+| cover_image  | VARCHAR   | URL to uploaded cover photo (nullable) |
 | emoji        | VARCHAR   | Emoji identifier for badge     |
 | created_by   | UUID (FK) | References `users.id`          |
 | created_at   | TIMESTAMP | Auto-generated                 |
@@ -253,6 +289,48 @@ TripDetailsDialog (UI)
 
 ---
 
+## Cover Photo Upload Flow
+
+The cover photo can be uploaded during trip creation (POST /trips) or when editing via the Trip Details dialog (PUT /trips/:id).
+
+### Upload Rules (Frontend Validation)
+- **Allowed types**: jpg, jpeg, png
+- **Max file size**: 5 MB
+- **Upload method**: multipart/form-data
+
+### Upload Flow
+```
+User taps "Cover Photo" → file_picker opens
+  → User selects image from device
+  → Frontend validates type & size
+  → Image stored locally (preview shown)
+  → On Save: sent as multipart/form-data to PUT /trips/:id
+  → Backend stores file (e.g. S3/GCS) and returns coverImage URL
+```
+
+### Trip Info Card Display Logic
+```
+if trip.coverImage exists:
+  Show cover photo as card background
+  Apply dark gradient overlay for text readability
+  Use white text colors
+else:
+  Show trip-type themed gradient background
+  Use dark text colors
+```
+
+### Trip-Type Default Gradients
+| Trip Type | Gradient Start | Gradient End |
+|-----------|---------------|--------------|
+| Beach     | #FFE4B5       | #F4A460      |
+| Mountain  | #A8D5BA       | #4A8C6F      |
+| City      | #B0C4DE       | #6A89CC      |
+| Nature    | #C8E6C9       | #66BB6A      |
+| Island    | #B2EBF2       | #26C6DA      |
+| Other     | #C1EAFF       | #D9F0FC      |
+
+---
+
 ## Pagination Strategy (Activity Feed)
 
 - Initial load: fetch first 10 activities via GET `/dashboard` (embedded in response).
@@ -285,23 +363,27 @@ TripDetailsDialog (UI)
 
 ## Model ↔ Backend Response Mapping
 
-| Flutter Model           | JSON Key            | Type                     |
-|-------------------------|---------------------|--------------------------|
-| `TripModel.id`          | `currentTrip.id`    | String                   |
-| `TripModel.name`        | `currentTrip.name`  | String                   |
-| `TripModel.location`    | `currentTrip.location` | String                |
-| `TripModel.startDate`   | `currentTrip.startDate` | String (ISO-8601 date) |
-| `TripModel.daysRemaining` | `currentTrip.daysRemaining` | int             |
-| `TripModel.emoji`       | `currentTrip.emoji` | String                   |
-| `ParticipantModel.id`   | `participants[].id` | String                   |
-| `ParticipantModel.name` | `participants[].name` | String                 |
-| `ParticipantModel.avatarUrl` | `participants[].avatarUrl` | String (URL)  |
-| `ActivityModel.id`      | `recentActivities[].id` | String                |
-| `ActivityModel.type`    | `recentActivities[].type` | String              |
-| `ActivityModel.actor`   | `recentActivities[].actor` | String             |
-| `ActivityModel.description` | `recentActivities[].description` | String   |
-| `ActivityModel.timestamp` | `recentActivities[].timestamp` | String (ISO-8601) |
-| `ActivityModel.iconType` | `recentActivities[].iconType` | String          |
+| Flutter Model                | JSON Key                          | Type                     |
+|------------------------------|-----------------------------------|--------------------------|
+| `TripModel.id`               | `currentTrip.id`                  | String                   |
+| `TripModel.name`             | `currentTrip.name`                | String                   |
+| `TripModel.location`         | `currentTrip.location`            | String                   |
+| `TripModel.destination`      | `currentTrip.destination`         | String                   |
+| `TripModel.startDate`        | `currentTrip.startDate`           | String (ISO-8601 date)   |
+| `TripModel.endDate`          | `currentTrip.endDate`             | String (ISO-8601 date)   |
+| `TripModel.daysRemaining`    | `currentTrip.daysRemaining`       | int                      |
+| `TripModel.emoji`            | `currentTrip.emoji`               | String                   |
+| `TripModel.tripType`         | `currentTrip.tripType`            | String                   |
+| `TripModel.coverImage`       | `currentTrip.coverImage`          | String (URL, nullable)   |
+| `ParticipantModel.id`        | `participants[].id`               | String                   |
+| `ParticipantModel.name`      | `participants[].name`             | String                   |
+| `ParticipantModel.avatarUrl` | `participants[].avatarUrl`        | String (URL)             |
+| `ActivityModel.id`           | `recentActivities[].id`           | String                   |
+| `ActivityModel.type`         | `recentActivities[].type`         | String                   |
+| `ActivityModel.actor`        | `recentActivities[].actor`        | String                   |
+| `ActivityModel.description`  | `recentActivities[].description`  | String                   |
+| `ActivityModel.timestamp`    | `recentActivities[].timestamp`    | String (ISO-8601)        |
+| `ActivityModel.iconType`     | `recentActivities[].iconType`     | String                   |
 
 ---
 
@@ -344,6 +426,7 @@ After the backend is live and tested:
 | Repository   | `data/repositories/dashboard_repository.dart`              |
 | Provider     | `presentation/providers/dashboard_provider.dart`           |
 | Screen       | `presentation/screens/dashboard_screen.dart`               |
+| Dialogs      | `presentation/dialogs/trip_details_dialog.dart`            |
 | Widgets      | `presentation/widgets/trip_header.dart`                    |
 |              | `presentation/widgets/participant_row.dart`                |
 |              | `presentation/widgets/explore_grid.dart`                   |

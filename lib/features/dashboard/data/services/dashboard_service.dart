@@ -48,15 +48,22 @@ class DashboardService {
   /// Returns hardcoded mock dashboard data matching the API contract.
   ///
   /// MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED
+  ///
+  /// Includes all trip fields used in the Trip Details dialog:
+  ///   • name, destination, startDate, endDate, tripType, coverImage
   Map<String, dynamic> _getMockDashboardData() {
     return {
       'currentTrip': {
         'id': 'trip_mock_001',
         'name': 'The Lyaari Trip',
         'location': 'Pakistan',
+        'destination': 'Lahore, Pakistan',
         'startDate': '2026-04-10',
+        'endDate': '2026-04-20',
         'daysRemaining': 5,
         'emoji': '♠️',
+        'tripType': 'City',
+        'coverImage': null, // No cover photo — will use trip-type default
         'participants': [
           {
             'id': 'user_mock_1',
@@ -128,24 +135,40 @@ class DashboardService {
 
   /// Updates trip details via PUT /trips/:tripId.
   ///
-  /// Sends the updated name, startDate, and emoji to the backend.
+  /// Sends all editable trip fields to the backend:
+  ///   • name, destination, startDate, endDate, tripType, emoji
+  ///   • coverImagePath (optional) — for multipart/form-data upload
+  ///
   /// Falls back to a mock success response if the backend is unavailable.
   ///
   /// Architecture note: This method is called by DashboardRepository,
   /// which is called by DashboardProvider.updateTrip().
+  ///
+  /// BACKEND CALL: PUT /trips/:tripId
+  /// TODO: When coverImagePath is provided, switch to multipart/form-data
+  ///       upload instead of JSON body.
   Future<Map<String, dynamic>> updateTrip({
     required String tripId,
     required String name,
+    required String destination,
     required String startDate,
+    required String endDate,
+    required String tripType,
     required String emoji,
+    String? coverImagePath,
   }) async {
     try {
       // ── Real API call ──────────────────────────────────────────────
+      // TODO: If coverImagePath is not null, use multipart/form-data
+      //       to upload the cover image file along with trip data.
       final response = await _apiClient.put(
         ApiEndpoints.tripById(tripId),
         body: {
           'name': name,
+          'destination': destination,
           'startDate': startDate,
+          'endDate': endDate,
+          'tripType': tripType,
           'emoji': emoji,
         },
       );
@@ -162,8 +185,12 @@ class DashboardService {
       'trip': {
         'id': tripId,
         'name': name,
+        'destination': destination,
         'startDate': startDate,
+        'endDate': endDate,
+        'tripType': tripType,
         'emoji': emoji,
+        'coverImage': coverImagePath,
       },
     };
     // ── END MOCK DATA ──────────────────────────────────────────────
