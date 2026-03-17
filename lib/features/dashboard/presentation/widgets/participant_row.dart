@@ -1,60 +1,44 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:travelly/features/dashboard/data/models/trip_model.dart';
 import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 
 // =============================================================================
-// ParticipantRow — Trip info card on the dashboard.
+// ParticipantRow — Premium trip info card on the dashboard.
 //
-// Displays:
-//   • Cover photo background (if uploaded) or trip-type default gradient
-//   • Days remaining counter
-//   • Trip type emoji badge
-//   • Overlapping participant avatars
+// Visual Design:
+//   • Cover photo or trip-type gradient as background
+//   • Always-present dark gradient overlay ensures text readability
+//   • Frosted-glass pill for destination at the top
+//   • Bold trip duration headline
+//   • Glassmorphic info bar with date range + member count at the bottom
 //
-// Cover Photo Logic:
-//   1. If trip.coverImage is set and is a network URL → show CachedNetworkImage
-//   2. If trip.coverImage is set and is a local file  → show Image.file
-//   3. If no cover image → show a trip-type themed gradient
-//
-// Trip-type gradient mapping:
-//   Beach   → sandy (#FFE4B5 → #F4A460)
-//   Mountain → alpine (#A8D5BA → #4A8C6F)
-//   City    → urban (#B0C4DE → #6A89CC)
-//   Nature  → forest (#C8E6C9 → #66BB6A)
-//   Island  → tropical (#B2EBF2 → #26C6DA)
-//   Other   → default blue (#C1EAFF → #D9F0FC)
+// Layout:
+//   ┌──────────────────────────────────────┐
+//   │  📍 Lahore, Pakistan        (pill)   │
+//   │                                      │
+//   │  10 Days Trip                        │
+//   │                                      │
+//   │  ┌─[glass bar]───────────────────┐   │
+//   │  │ 📅 Apr 10 – Apr 20  👥 6     │   │
+//   │  └───────────────────────────────┘   │
+//   └──────────────────────────────────────┘
 // =============================================================================
 
-/// Trip info card displaying days remaining, trip type emoji badge,
-/// and an overlapping row of participant avatars.
+/// Premium trip info card with cover photo / gradient background,
+/// destination pill, trip duration, and glassmorphic info bar.
 ///
-/// Background shows the trip's cover photo (if uploaded) or a themed
-/// gradient based on the trip type.
+/// Text is always white with a dark gradient overlay applied
+/// regardless of whether a cover photo or gradient BG is used,
+/// ensuring consistent readability.
 ///
-/// Layout:
-///   ┌──────────────────────────────────────┐
-///   │  [Cover Photo / Trip-Type Gradient]  │
-///   │  Trip starts in            [🏖️]      │
-///   │  5 Days                              │
-///   │                                      │
-///   │  😊 😎 🤗 😄  +2 travelers           │
-///   └──────────────────────────────────────┘
-///
-/// Tapping this card opens the [TripDetailsDialog] via [onTap].
+/// Tapping opens the [TripDetailsDialog] via [onTap].
 class ParticipantRow extends StatelessWidget {
-  /// Current trip data for the info card header.
   final TripModel trip;
-
-  /// List of participants to display as avatar bubbles.
   final List<ParticipantModel> participants;
-
-  /// Maximum number of avatars to show before "+N travelers" text.
   final int maxVisibleAvatars;
-
-  /// Callback when the entire card is tapped.
-  /// Used to open the Trip Details floating dialog.
   final VoidCallback? onTap;
 
   const ParticipantRow({
@@ -65,159 +49,128 @@ class ParticipantRow extends StatelessWidget {
     this.onTap,
   });
 
-  /// Returns the gradient colors for a given trip type.
-  /// Used as fallback when no cover photo is uploaded.
+  // ── Trip-type gradient mapping ──────────────────────────────────────
+
   List<Color> _getGradientForTripType(String tripType) {
     switch (tripType) {
       case 'Beach':
-        return [const Color(0xFFFFE4B5), const Color(0xFFF4A460)];
+        return [const Color(0xFFF9D29D), const Color(0xFFE8875C)];
       case 'Mountain':
-        return [const Color(0xFFA8D5BA), const Color(0xFF4A8C6F)];
+        return [const Color(0xFF8ECFAB), const Color(0xFF3B7A5A)];
       case 'City':
-        return [const Color(0xFFB0C4DE), const Color(0xFF6A89CC)];
+        return [const Color(0xFF94B3D4), const Color(0xFF4A6FA5)];
       case 'Nature':
-        return [const Color(0xFFC8E6C9), const Color(0xFF66BB6A)];
+        return [const Color(0xFFA5D6A7), const Color(0xFF388E3C)];
       case 'Island':
-        return [const Color(0xFFB2EBF2), const Color(0xFF26C6DA)];
+        return [const Color(0xFF80DEEA), const Color(0xFF00897B)];
       default:
-        return [const Color(0xFFC1EAFF), const Color(0xFFD9F0FC)];
+        return [const Color(0xFF90CAF9), const Color(0xFF42A5F5)];
     }
   }
 
-  /// Returns the emoji icon for a given trip type.
-  String _getEmojiForTripType(String tripType) {
-    switch (tripType) {
-      case 'Beach':
-        return '🏖️';
-      case 'Mountain':
-        return '⛰️';
-      case 'City':
-        return '🏙️';
-      case 'Nature':
-        return '🌿';
-      case 'Island':
-        return '🏝️';
-      default:
-        return '🌍';
-    }
-  }
+  // ── Computed properties ─────────────────────────────────────────────
 
-  /// Whether the trip has a valid cover image (network or local file).
   bool get _hasCoverImage =>
       trip.coverImage != null && trip.coverImage!.isNotEmpty;
+
+  /// Trip duration in days from start → end date.
+  int get _tripDurationDays {
+    final start = DateTime.tryParse(trip.startDate);
+    final end = DateTime.tryParse(trip.endDate);
+    if (start != null && end != null) {
+      return end.difference(start).inDays;
+    }
+    return trip.daysRemaining;
+  }
+
+  /// "Apr 10" format.
+  String _formatShortDate(String isoDate) {
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) return isoDate;
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}';
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        height: 160,
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF262F40).withValues(alpha: 0.1),
-              blurRadius: 13.6,
-              offset: const Offset(0, 4),
-              spreadRadius: -6,
+              color: const Color(0xFF262F40).withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
             ),
           ],
         ),
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            // ── Background: cover photo or trip-type gradient ──────────
-            Positioned.fill(
-              child: _buildBackground(),
+            // ── Layer 1: Background image or gradient ─────────────
+            _buildBackground(),
+
+            // ── Layer 2: Dark gradient overlay (always present) ───
+            // Ensures white text is readable on ANY background.
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.35, 1.0],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.10),
+                    Colors.black.withValues(alpha: 0.60),
+                  ],
+                ),
+              ),
             ),
 
-            // ── Dark overlay for text readability on photos ───────────
-            if (_hasCoverImage)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.15),
-                        Colors.black.withValues(alpha: 0.55),
+            // ── Layer 3: Content ──────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Top: destination pill ────────────────────────
+                  _buildDestinationPill(),
+
+                  const Spacer(),
+
+                  // ── Middle: trip duration ────────────────────────
+                  Text(
+                    '$_tripDurationDays Days Trip',
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                      height: 1.1,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x66000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
                       ],
                     ),
                   ),
-                ),
-              ),
 
-            // ── Content ───────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                children: [
-                  // ── Top row: days remaining + emoji badge ──────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Trip starts in',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: _hasCoverImage
-                                    ? Colors.white.withValues(alpha: 0.85)
-                                    : const Color(0x99212022),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${trip.daysRemaining} Days',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: _hasCoverImage
-                                    ? Colors.white
-                                    : const Color(0xFF212022),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Emoji badge in frosted container
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: _hasCoverImage
-                              ? Colors.white.withValues(alpha: 0.25)
-                              : Colors.white.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF262F40).withValues(alpha: 0.08),
-                              blurRadius: 16,
-                              offset: const Offset(0, 3),
-                              spreadRadius: -3,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            trip.emoji.isNotEmpty
-                                ? trip.emoji
-                                : _getEmojiForTripType(trip.tripType),
-                            style: const TextStyle(fontSize: 32),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
-                  // ── Bottom row: participant avatars ────────────────
-                  _buildAvatarRow(),
+                  // ── Bottom: glassmorphic info bar ────────────────
+                  _buildInfoBar(),
                 ],
               ),
             ),
@@ -227,13 +180,136 @@ class ParticipantRow extends StatelessWidget {
     );
   }
 
-  /// Builds the card background: cover photo or trip-type gradient.
+  // ── Sub-widgets ─────────────────────────────────────────────────────
+
+  /// Frosted glass pill showing 📍 destination at the top of the card.
+  Widget _buildDestinationPill() {
+    final destination = trip.destination.isNotEmpty
+        ? trip.destination
+        : trip.location.isNotEmpty
+            ? trip.location
+            : 'Unknown';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.location_on,
+                size: 13,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  destination,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Glassmorphic bar at the bottom showing date range and member count.
+  Widget _buildInfoBar() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Date range
+              const Icon(
+                Icons.calendar_today_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${_formatShortDate(trip.startDate)} – ${_formatShortDate(trip.endDate)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.95),
+                ),
+              ),
+
+              const Spacer(),
+
+              // Divider dot
+              Container(
+                width: 3,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+              ),
+
+              const Spacer(),
+
+              // Member count
+              const Icon(
+                Icons.people_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${participants.length} ${participants.length == 1 ? 'member' : 'members'}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.95),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Background builders ─────────────────────────────────────────────
+
+  /// Cover photo or trip-type gradient.
   Widget _buildBackground() {
-    // 1. Cover photo is available
     if (_hasCoverImage) {
       final coverImage = trip.coverImage!;
 
-      // Network image (URL from backend)
       if (coverImage.startsWith('http')) {
         return CachedNetworkImage(
           imageUrl: coverImage,
@@ -243,7 +319,6 @@ class ParticipantRow extends StatelessWidget {
         );
       }
 
-      // Local file image (just uploaded, not yet synced)
       return Image.file(
         File(coverImage),
         fit: BoxFit.cover,
@@ -251,11 +326,9 @@ class ParticipantRow extends StatelessWidget {
       );
     }
 
-    // 2. No cover photo — use trip-type themed gradient
     return _buildGradientBackground();
   }
 
-  /// Trip-type themed gradient fallback.
   Widget _buildGradientBackground() {
     final gradientColors = _getGradientForTripType(trip.tripType);
     return Container(
@@ -265,65 +338,7 @@ class ParticipantRow extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: gradientColors,
         ),
-        borderRadius: BorderRadius.circular(16),
       ),
-    );
-  }
-
-  /// Builds the overlapping avatar row with a "+N travelers" label.
-  Widget _buildAvatarRow() {
-    final visible = participants.take(maxVisibleAvatars).toList();
-    final remaining = participants.length - visible.length;
-
-    return Row(
-      children: [
-        // Overlapping emoji avatars
-        ...visible.asMap().entries.map((entry) {
-          final isLast = entry.key == visible.length - 1;
-          final participant = entry.value;
-          return Align(
-            widthFactor: isLast ? 1.0 : 0.7,
-            child: _buildEmojiAvatar(participant.emoji),
-          );
-        }),
-
-        // "+N travelers" text
-        if (remaining > 0) ...[
-          const SizedBox(width: 8),
-          Text(
-            '+$remaining travelers',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              color: _hasCoverImage
-                  ? Colors.white.withValues(alpha: 0.9)
-                  : const Color(0xB3212022),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// Individual circular emoji avatar.
-  Widget _buildEmojiAvatar(String emoji) {
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF262F40).withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 3),
-            spreadRadius: -3,
-          ),
-        ],
-      ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 11))),
     );
   }
 }
