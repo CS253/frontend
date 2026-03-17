@@ -27,10 +27,10 @@ class _MainScreenState extends State<MainScreen> {
   /// Screen list built lazily so the navigation callback is available.
   late final List<Widget> _screens = [
     DashboardScreen(onNavigate: _navigateToTab),
-    const PaymentsScreen(),
+    PaymentsScreen(onBackPressed: () => _navigateToTab(0)),
     const Scaffold(body: Center(child: Text('Plan'))),
-    const GalleryScreen(),
-    const DocumentsScreen(),
+    GalleryScreen(onBackPressed: () => _navigateToTab(0)),
+    DocumentsScreen(onBackPressed: () => _navigateToTab(0)),
   ];
 
   @override

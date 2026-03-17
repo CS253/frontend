@@ -123,7 +123,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
 
             // ── Trip header with trip name ────────────────────────
-            TripHeader(tripName: provider.currentTrip?.name ?? 'My Trip'),
+            TripHeader(
+              tripName: provider.currentTrip?.name ?? 'My Trip',
+              onBackPressed: () => Navigator.of(context).pop(),
+            ),
             const SizedBox(height: 24),
 
             // ── Trip info card with participant avatars ───────────
