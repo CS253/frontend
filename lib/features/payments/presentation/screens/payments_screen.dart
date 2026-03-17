@@ -6,6 +6,7 @@ import 'package:travelly/features/payments/presentation/widgets/balance_card.dar
 import 'package:travelly/features/payments/presentation/widgets/summary_cards.dart';
 import 'package:travelly/features/payments/presentation/widgets/friend_balances.dart';
 import 'package:travelly/features/payments/presentation/widgets/expense_card.dart';
+import 'package:travelly/core/widgets/app_sidebar.dart';
 
 class PaymentsScreen extends StatelessWidget {
   final VoidCallback? onBackPressed;
@@ -16,6 +17,7 @@ class PaymentsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFCFAF8),
+      endDrawer: const AppSidebar(),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(74.0),
         child: Container(
@@ -65,7 +67,12 @@ class PaymentsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
+                    onPressed: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                  ),
                 ],
               ),
             ),
