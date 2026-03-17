@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/route_constants.dart';
 
 class TripCard extends StatelessWidget {
@@ -44,21 +45,59 @@ class TripCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (isRightAligned) _buildCardInfo(),
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Builder(
+                  builder: (context) {
+                    if (imageUrl.startsWith('http')) {
+                      return CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: const Color(0xFFF3F3F3),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: const Color(0xFFF3F3F3),
+                          child: const Icon(Icons.broken_image, color: Color(0xFFB0B0B0)),
+                        ),
+                      );
+                    } else if (imageUrl.isNotEmpty) {
+                      // Attempt to show local file or fallback
+                      return Image.network(
+                        imageUrl, // This might still fail but we can't easily check for File Existence across platforms without more logic
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFFBCE3F7),
+                          child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                        ),
+                      );
+                    } else {
+                      // Fallback for no image
+                      return Container(
+                        color: const Color(0xFFBCE3F7),
+                        child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                      );
+                    }
+                  },
                 ),
               ),
             ),

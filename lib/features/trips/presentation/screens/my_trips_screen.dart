@@ -37,27 +37,26 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFDFD),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                const Color(0xFFF3F9FD).withValues(alpha: 0.5),
+                const Color(0xFFEBF5FB),
+              ],
+            ),
+          ),
+          child: Stack(
           children: [
-            // Background Pattern Placeholder
-            Opacity(
-              opacity: 0.05,
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6,
-                ),
-                itemBuilder: (context, index) {
-                  List<IconData> icons = [
-                    Icons.flight_takeoff,
-                    Icons.explore_outlined,
-                    Icons.map_outlined,
-                    Icons.camera_alt_outlined,
-                  ];
-                  return Icon(icons[index % icons.length]);
-                },
+            // Background Design — subtle dots pattern
+            Positioned.fill(
+              child: CustomPaint(
+                painter: BackgroundPatternPainter(),
               ),
             ),
             
@@ -243,7 +242,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+    ),
+    floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
             context: context,
@@ -280,17 +280,16 @@ class TripTimelinePainter extends CustomPainter {
     if (tripCount < 2) return;
 
     final paint = Paint()
-      ..color = const Color(0xFFE5E5E5)
+      ..color = const Color(0xFF6BB5E5).withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
+      ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
     
-    // Constants matching the layouts in TripCard and _calculateCardPositions
     const double verticalSpacing = 170.0;
     const double startTop = 30.0;
-    const double nodeRadius = 45.0; // Center of 90x90 image
+    const double nodeRadius = 45.0; 
     const double horizontalMargin = 20.0;
     
     final double leftX = horizontalMargin + nodeRadius;
@@ -310,14 +309,12 @@ class TripTimelinePainter extends CustomPainter {
         path.moveTo(currentX, currentY);
       }
 
-      // Calculate control points for a smooth curve
       final double midY = (currentY + nextY) / 2;
       
-      // We want a vertical-ish curve that swings out
       path.cubicTo(
-        currentX, midY, // Control point 1
-        nextX, midY,    // Control point 2
-        nextX, nextY,   // End point
+        currentX, midY,
+        nextX, midY,
+        nextX, nextY,
       );
     }
 
@@ -328,4 +325,27 @@ class TripTimelinePainter extends CustomPainter {
   bool shouldRepaint(covariant TripTimelinePainter oldDelegate) {
     return oldDelegate.tripCount != tripCount;
   }
+}
+
+// =============================================================================
+// Background Pattern Painter — Draws subtle decorative patterns.
+// =============================================================================
+class BackgroundPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF6BB5E5).withValues(alpha: 0.05)
+      ..style = PaintingStyle.fill;
+
+    const double spacing = 40.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        // Draw small dots
+        canvas.drawCircle(Offset(x, y), 1.0, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
