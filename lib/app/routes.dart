@@ -13,7 +13,6 @@ import '../features/intro/presentation/screens/launch_screen.dart';
 import '../features/intro/presentation/screens/sign_in_screen.dart';
 import '../features/intro/presentation/screens/register_screen.dart';
 import '../features/intro/presentation/screens/otp_screen.dart';
-import '../features/intro/presentation/screens/create_password_screen.dart';
 import '../features/intro/presentation/screens/google_sign_in_screen.dart';
 
 // Trip screens
@@ -49,9 +48,6 @@ class AppRoutes {
 
       case RouteConstants.verifyEmail:
         return _buildRoute(const OtpScreen(), settings);
-
-      case RouteConstants.createPassword:
-        return _buildRoute(const CreatePasswordScreen(), settings);
 
       case RouteConstants.googleSignIn:
         return _buildRoute(const GoogleSignInScreen(), settings);
