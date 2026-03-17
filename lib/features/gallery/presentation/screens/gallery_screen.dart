@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/gallery_provider.dart';
 import '../widgets/photo_card.dart';
+import '../../../../core/widgets/app_sidebar.dart';
 
 class GalleryScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
@@ -31,6 +32,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      endDrawer: const AppSidebar(),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(74.0),
         child: Container(

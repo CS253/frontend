@@ -6,6 +6,7 @@ import '../widgets/participant_row.dart';
 import '../widgets/explore_grid.dart';
 import '../widgets/activity_list.dart';
 import '../dialogs/trip_details_dialog.dart';
+import '../../../../core/widgets/app_sidebar.dart';
 
 /// The main dashboard screen — central navigation hub of the Travelly app.
 ///
@@ -53,6 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      endDrawer: const AppSidebar(),
       body: SafeArea(bottom: false, child: _buildBody(provider)),
     );
   }
