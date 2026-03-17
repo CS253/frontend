@@ -80,7 +80,7 @@ class AuthProvider with ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Session Persistence
   // ---------------------------------------------------------------------------
-  
+
   /// Checks if a user is already logged in on app startup.
   Future<void> initialize() async {
     _status = AuthStatus.initial;
@@ -108,7 +108,8 @@ class AuthProvider with ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Returns true if the user is currently authenticated.
-  bool get isAuthenticated => _status == AuthStatus.authenticated && _user != null;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated && _user != null;
 
   // ---------------------------------------------------------------------------
   // Login
@@ -121,10 +122,7 @@ class AuthProvider with ChangeNotifier {
   ///   → POST /auth/login with { email, password }
   ///
   /// TODO: Replace mock data once backend API is connected
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     _setLoading(true);
     _clearError();
 
@@ -156,10 +154,7 @@ class AuthProvider with ChangeNotifier {
   ///   → POST /auth/register with { email, phone }
   ///
   /// After calling this, navigate to the OTP screen.
-  Future<void> register({
-    required String email,
-    required String phone,
-  }) async {
+  Future<void> register({required String email, required String phone}) async {
     _setLoading(true);
     _clearError();
 
@@ -189,7 +184,9 @@ class AuthProvider with ChangeNotifier {
 
     try {
       if (_tempToken == null) {
-        throw Exception('No registration session found. Please register again.');
+        throw Exception(
+          'No registration session found. Please register again.',
+        );
       }
 
       _isOtpVerified = await repository.verifyOtp(
@@ -228,7 +225,9 @@ class AuthProvider with ChangeNotifier {
 
     try {
       if (_tempToken == null) {
-        throw Exception('No registration session found. Please register again.');
+        throw Exception(
+          'No registration session found. Please register again.',
+        );
       }
 
       final AuthResponse response = await repository.createPassword(
@@ -336,4 +335,3 @@ class AuthProvider with ChangeNotifier {
     return message;
   }
 }
-
