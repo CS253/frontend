@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:travelly/features/dashboard/data/models/trip_model.dart';
 import 'package:travelly/features/dashboard/data/models/participant_model.dart';
+import 'package:travelly/features/dashboard/data/models/weather_model.dart';
+import 'package:travelly/features/dashboard/data/services/weather_service.dart';
+
 
 // =============================================================================
 // ParticipantRow — Premium trip info card on the dashboard.
@@ -39,7 +42,7 @@ import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 /// of the background, ensuring premium aesthetics and consistent readability.
 ///
 /// Tapping opens the [TripDetailsDialog] via [onTap].
-class ParticipantRow extends StatelessWidget {
+class ParticipantRow extends StatefulWidget {
   final TripModel trip;
   final List<ParticipantModel> participants;
   final int maxVisibleAvatars;
@@ -52,6 +55,50 @@ class ParticipantRow extends StatelessWidget {
     this.maxVisibleAvatars = 4,
     this.onTap,
   });
+
+  @override
+  State<ParticipantRow> createState() => _ParticipantRowState();
+}
+
+class _ParticipantRowState extends State<ParticipantRow> {
+  final PageController _pageController = PageController(initialPage: 1000);
+  int _currentPage = 0;
+
+  // Weather State
+  bool _isLoadingWeather = true;
+  WeatherData? _weatherData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadWeather() async {
+    final destination = widget.trip.destination.isNotEmpty 
+        ? widget.trip.destination 
+        : widget.trip.location;
+        
+    if (destination.isEmpty) {
+      if (mounted) setState(() => _isLoadingWeather = false);
+      return;
+    }
+
+    final data = await WeatherService().getWeather(destination);
+    
+    if (mounted) {
+      setState(() {
+        _weatherData = data;
+        _isLoadingWeather = false;
+      });
+    }
+  }
 
   // ── Stock Photo Mapping ─────────────────────────────────────────────
 
@@ -97,16 +144,16 @@ class ParticipantRow extends StatelessWidget {
   // ── Computed properties ─────────────────────────────────────────────
 
   bool get _hasCoverImage =>
-      trip.coverImage != null && trip.coverImage!.isNotEmpty;
+      widget.trip.coverImage != null && widget.trip.coverImage!.isNotEmpty;
 
   /// Trip duration in days from start → end date.
   int get _tripDurationDays {
-    final start = DateTime.tryParse(trip.startDate);
-    final end = DateTime.tryParse(trip.endDate);
+    final start = DateTime.tryParse(widget.trip.startDate);
+    final end = DateTime.tryParse(widget.trip.endDate);
     if (start != null && end != null) {
       return end.difference(start).inDays;
     }
-    return trip.daysRemaining;
+    return widget.trip.daysRemaining;
   }
 
   /// "Apr 10" format.
@@ -125,7 +172,7 @@ class ParticipantRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         height: 160,
         clipBehavior: Clip.hardEdge,
@@ -163,40 +210,57 @@ class ParticipantRow extends StatelessWidget {
               ),
             ),
 
-            // ── Layer 3: Content ──────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(16),
+            // ── Layer 3: Swipeable Content (Vertical Infinite PageView) ──────────────
+            PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              itemCount: null, // Infinite scrolling
+              onPageChanged: (index) {
+                // Ensure page indicators update correctly (0 or 1)
+                setState(() => _currentPage = index % 2);
+              },
+              itemBuilder: (context, index) {
+                final pageIndex = index % 2;
+
+                return AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    double value = 1.0;
+                    if (_pageController.position.haveDimensions) {
+                      value = _pageController.page! - index;
+                      // Clamp the value to [-1, 1] range to prevent overscaling
+                      value = (1 - (value.abs() * 0.2)).clamp(0.8, 1.0);
+                    } else {
+                      // Initial render fallback
+                      final isInitial = index == _pageController.initialPage;
+                      value = isInitial ? 1.0 : 0.8;
+                    }
+
+                    return Transform.scale(
+                      scale: value,
+                      child: Opacity(
+                        // Fade out slightly when scaled down
+                        opacity: value.clamp(0.5, 1.0),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: pageIndex == 0 ? _buildTripInfoPage() : _buildWeatherPage(),
+                );
+              },
+            ),
+
+            // ── Layer 4: Vertical Page Indicators ───────────────────────────
+            Positioned(
+              right: 8,
+              top: 0,
+              bottom: 0,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ── Top: destination pill ────────────────────────
-                  _buildDestinationPill(),
-
-                  const Spacer(),
-
-                  // ── Middle: trip duration ────────────────────────
-                  Text(
-                    '$_tripDurationDays Days Trip',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                      height: 1.1,
-                      shadows: [
-                        Shadow(
-                          color: Color(0x66000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── Bottom: glassmorphic info bar ────────────────
-                  _buildInfoBar(),
+                  _buildDotIndicator(0),
+                  const SizedBox(height: 4),
+                  _buildDotIndicator(1),
                 ],
               ),
             ),
@@ -206,14 +270,256 @@ class ParticipantRow extends StatelessWidget {
     );
   }
 
+  Widget _buildDotIndicator(int index) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: _currentPage == index ? 16 : 6,
+      width: 6,
+      decoration: BoxDecoration(
+        color: _currentPage == index 
+            ? Colors.white 
+            : Colors.white.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(3),
+      ),
+    );
+  }
+
+  // ── Pages ───────────────────────────────────────────────────────────
+
+  Widget _buildTripInfoPage() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Top: destination pill ────────────────────────
+          _buildDestinationPill(),
+
+          const Spacer(),
+
+          // ── Middle: trip duration ────────────────────────
+          Text(
+            '$_tripDurationDays Days Trip',
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+              height: 1.1,
+              shadows: [
+                Shadow(
+                  color: Color(0x66000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // ── Bottom: glassmorphic info bar ────────────────
+          _buildInfoBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeatherPage() {
+    final destination = widget.trip.destination.isNotEmpty
+        ? widget.trip.destination
+        : widget.trip.location.isNotEmpty
+            ? widget.trip.location
+            : 'Unknown';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top: App-style header
+          Row(
+            children: [
+              const Icon(Icons.cloud_outlined, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Weather Forecast',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 8),
+
+          // Location string clearly mapped to trip.location
+          Text(
+            destination,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const Spacer(),
+
+          if (_isLoadingWeather)
+            const Center(
+              child: SizedBox(
+                width: 24, height: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              ),
+            )
+          else if (_weatherData == null)
+            Center(
+              child: Text(
+                'Weather unavailable\nfor this destination.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 13,
+                ),
+              ),
+            )
+          else
+            // Weather Content
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Left: Current Weather
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${_weatherData!.currentTemp.round()}°',
+                        style: const TextStyle(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                          shadows: [
+                            Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 2)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            _weatherData!.currentConditionIcon,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _weatherData!.currentConditionText,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.95),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Right: Hourly Forecast (Next 4 hours)
+                _buildHourlyForecast(),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHourlyForecast() {
+    if (_weatherData == null || _weatherData!.hourlyForecast.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Determine current hour in the local timezone of the destination
+    final now = DateTime.now().toUtc().add(Duration(seconds: _weatherData!.utcOffsetSeconds));
+    
+    // Find the next 4 hours
+    final upcomingHourly = _weatherData!.hourlyForecast.where((h) {
+      final hourTime = DateTime.tryParse(h.timeIso);
+      if (hourTime == null) return false;
+      return hourTime.isAfter(now.subtract(const Duration(hours: 1)));
+    }).take(4).toList();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: upcomingHourly.map((hour) {
+              final isFirst = upcomingHourly.indexOf(hour) == 0;
+              final time = DateTime.parse(hour.timeIso);
+              
+              return Padding(
+                padding: EdgeInsets.only(left: isFirst ? 0 : 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isFirst ? 'Now' : '${time.hour}:00',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isFirst ? FontWeight.w700 : FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      hour.conditionIcon,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${hour.temperature.round()}°',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Sub-widgets ─────────────────────────────────────────────────────
 
   /// Frosted glass pill showing 📍 destination at the top of the card.
   Widget _buildDestinationPill() {
-    final destination = trip.destination.isNotEmpty
-        ? trip.destination
-        : trip.location.isNotEmpty
-            ? trip.location
+    final destination = widget.trip.destination.isNotEmpty
+        ? widget.trip.destination
+        : widget.trip.location.isNotEmpty
+            ? widget.trip.location
             : 'Unknown';
 
     return ClipRRect(
@@ -285,7 +591,7 @@ class ParticipantRow extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${_formatShortDate(trip.startDate)} – ${_formatShortDate(trip.endDate)}',
+                '${_formatShortDate(widget.trip.startDate)} – ${_formatShortDate(widget.trip.endDate)}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -315,7 +621,7 @@ class ParticipantRow extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${participants.length} ${participants.length == 1 ? 'member' : 'members'}',
+                '${widget.participants.length} ${widget.participants.length == 1 ? 'member' : 'members'}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -338,7 +644,7 @@ class ParticipantRow extends StatelessWidget {
   Widget _buildBackground() {
     // 1. Check for user-uploaded cover photo
     if (_hasCoverImage) {
-      final coverImage = trip.coverImage!;
+      final coverImage = widget.trip.coverImage!;
 
       if (coverImage.startsWith('http')) {
         return CachedNetworkImage(
@@ -363,7 +669,7 @@ class ParticipantRow extends StatelessWidget {
   /// Builds the stock photo fallback based on tripType.
   /// Falls back to gradient if network image fails.
   Widget _buildStockFallback() {
-    final stockUrl = _getStockPhotoForTripType(trip.tripType);
+    final stockUrl = _getStockPhotoForTripType(widget.trip.tripType);
 
     return CachedNetworkImage(
       imageUrl: stockUrl,
@@ -375,7 +681,7 @@ class ParticipantRow extends StatelessWidget {
 
   /// Last resort gradient fallback.
   Widget _buildGradientBackground() {
-    final gradientColors = _getGradientForTripType(trip.tripType);
+    final gradientColors = _getGradientForTripType(widget.trip.tripType);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
