@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -50,11 +51,18 @@ class AuthService {
   // Register (Email Magic Link)
   // ---------------------------------------------------------------------------
 
+
+
   /// Sends a Passwordless Sign-in link to the user's email.
   Future<void> sendSignInLink(String email) async {
     try {
+      // Dynamic URL for Web support (redirects back to localhost if testing locally)
+      // IMPORTANT: This URL MUST be whitelisted in Firebase Console > Auth > Settings > Authorized Domains
+      final String baseUrl = kIsWeb ? Uri.base.origin : 'https://travelly-66659.firebaseapp.com';
+      final String redirectUrl = '$baseUrl/login';
+
       var actionCodeSettings = ActionCodeSettings(
-        url: 'https://travelly-66659.firebaseapp.com/login', // Must match Firebase Console
+        url: redirectUrl, 
         handleCodeInApp: true,
         androidPackageName: 'com.10bit.travelly',
         androidMinimumVersion: '21',
@@ -67,9 +75,11 @@ class AuthService {
         actionCodeSettings: actionCodeSettings,
       );
       
-      // We must save the email locally because we need it to complete sign-in later
-      // when the user clicks the link.
-      debugPrint('Magic link sent to $email');
+      // Persist the email because we need it when the link is clicked
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('magic_link_email', email);
+      
+      debugPrint('Magic link sent to $email and saved to prefs');
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Failed to send magic link');
     }
@@ -78,28 +88,40 @@ class AuthService {
   /// Completes the sign-in process after the user clicks the link in their email.
   Future<Map<String, dynamic>> signInWithEmailLink(String email, String emailLink) async {
     try {
-      if (_auth.isSignInWithEmailLink(emailLink)) {
-        final userCredential = await _auth.signInWithEmailLink(
-          email: email,
-          emailLink: emailLink,
-        );
+      final userCredential = await _auth.signInWithEmailLink(
+        email: email,
+        emailLink: emailLink,
+      );
 
-        final user = userCredential.user;
-        final token = await user?.getIdToken();
+      final user = userCredential.user;
+      final token = await user?.getIdToken();
 
-        return {
-          'token': token,
-          'user': {
-            'id': user?.uid,
-            'name': user?.displayName ?? email.split('@').first,
-            'email': user?.email,
-          },
-        };
-      }
-      throw Exception('Invalid or expired magic link');
+      // Clear the persisted email
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('magic_link_email');
+
+      return {
+        'token': token,
+        'user': {
+          'id': user?.uid,
+          'name': user?.displayName ?? email.split('@').first,
+          'email': user?.email,
+        },
+      };
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Magic link sign-in failed');
     }
+  }
+
+  /// Checks if a dynamic link is actually a sign-in link.
+  bool isSignInWithEmailLink(String link) {
+    return _auth.isSignInWithEmailLink(link);
+  }
+
+  /// Retrieves the persisted magic link email.
+  Future<String?> getPersistedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('magic_link_email');
   }
 
   // ---------------------------------------------------------------------------

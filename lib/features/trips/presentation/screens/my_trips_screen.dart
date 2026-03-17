@@ -181,7 +181,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                               const Icon(Icons.error_outline, size: 48, color: Color(0xFFB0B0B0)),
                               const SizedBox(height: 16),
                               Text(
-                                'Failed to load trips',
+                                tripsProvider.errorMessage ?? 'Failed to load trips',
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 16,
