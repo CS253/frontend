@@ -5,6 +5,9 @@ import 'core/api/api_client.dart';
 import 'features/account_settings/data/repositories/account_settings_repository.dart';
 import 'features/account_settings/data/services/account_settings_service.dart';
 import 'features/account_settings/presentation/providers/account_settings_provider.dart';
+import 'features/trip_settings/data/repositories/trip_settings_repository.dart';
+import 'features/trip_settings/data/services/trip_settings_api_service.dart';
+import 'features/trip_settings/presentation/providers/trip_settings_provider.dart';
 import 'app/main_screen.dart';
 
 void main() {
@@ -14,6 +17,11 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => AccountSettingsProvider(
             AccountSettingsRepository(AccountSettingsService(ApiClient())),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TripSettingsProvider(
+            TripSettingsRepository(TripSettingsApiService()),
           ),
         ),
       ],
