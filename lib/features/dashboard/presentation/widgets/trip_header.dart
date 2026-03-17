@@ -35,9 +35,9 @@ class TripHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_back, color: Color(0xFF212022)),
+              icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
               onPressed: onBackPressed,
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
             ),
             IconButton(
