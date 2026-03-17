@@ -1,32 +1,49 @@
+import 'dart:io';
 import '../models/photo_model.dart';
 import '../services/photo_service.dart';
+import '../../../../core/api/api_client.dart';
 
 class PhotoRepository {
-  final PhotoService _service;
+  final PhotoService _photoService;
 
-  PhotoRepository(this._service);
+  PhotoRepository({required ApiClient apiClient})
+    : _photoService = PhotoService(apiClient: apiClient);
 
-  Future<List<PhotoModel>> getPhotos(String tripId) async {
+  Future<List<Photo>> fetchPhotos({int page = 1, int limit = 20}) async {
     try {
-      final response = await _service.fetchPhotos(tripId);
-      final List<dynamic> data = response['data'] ?? [];
-      
-      return data.map((json) => PhotoModel.fromJson(json)).toList();
+      final response = await _photoService.fetchPhotos(
+        page: page,
+        limit: limit,
+      );
+
+      final List<dynamic> data = response['data'];
+      return data.map((json) => Photo.fromJson(json)).toList();
     } catch (e) {
-      // Handle or re-throw error for the provider to catch
-      throw Exception('Failed to load photos: $e');
+      throw Exception('Failed to fetch photos: $e');
     }
   }
 
-  Future<PhotoModel> addPhoto(String tripId, String url, String uploadedBy) async {
-    final newPhoto = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'url': url,
-      'uploaded_by': uploadedBy,
-      'uploaded_at': DateTime.now().toIso8601String(),
-    };
-    
-    final response = await _service.uploadPhoto(tripId, newPhoto);
-    return PhotoModel.fromJson(response['data']);
+  Future<void> uploadPhoto(File image) async {
+    try {
+      await _photoService.uploadPhoto(image.path);
+    } catch (e) {
+      throw Exception('Failed to upload photo: $e');
+    }
+  }
+
+  Future<void> deletePhoto(String id) async {
+    try {
+      await _photoService.deletePhoto(id);
+    } catch (e) {
+      throw Exception('Failed to delete photo: $e');
+    }
+  }
+
+  Future<void> deletePhotos(List<String> ids) async {
+    try {
+      await _photoService.deletePhotos(ids);
+    } catch (e) {
+      throw Exception('Failed to delete photos: $e');
+    }
   }
 }

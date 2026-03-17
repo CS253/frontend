@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>545892068210-bk9bfqdjsgbn1kqncd3k7ptrbm899gmq.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.545892068210-bk9bfqdjsgbn1kqncd3k7ptrbm899gmq</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>545892068210-o9v4bg899bcse590tp7qmgftcc7lfs8a.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyC4clpwCzE-DyucCtN9jQok8SE-3B0kH3o</string>
+	<key>GCM_SENDER_ID</key>
+	<string>545892068210</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.10bit.travelly</string>
+	<key>PROJECT_ID</key>
+	<string>travelly-66659</string>
+	<key>STORAGE_BUCKET</key>
+	<string>travelly-66659.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:545892068210:ios:70ed6f5c65be960fac8beb</string>
+</dict>
+</plist>
