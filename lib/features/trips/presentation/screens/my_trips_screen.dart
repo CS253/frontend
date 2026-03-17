@@ -13,6 +13,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../trips/presentation/providers/trips_provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
+import 'package:travelly/core/constants/route_constants.dart';
 import '../widgets/trip_card.dart';
 import '../widgets/create_trip_dialog.dart';
 
@@ -117,7 +119,42 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                           );
                         },
                       ),
-                      const Icon(Icons.menu, color: Color(0xFF282828), size: 28),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, color: Color(0xFF282828), size: 22),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onSelected: (value) async {
+                          if (value == 'logout') {
+                            await context.read<AuthProvider>().logout();
+                            if (context.mounted) {
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                RouteConstants.login,
+                                (route) => false,
+                              );
+                            }
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'logout',
+                            height: 40,
+                            child: Row(
+                              children: [
+                                Icon(Icons.logout_rounded, color: Colors.red.shade400, size: 18),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Logout', 
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
