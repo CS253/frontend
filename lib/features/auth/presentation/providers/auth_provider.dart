@@ -79,7 +79,7 @@ class AuthProvider with ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Session Persistence
   // ---------------------------------------------------------------------------
-  
+
   /// Checks if a user is already logged in on app startup.
   Future<void> initialize() async {
     _status = AuthStatus.initial;
@@ -107,7 +107,8 @@ class AuthProvider with ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Returns true if the user is currently authenticated.
-  bool get isAuthenticated => _status == AuthStatus.authenticated && _user != null;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated && _user != null;
 
   // ---------------------------------------------------------------------------
   // Login
@@ -120,10 +121,7 @@ class AuthProvider with ChangeNotifier {
   ///   → POST /auth/login with { email, password }
   ///
   /// TODO: Replace mock data once backend API is connected
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     _setLoading(true);
     _clearError();
 
@@ -175,7 +173,10 @@ class AuthProvider with ChangeNotifier {
     _clearError();
 
     try {
-      final AuthResponse response = await repository.signInWithEmailLink(email, emailLink);
+      final AuthResponse response = await repository.signInWithEmailLink(
+        email,
+        emailLink,
+      );
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
@@ -209,7 +210,9 @@ class AuthProvider with ChangeNotifier {
 
     try {
       if (_magicLinkEmail == null) {
-        throw Exception('No registration session found. Please register again.');
+        throw Exception(
+          'No registration session found. Please register again.',
+        );
       }
 
       final AuthResponse response = await repository.createPassword(
@@ -222,9 +225,9 @@ class AuthProvider with ChangeNotifier {
       _user = response.user;
       _status = AuthStatus.authenticated;
 
-    // Reset registration flow data
-    _magicLinkEmail = null;
-    _linkSent = false;
+      // Reset registration flow data
+      _magicLinkEmail = null;
+      _linkSent = false;
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
     }
@@ -317,4 +320,3 @@ class AuthProvider with ChangeNotifier {
     return message;
   }
 }
-
