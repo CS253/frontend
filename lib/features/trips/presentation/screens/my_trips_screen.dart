@@ -64,9 +64,9 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                       Row(
                         children: [
                           Image.asset(
-                            'assets/images/launch_icon.png',
-                            height: 28,
-                            width: 28,
+                            'assets/images/app_logo.png',
+                            height: 50,
+                            width: 50,
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) =>
                                 const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
