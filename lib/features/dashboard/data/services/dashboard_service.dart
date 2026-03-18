@@ -55,14 +55,14 @@ class DashboardService {
     return {
       'currentTrip': {
         'id': 'trip_mock_001',
-        'name': 'Jangal Mei Mangal',
+        'name': 'Less Gooo',
         'location': 'Kanpur, India',
-        'destination': 'Kolhapur, India',
+        'destination': 'Kanpur, India',
         'startDate': '2026-04-10',
         'endDate': '2026-04-20',
         'daysRemaining': 5,
         'emoji': '♠️',
-        'tripType': 'Nature',
+        'tripType': 'Other',
         'coverImage': null, // No cover photo — will use trip-type default
         'participants': [
           {

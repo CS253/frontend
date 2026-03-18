@@ -5,7 +5,7 @@ import 'package:travelly/features/documents/data/services/document_service.dart'
 import 'package:travelly/core/widgets/primary_button.dart'; // PrimaryFabButton
 import 'package:travelly/features/documents/data/services/document_download_service.dart';
 import 'package:travelly/features/documents/presentation/screens/document_viewer_screen.dart';
-import 'package:travelly/core/widgets/app_sidebar.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
 
 class DocumentsScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
@@ -88,7 +88,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      endDrawer: const AppSidebar(),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(74.0),
         child: Container(
@@ -104,15 +103,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               padding: const EdgeInsets.only(
                 left: 4.0,
                 right: 16.0,
-                top: 22.0,
+                top: 12.0,
                 bottom: 8.0,
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
-                    onPressed: widget.onBackPressed ?? () => Navigator.of(context).pop(),
-                  ),
+                  GlassBackButton(onPressed: widget.onBackPressed),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,12 +140,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
-                    onPressed: () {
-                      context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
-                    },
                   ),
                 ],
               ),
@@ -203,7 +194,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             },
           ),
           Positioned(
-            bottom: 24,
+            bottom: 110,
             left: 0,
             right: 0,
             child: Center(

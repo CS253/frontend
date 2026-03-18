@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/gallery_provider.dart';
 import '../widgets/photo_card.dart';
-import '../../../../core/widgets/app_sidebar.dart';
+import '../../../../core/widgets/glass_back_button.dart';
 
 class GalleryScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
@@ -32,7 +32,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      endDrawer: const AppSidebar(),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(74.0),
         child: Container(
@@ -48,7 +47,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               padding: const EdgeInsets.only(
                 left: 4.0,
                 right: 16.0,
-                top: 22.0,
+                top: 12.0,
                 bottom: 8.0,
               ),
               child: inSelectionMode
@@ -63,7 +62,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
           _buildGrid(provider),
           if (!inSelectionMode)
             Positioned(
-              bottom: 24,
+              bottom: 110,
               left: 0,
               right: 0,
               child: Center(child: _buildAddButton()),
@@ -76,10 +75,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget _buildStandardHeader(GalleryProvider provider) {
     return Row(
       children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
-          onPressed: widget.onBackPressed ?? () => Navigator.of(context).pop(),
-        ),
+        GlassBackButton(onPressed: widget.onBackPressed),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,12 +101,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
             ],
           ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
-          onPressed: () {
-            context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
-          },
         ),
       ],
     );
@@ -147,6 +138,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       ],
     );
   }
+
 
   Widget _buildGrid(GalleryProvider provider) {
     if (provider.isLoading) {
