@@ -6,7 +6,7 @@ import 'package:travelly/features/payments/presentation/widgets/balance_card.dar
 import 'package:travelly/features/payments/presentation/widgets/summary_cards.dart';
 import 'package:travelly/features/payments/presentation/widgets/friend_balances.dart';
 import 'package:travelly/features/payments/presentation/widgets/expense_card.dart';
-import 'package:travelly/core/widgets/app_sidebar.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
 
 class PaymentsScreen extends StatelessWidget {
   final VoidCallback? onBackPressed;
@@ -17,7 +17,6 @@ class PaymentsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFCFAF8),
-      endDrawer: const AppSidebar(),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(74.0),
         child: Container(
@@ -33,15 +32,13 @@ class PaymentsScreen extends StatelessWidget {
               padding: const EdgeInsets.only(
                 left: 4.0,
                 right: 16.0,
-                top: 22.0,
+                top: 12.0,
                 bottom: 8.0,
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF212022), size: 20),
-                    onPressed: onBackPressed ?? () => Navigator.maybePop(context),
-                  ),
+                  GlassBackButton(onPressed: onBackPressed),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,12 +63,6 @@ class PaymentsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz, color: Color(0xFF212022), size: 24),
-                    onPressed: () {
-                      context.findRootAncestorStateOfType<ScaffoldState>()?.openEndDrawer();
-                    },
                   ),
                 ],
               ),
@@ -114,7 +105,7 @@ class PaymentsScreen extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: 24,
+            bottom: 110,
             left: 0,
             right: 0,
             child: Center(child: _buildAddPaymentButton(context)),
