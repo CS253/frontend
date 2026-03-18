@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import 'package:travelly/features/account_settings/data/models/user_profile.dart';
 import 'package:travelly/core/constants/route_constants.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
 import '../providers/account_settings_provider.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/setting_item.dart';
@@ -191,30 +192,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF262F40).withValues(alpha: 0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 3),
-                  spreadRadius: -3,
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF212022),
-                size: 20,
-              ),
-              onPressed: () => Navigator.pop(context),
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(),
-            ),
-          ),
+          GlassBackButton(onPressed: () => Navigator.pop(context)),
           const SizedBox(width: 16),
           const Text(
             'Account Settings',
