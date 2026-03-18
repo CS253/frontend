@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:travelly/features/account_settings/presentation/widgets/setting_item.dart';
 import 'package:travelly/features/account_settings/presentation/widgets/settings_group.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
 import '../providers/trip_settings_provider.dart';
 import 'manage_members_screen.dart';
 import 'notification_settings_screen.dart';
@@ -175,7 +176,6 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
   }
 
   Widget _buildHeader() {
-    // ... same as before
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       decoration: const BoxDecoration(
@@ -186,30 +186,7 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF262F40).withValues(alpha: 0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 3),
-                  spreadRadius: -3,
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Color(0xFF212022),
-                size: 20,
-              ),
-              onPressed: () => Navigator.pop(context),
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(),
-            ),
-          ),
+          GlassBackButton(onPressed: () => Navigator.pop(context)),
           const SizedBox(width: 16),
           const Text(
             'Trip Settings',
