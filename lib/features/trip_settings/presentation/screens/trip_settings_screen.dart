@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:travelly/features/account_settings/presentation/widgets/setting_item.dart';
 import 'package:travelly/features/account_settings/presentation/widgets/settings_group.dart';
 import 'package:travelly/core/widgets/glass_back_button.dart';
+import '../../../../features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/trip_settings_provider.dart';
 import 'manage_members_screen.dart';
 import 'notification_settings_screen.dart';
@@ -30,27 +34,29 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
-      body: SafeArea(
-        child: Consumer<TripSettingsProvider>(
-          builder: (context, provider, child) {
-            
-            // Build the switch state optimistically based on provider values
-            final simplifyExpenses = provider.tripSettings?.simplifyExpenses ?? true;
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          Consumer<TripSettingsProvider>(
+            builder: (context, provider, child) {
+              
+              // Build the switch state optimistically based on provider values
+              final simplifyExpenses = provider.tripSettings?.simplifyExpenses ?? true;
 
-            return Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 24),
-                          _buildTripCard(provider),
-                          const SizedBox(height: 32),
-                          _buildSectionHeader('APP OPTIONS'),
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 100,
+                  bottom: 120, // space for navbar
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildTripCard(context, provider),
+                      const SizedBox(height: 32),
+                          _buildSectionHeader('TRIP OPTIONS'),
                           const SizedBox(height: 12),
                           SettingsGroup(
                             children: [
@@ -165,39 +171,56 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                         ],
                       ),
                     ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+                  );
+            },
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            right: 16,
+            child: _buildHeader(),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFEDEDED), width: 1.0),
-        ),
-      ),
-      child: Row(
-        children: [
-          GlassBackButton(onPressed: () => Navigator.pop(context)),
-          const SizedBox(width: 16),
-          const Text(
-            'Trip Settings',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Nunito',
-              color: Color(0xFF212022),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
+          child: Row(
+            children: [
+              GlassBackButton(onPressed: () => Navigator.pop(context)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Trip Settings',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF212022),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -215,40 +238,124 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
     );
   }
 
-  Widget _buildTripCard(TripSettingsProvider provider) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 38.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0x33F09475), // rgba(240, 148, 117, 0.2)
-            Color(0x0DF09475), // rgba(240, 148, 117, 0.05)
-          ],
+  Widget _buildTripCard(BuildContext context, TripSettingsProvider provider) {
+    final dashboardProvider = context.watch<DashboardProvider>();
+    final trip = dashboardProvider.currentTrip;
+    
+    if (trip == null) {
+      return Container(
+        height: 140,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.grey.withValues(alpha: 0.2),
         ),
-      ),
-      child: Column(
-        children: [
-          if (provider.isLoadingTripSettings)
-            const CircularProgressIndicator()
-          else ...[
-            Text(provider.tripSettings?.icon ?? '🏖️', style: const TextStyle(fontSize: 34)),
-            const SizedBox(height: 16),
-            Text(
-              provider.tripSettings?.name ?? 'Loading...',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Nunito',
-                color: Color(0xFF212022),
-              ),
-            ),
-          ],
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    Widget backgroundImage;
+    if (trip.coverImage != null && trip.coverImage!.isNotEmpty) {
+      if (trip.coverImage!.startsWith('http')) {
+        backgroundImage = CachedNetworkImage(
+          imageUrl: trip.coverImage!,
+          fit: BoxFit.cover,
+          errorWidget: (context, url, error) => _buildStockFallback(trip.tripType),
+        );
+      } else {
+        backgroundImage = Image.file(
+          File(trip.coverImage!),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildStockFallback(trip.tripType),
+        );
+      }
+    } else {
+      backgroundImage = _buildStockFallback(trip.tripType);
+    }
+
+    return Container(
+      height: 140,
+      width: double.infinity,
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF262F40).withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
         ],
       ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          backgroundImage,
+          // Dark gradient overlay for text readability
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.4, 1.0],
+                colors: [
+                  Colors.black.withValues(alpha: 0.2),
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.black.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+          ),
+          // Trip Name
+          Positioned(
+            left: 16,
+            bottom: 16,
+            right: 16,
+            child: Text(
+              trip.name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: -0.5,
+                shadows: [
+                  Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 2)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockFallback(String tripType) {
+    String stockUrl;
+    switch (tripType) {
+      case 'Beach':
+        stockUrl = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'Mountain':
+        stockUrl = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'City':
+        stockUrl = 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'Nature':
+        stockUrl = 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'Island':
+        stockUrl = 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=60';
+        break;
+      default:
+        stockUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+    }
+    return CachedNetworkImage(
+      imageUrl: stockUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(color: const Color(0xFF90CAF9)),
+      errorWidget: (context, url, error) => Container(color: const Color(0xFF90CAF9)),
     );
   }
 

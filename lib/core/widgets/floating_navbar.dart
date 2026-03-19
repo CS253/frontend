@@ -1,5 +1,8 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:cupertino_native/cupertino_native.dart';
 
 class FloatingNavbar extends StatelessWidget {
   final int selectedIndex;
@@ -13,86 +16,114 @@ class FloatingNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.4),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 30,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
+    bool isAppleNative = !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+
+    if (isAppleNative) {
+      return CNTabBar(
+        items: [
+          CNTabBarItem(
+            label: 'Home',
+            icon: const CNSymbol('house.fill'),
+          ),
+          CNTabBarItem(
+            label: 'Trip Settings',
+            icon: const CNSymbol('gearshape.fill'),
+          ),
+          CNTabBarItem(
+            label: 'Profile',
+            icon: const CNSymbol('person.fill'),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(40),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Stack(
-            children: [
-              // ── Sliding Highlight Animation ──
-              AnimatedAlign(
-                alignment: Alignment(
-                  selectedIndex == 0
-                      ? -1.0
-                      : (selectedIndex == 1 ? 0.0 : 1.0),
-                  0.0,
-                ),
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeOutCirc,
-                child: FractionallySizedBox(
-                  widthFactor: 1 / 3, // Each tab takes exactly 1/3 of the width
-                  child: Center(
-                    child: Container(
-                      width: 64,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9F0FC).withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(24),
+        currentIndex: selectedIndex,
+        tint: const Color(0xFF00A2FF), // Travelly theme color
+        height: 85,
+        onTap: onTabSelected,
+      );
+    }
+
+    // Original Android / Chrome (Web) Fallback
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
+        height: 70,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.4),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(40),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Stack(
+              children: [
+                // ── Sliding Highlight Animation ──
+                AnimatedAlign(
+                  alignment: Alignment(
+                    selectedIndex == 0
+                        ? -1.0
+                        : (selectedIndex == 1 ? 0.0 : 1.0),
+                    0.0,
+                  ),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOutCirc,
+                  child: FractionallySizedBox(
+                    widthFactor: 1 / 3, // Each tab takes exactly 1/3 of the width
+                    child: Center(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.25,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD9F0FC).withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              // ── Tab Items ──
-              Row(
-                children: [
-                  Expanded(
-                    child: _NavBarItem(
-                      icon: Icons.home_outlined,
-                      label: 'Home',
-                      isSelected: selectedIndex == 0,
-                      onTap: () => onTabSelected(0),
+                // ── Tab Items ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: Icons.home_outlined,
+                        label: 'Home',
+                        isSelected: selectedIndex == 0,
+                        onTap: () => onTabSelected(0),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _NavBarItem(
-                      icon: Icons.settings_outlined,
-                      label: 'Settings',
-                      isSelected: selectedIndex == 1,
-                      onTap: () => onTabSelected(1),
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: Icons.settings_outlined,
+                        label: 'Trip Settings',
+                        isSelected: selectedIndex == 1,
+                        onTap: () => onTabSelected(1),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _NavBarItem(
-                      icon: Icons.person_outline,
-                      label: 'Profile',
-                      isSelected: selectedIndex == 2,
-                      onTap: () => onTabSelected(2),
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: Icons.person_outline,
+                        label: 'Profile',
+                        isSelected: selectedIndex == 2,
+                        onTap: () => onTabSelected(2),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

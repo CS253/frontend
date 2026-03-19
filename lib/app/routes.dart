@@ -5,6 +5,7 @@
 // transition animations. Named routes enable type-safe navigation.
 // =============================================================================
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../core/constants/route_constants.dart';
 
@@ -94,16 +95,16 @@ class AppRoutes {
 
       // Features
       case RouteConstants.payments:
-        return _buildSlideRightToLeftRoute(const PaymentsScreen(), settings);
+        return _buildCupertinoRoute(const PaymentsScreen(), settings);
 
       case RouteConstants.gallery:
-        return _buildSlideRightToLeftRoute(const GalleryScreen(), settings);
+        return _buildCupertinoRoute(const GalleryScreen(), settings);
 
       case RouteConstants.documents:
-        return _buildSlideRightToLeftRoute(const DocumentsScreen(), settings);
+        return _buildCupertinoRoute(const DocumentsScreen(), settings);
 
       case RouteConstants.plan:
-        return _buildSlideRightToLeftRoute(const PlanScreen(), settings);
+        return _buildCupertinoRoute(const PlanScreen(), settings);
 
       // Default — 404
       default:
@@ -126,24 +127,12 @@ class AppRoutes {
     );
   }
 
-  /// Builds a right-to-left slide transition route for specific screens.
-  static PageRouteBuilder _buildSlideRightToLeftRoute(Widget widget, RouteSettings settings) {
-    return PageRouteBuilder(
+  /// Builds a CupertinoPageRoute to provide native iOS swipe-back
+  /// and right-to-left slide transition on all platforms.
+  static CupertinoPageRoute _buildCupertinoRoute(Widget widget, RouteSettings settings) {
+    return CupertinoPageRoute(
+      builder: (_) => widget,
       settings: settings,
-      pageBuilder: (context, animation, secondaryAnimation) => widget,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
-
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        var offsetAnimation = animation.drive(tween);
-
-        return SlideTransition(
-          position: offsetAnimation,
-          child: child,
-        );
-      },
     );
   }
 }

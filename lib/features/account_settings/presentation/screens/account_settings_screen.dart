@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -34,28 +35,30 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: Consumer2<AccountSettingsProvider, AuthProvider>(
-                builder: (context, provider, authProvider, child) {
-                  final firebaseUser = authProvider.user;
-                  final profile = provider.userProfile;
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          Consumer2<AccountSettingsProvider, AuthProvider>(
+            builder: (context, provider, authProvider, child) {
+              final firebaseUser = authProvider.user;
+              final profile = provider.userProfile;
 
-                  // Use Firebase details if local profile is still loading or doesn't have them
-                  final displayEmail = firebaseUser?.email ?? profile?.email ?? 'Loading...';
-                  final displayName = profile?.name ?? firebaseUser?.name ?? 'Traveller';
-                  final displayImageUrl = profile?.imageUrl ?? firebaseUser?.avatarUrl;
+              // Use Firebase details if local profile is still loading or doesn't have them
+              final displayEmail = firebaseUser?.email ?? profile?.email ?? 'Loading...';
+              final displayName = profile?.name ?? firebaseUser?.name ?? 'Traveller';
+              final displayImageUrl = profile?.imageUrl ?? firebaseUser?.avatarUrl;
 
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 24),
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 100,
+                  bottom: 120, // space for navbar
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
 
                           // Display Error if any
                           if (provider.errorMessage != null)
@@ -170,40 +173,57 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           const SizedBox(height: 48),
                         ],
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            right: 16,
+            child: _buildHeader(),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFEDEDED), width: 1.0),
-        ),
-      ),
-      child: Row(
-        children: [
-          GlassBackButton(onPressed: () => Navigator.pop(context)),
-          const SizedBox(width: 16),
-          const Text(
-            'Account Settings',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Nunito',
-              color: Color(0xFF212022),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
+          child: Row(
+            children: [
+              GlassBackButton(onPressed: () => Navigator.pop(context)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Account Settings',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF212022),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

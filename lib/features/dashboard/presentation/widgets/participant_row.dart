@@ -115,7 +115,7 @@ class _ParticipantRowState extends State<ParticipantRow> {
       case 'Nature':
         return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
       case 'Island':
-        return 'https://images.unsplash.com/photo-1559128192-d7379f65c711?auto=format&fit=crop&w=800&q=80';
+        return 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8aXNsYW5kfGVufDB8fDB8fHww';
       case 'Other':
       default:
         return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
@@ -360,7 +360,7 @@ class _ParticipantRowState extends State<ParticipantRow> {
           Text(
             destination,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Colors.white.withValues(alpha: 0.85),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

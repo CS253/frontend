@@ -67,7 +67,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
+                blurRadius: 20,
+                spreadRadius: 2,
                 offset: const Offset(0, 4),
               ),
             ],
