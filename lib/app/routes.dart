@@ -32,6 +32,7 @@ import '../features/trip_settings/presentation/screens/notification_settings_scr
 import '../features/payments/presentation/screens/payments_screen.dart';
 import '../features/gallery/presentation/screens/gallery_screen.dart';
 import '../features/documents/presentation/screens/documents_screen.dart';
+import '../features/plan/presentation/screens/plan_screen.dart';
 
 class AppRoutes {
   // Prevent instantiation
@@ -93,13 +94,16 @@ class AppRoutes {
 
       // Features
       case RouteConstants.payments:
-        return _buildRoute(const PaymentsScreen(), settings);
+        return _buildSlideRightToLeftRoute(const PaymentsScreen(), settings);
 
       case RouteConstants.gallery:
-        return _buildRoute(const GalleryScreen(), settings);
+        return _buildSlideRightToLeftRoute(const GalleryScreen(), settings);
 
       case RouteConstants.documents:
-        return _buildRoute(const DocumentsScreen(), settings);
+        return _buildSlideRightToLeftRoute(const DocumentsScreen(), settings);
+
+      case RouteConstants.plan:
+        return _buildSlideRightToLeftRoute(const PlanScreen(), settings);
 
       // Default — 404
       default:
@@ -119,6 +123,27 @@ class AppRoutes {
     return MaterialPageRoute(
       builder: (_) => widget,
       settings: settings,
+    );
+  }
+
+  /// Builds a right-to-left slide transition route for specific screens.
+  static PageRouteBuilder _buildSlideRightToLeftRoute(Widget widget, RouteSettings settings) {
+    return PageRouteBuilder(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => widget,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
     );
   }
 }
