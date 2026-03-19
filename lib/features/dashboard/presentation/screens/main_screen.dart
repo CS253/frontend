@@ -48,13 +48,7 @@ class _MainScreenState extends State<MainScreen> {
             transitionBuilder: (child, animation) {
               return FadeTransition(
                 opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.05),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
+                child: child,
               );
             },
             child: KeyedSubtree(
@@ -64,15 +58,11 @@ class _MainScreenState extends State<MainScreen> {
           ),
 
           // Floating navbar overlaid on bottom
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: SafeArea(
-              child: FloatingNavbar(
-                selectedIndex: _selectedIndex,
-                onTabSelected: _onTabSelected,
-              ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: FloatingNavbar(
+              selectedIndex: _selectedIndex,
+              onTabSelected: _onTabSelected,
             ),
           ),
         ],

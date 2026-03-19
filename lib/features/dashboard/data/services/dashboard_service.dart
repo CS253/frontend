@@ -56,13 +56,13 @@ class DashboardService {
       'currentTrip': {
         'id': 'trip_mock_001',
         'name': 'Less Gooo',
-        'location': 'Kanpur, India',
-        'destination': 'Kanpur, India',
+        'location': 'Maldives',
+        'destination': 'Maldives',
         'startDate': '2026-04-10',
         'endDate': '2026-04-20',
         'daysRemaining': 5,
         'emoji': '♠️',
-        'tripType': 'Other',
+        'tripType': 'Island',
         'coverImage': null, // No cover photo — will use trip-type default
         'participants': [
           {
