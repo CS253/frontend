@@ -21,18 +21,12 @@ class FloatingNavbar extends StatelessWidget {
     if (isAppleNative) {
       return CNTabBar(
         items: [
-          CNTabBarItem(
-            label: 'Home',
-            icon: const CNSymbol('house.fill'),
-          ),
+          CNTabBarItem(label: 'Home', icon: const CNSymbol('house.fill')),
           CNTabBarItem(
             label: 'Trip Settings',
             icon: const CNSymbol('gearshape.fill'),
           ),
-          CNTabBarItem(
-            label: 'Profile',
-            icon: const CNSymbol('person.fill'),
-          ),
+          CNTabBarItem(label: 'Profile', icon: const CNSymbol('person.fill')),
         ],
         currentIndex: selectedIndex,
         tint: const Color(0xFF00A2FF), // Travelly theme color
@@ -79,7 +73,8 @@ class FloatingNavbar extends StatelessWidget {
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.easeOutCirc,
                   child: FractionallySizedBox(
-                    widthFactor: 1 / 3, // Each tab takes exactly 1/3 of the width
+                    widthFactor:
+                        1 / 3, // Each tab takes exactly 1/3 of the width
                     child: Center(
                       child: Container(
                         width: MediaQuery.of(context).size.width * 0.25,
@@ -160,12 +155,16 @@ class _NavBarItem extends StatelessWidget {
           children: [
             AnimatedOpacity(
               duration: const Duration(milliseconds: 350),
-              curve: !isSelected ? const Interval(0.0, 0.4) : const Interval(0.6, 1.0),
+              curve: !isSelected
+                  ? const Interval(0.0, 0.4)
+                  : const Interval(0.6, 1.0),
               opacity: isSelected ? 1.0 : 0.5,
               child: Icon(
                 icon,
                 size: 24,
-                color: isSelected ? const Color(0xFF00A2FF) : const Color(0xFF8B8893),
+                color: isSelected
+                    ? const Color(0xFF00A2FF)
+                    : const Color(0xFF8B8893),
               ),
             ),
             if (isSelected) const SizedBox(height: 2),
