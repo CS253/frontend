@@ -1,0 +1,373 @@
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:travelly/features/account_settings/presentation/widgets/setting_item.dart';
+import 'package:travelly/features/account_settings/presentation/widgets/settings_group.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
+import '../../../../features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../providers/trip_settings_provider.dart';
+import 'manage_members_screen.dart';
+import 'notification_settings_screen.dart';
+
+class TripSettingsScreen extends StatefulWidget {
+  const TripSettingsScreen({super.key});
+
+  @override
+  State<TripSettingsScreen> createState() => _TripSettingsScreenState();
+}
+
+class _TripSettingsScreenState extends State<TripSettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Initialize with random trip ID. Change to actual tripId from arguments later
+      context.read<TripSettingsProvider>().init('trip_123');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFC),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          Consumer<TripSettingsProvider>(
+            builder: (context, provider, child) {
+              
+              // Build the switch state optimistically based on provider values
+              final simplifyExpenses = provider.tripSettings?.simplifyExpenses ?? true;
+
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 100,
+                  bottom: 120, // space for navbar
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildTripCard(context, provider),
+                      const SizedBox(height: 32),
+                          _buildSectionHeader('TRIP OPTIONS'),
+                          const SizedBox(height: 12),
+                          SettingsGroup(
+                            children: [
+                              SettingItem(
+                                title: 'Manage Members',
+                                subtitle: 'Add/Remove Members',
+                                icon: Icons.person_outline,
+                                iconBgColor: const Color(0xFFD9F0FC),
+                                iconColor: const Color(0xFF5AB6EE),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ManageMembersScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const Divider(
+                                height: 1,
+                                color: Color(0xFFEDEDED),
+                                indent: 16,
+                                endIndent: 16,
+                              ),
+                              SettingItem(
+                                title: 'Notification Settings',
+                                subtitle: 'Alerts, Splits...',
+                                icon: Icons.notifications_none,
+                                iconBgColor: const Color(0xFFE3D9F2),
+                                iconColor: const Color(0xFF8757C3),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const NotificationSettingsScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const Divider(
+                                height: 1,
+                                color: Color(0xFFEDEDED),
+                                indent: 16,
+                                endIndent: 16,
+                              ),
+                              SettingItem(
+                                title: 'Change Currency',
+                                subtitle: 'Choose the currency for payments',
+                                icon: Icons.payments_outlined,
+                                iconBgColor: const Color(0xFFF8DA78),
+                                iconColor: const Color(0xFFD3A117),
+                                onTap: () {},
+                              ),
+                              const Divider(
+                                height: 1,
+                                color: Color(0xFFEDEDED),
+                                indent: 16,
+                                endIndent: 16,
+                              ),
+                              SettingItem(
+                                title: 'Simplify Expenses',
+                                subtitle: 'Reduce the number of transactions',
+                                icon: Icons.account_tree_outlined, // close enough to the simplify graph
+                                iconBgColor: const Color(0xFFD9F2EA),
+                                iconColor: const Color(0xFF57C2A1),
+                                trailing: _buildSwitch(
+                                  simplifyExpenses,
+                                  (value) => provider.updateTripSetting('simplify_expenses', value),
+                                ),
+                                showChevron: false,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Color(0xFFD74242),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              const Text(
+                                'DANGER ZONE',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Nunito',
+                                  color: Color(0xFFD74242),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SettingsGroup(
+                            children: [
+                              SettingItem(
+                                title: 'Leave Trip',
+                                titleColor: const Color(0xFFD74242),
+                                subtitle: 'Leave this trip and its shared data',
+                                icon: Icons.delete_outline,
+                                iconBgColor: const Color(0xFFFDE8E8),
+                                iconColor: const Color(0xFFD74242),
+                                onTap: () {},
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 48),
+                        ],
+                      ),
+                    ),
+                  );
+            },
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            right: 16,
+            child: _buildHeader(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              GlassBackButton(onPressed: () => Navigator.pop(context)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Trip Settings',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF212022),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Nunito',
+        color: Color(0xFF8B8893),
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildTripCard(BuildContext context, TripSettingsProvider provider) {
+    final dashboardProvider = context.watch<DashboardProvider>();
+    final trip = dashboardProvider.currentTrip;
+    
+    if (trip == null) {
+      return Container(
+        height: 140,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.grey.withValues(alpha: 0.2),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    Widget backgroundImage;
+    if (trip.coverImage != null && trip.coverImage!.isNotEmpty) {
+      if (trip.coverImage!.startsWith('http')) {
+        backgroundImage = CachedNetworkImage(
+          imageUrl: trip.coverImage!,
+          fit: BoxFit.cover,
+          errorWidget: (context, url, error) => _buildStockFallback(trip.tripType),
+        );
+      } else {
+        backgroundImage = Image.file(
+          File(trip.coverImage!),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildStockFallback(trip.tripType),
+        );
+      }
+    } else {
+      backgroundImage = _buildStockFallback(trip.tripType);
+    }
+
+    return Container(
+      height: 140,
+      width: double.infinity,
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF262F40).withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          backgroundImage,
+          // Dark gradient overlay for text readability
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.4, 1.0],
+                colors: [
+                  Colors.black.withValues(alpha: 0.2),
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.black.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+          ),
+          // Trip Name
+          Positioned(
+            left: 16,
+            bottom: 16,
+            right: 16,
+            child: Text(
+              trip.name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: -0.5,
+                shadows: [
+                  Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 2)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockFallback(String tripType) {
+    String stockUrl;
+    switch (tripType) {
+      case 'Beach':
+        stockUrl = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'Mountain':
+        stockUrl = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'City':
+        stockUrl = 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'Nature':
+        stockUrl = 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
+        break;
+      case 'Island':
+        stockUrl = 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=60';
+        break;
+      default:
+        stockUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+    }
+    return CachedNetworkImage(
+      imageUrl: stockUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(color: const Color(0xFF90CAF9)),
+      errorWidget: (context, url, error) => Container(color: const Color(0xFF90CAF9)),
+    );
+  }
+
+  Widget _buildSwitch(bool value, Function(bool) onChanged) {
+    return Transform.scale(
+      scale: 0.7,
+      child: CupertinoSwitch(
+        value: value,
+        activeTrackColor: const Color(0xFF6BB5E5),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+

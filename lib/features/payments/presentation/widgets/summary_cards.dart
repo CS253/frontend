@@ -8,26 +8,31 @@ class SummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _buildSummaryCard(
-          context: context,
-          iconBoxColor: const Color(0xFFD8F1FD), iconColor: Colors.blueAccent,
-          icon: Icons.account_balance_wallet_outlined, title: 'Total Expense', amount: '${AppCurrency.symbol}19,400',
-        ),
-        const SizedBox(width: 8),
-        _buildSummaryCard(
-          context: context,
-          iconBoxColor: const Color(0xFFE0F5EE), iconColor: const Color(0xFF339977),
-          icon: Icons.trending_up, title: 'You Paid', amount: '${AppCurrency.symbol}5,000', hasProgressBar: true,
-        ),
-        const SizedBox(width: 8),
-        _buildSummaryCard(
-          context: context,
-          iconBoxColor: const Color(0xFFF0E8F7), iconColor: Colors.purpleAccent,
-          icon: Icons.people_outline, title: 'Top Spender', amount: '${AppCurrency.symbol}8,000', dynamicSubtitle: 'Ashish',
-        ),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(width: 8),
+          _buildSummaryCard(
+            context: context,
+            iconBoxColor: const Color(0xFFD8F1FD), iconColor: Colors.blueAccent,
+            icon: Icons.account_balance_wallet_outlined, title: 'Total Expense', amount: '${AppCurrency.symbol}19,400',
+          ),
+          const SizedBox(width: 8),
+          _buildSummaryCard(
+            context: context,
+            iconBoxColor: const Color(0xFFE0F5EE), iconColor: const Color(0xFF339977),
+            icon: Icons.trending_up, title: 'You Paid', amount: '${AppCurrency.symbol}5,000', hasProgressBar: true,
+          ),
+          const SizedBox(width: 8),
+          _buildSummaryCard(
+            context: context,
+            iconBoxColor: const Color(0xFFF0E8F7), iconColor: Colors.purpleAccent,
+            icon: Icons.people_outline, title: 'Top Spender', amount: '${AppCurrency.symbol}8,000', dynamicSubtitle: 'Ashish',
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 

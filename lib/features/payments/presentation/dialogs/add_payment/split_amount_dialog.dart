@@ -62,27 +62,51 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   void _recalculateSplits() {
     if (!splitEqually) return;
 
-    double total = double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
+    double total =
+        double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
     int divisor = widget.selectedPeopleNames.length;
-    double splitVal = divisor > 0 ? total / divisor : 0.0;
+    if (divisor == 0) return;
 
-    for (var name in widget.selectedPeopleNames) {
+    int totalCents = (total * 100).round();
+    int fCents = totalCents ~/ divisor;
+    int remainder = totalCents % divisor;
+
+    int y = remainder;
+    int x = divisor - y;
+
+    double f = fCents / 100.0;
+    double c = (fCents + 1) / 100.0;
+
+    List<String> names = List.from(widget.selectedPeopleNames);
+    names.shuffle();
+
+    for (int i = 0; i < names.length; i++) {
+      String name = names[i];
       if (controllers.containsKey(name)) {
-        controllers[name]!.text = splitVal.toStringAsFixed(0);
+        if (i < x) {
+          controllers[name]!.text = f.toStringAsFixed(2);
+        } else {
+          controllers[name]!.text = c.toStringAsFixed(2);
+        }
       }
     }
   }
 
   Future<void> _submitExpense() async {
-    double total = double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
-    double currentSum = 0.0;
+    int totalCents =
+        ((double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0) * 100)
+            .round();
+    int currentSumCents = 0;
     for (var controller in controllers.values) {
-      currentSum += double.tryParse(controller.text) ?? 0.0;
+      currentSumCents += ((double.tryParse(controller.text) ?? 0.0) * 100)
+          .round();
     }
 
-    if (currentSum != total) {
+    if (currentSumCents != totalCents) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Split amounts must equal total payment amount')),
+        const SnackBar(
+          content: Text('Split amounts must equal total payment amount'),
+        ),
       );
       return;
     }
@@ -96,13 +120,17 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
       'payer': widget.paymentDetails['payer'],
       'date': widget.paymentDetails['date'],
       'transaction_id': widget.paymentDetails['transaction_id'],
-      'splits': controllers.entries.map((e) => {'name': e.key, 'amount': e.value.text}).toList(),
+      'splits': controllers.entries
+          .map((e) => {'name': e.key, 'amount': e.value.text})
+          .toList(),
     };
 
     try {
       await PaymentService().createExpense(body);
       if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst); // Close all dialogs
+        Navigator.of(
+          context,
+        ).popUntil((route) => route.isFirst); // Close all dialogs
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Expense added successfully')),
         );
@@ -110,9 +138,9 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding expense: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error adding expense: $e')));
       }
     }
   }
@@ -198,7 +226,11 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.people_outline, size: 16, color: Color(0xFF8A8075)),
+                    const Icon(
+                      Icons.people_outline,
+                      size: 16,
+                      color: Color(0xFF8A8075),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Split equally',
@@ -221,17 +253,24 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
                     width: 36,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: splitEqually ? const Color(0xFF9FDFCA) : const Color(0xFFEBE7E0),
+                      color: splitEqually
+                          ? const Color(0xFF9FDFCA)
+                          : const Color(0xFFEBE7E0),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: AnimatedAlign(
                       duration: const Duration(milliseconds: 200),
-                      alignment: splitEqually ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: splitEqually
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 2),
                         width: 16,
                         height: 16,
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -242,31 +281,32 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
             SizedBox(
               height: 300,
               child: _isLoading
-                ? ListView.builder(
-                    itemCount: 3,
-                    itemBuilder: (context, index) => PaymentSplitRow.buildLoading(),
-                  )
-                : ListView.builder(
-                    itemCount: activeMembers.length,
-                    itemBuilder: (context, index) {
-                      final member = activeMembers[index];
-                      final controller = controllers[member.name]!;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: PaymentSplitRow(
-                          member: member,
-                          controller: controller,
-                          onManualEdit: () {
-                            if (splitEqually) {
-                              setState(() {
-                                splitEqually = false;
-                              });
-                            }
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                  ? ListView.builder(
+                      itemCount: 3,
+                      itemBuilder: (context, index) =>
+                          PaymentSplitRow.buildLoading(),
+                    )
+                  : ListView.builder(
+                      itemCount: activeMembers.length,
+                      itemBuilder: (context, index) {
+                        final member = activeMembers[index];
+                        final controller = controllers[member.name]!;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: PaymentSplitRow(
+                            member: member,
+                            controller: controller,
+                            onManualEdit: () {
+                              if (splitEqually) {
+                                setState(() {
+                                  splitEqually = false;
+                                });
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
             ),
             const SizedBox(height: 16),
             DialogPrimaryButton(

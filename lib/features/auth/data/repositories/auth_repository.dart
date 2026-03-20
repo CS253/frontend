@@ -55,56 +55,22 @@ class AuthRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Register
+  // Register (Email/Password + Verification)
   // ---------------------------------------------------------------------------
 
-  /// Registers a new user and returns a temporary token for OTP verification.
-  Future<String> register({
+  /// Creates a new user with email and password and sends verification email.
+  Future<AuthResponse> registerWithEmailPassword({
     required String email,
-    required String phone,
-  }) async {
-    try {
-      final rawData = await service.register(email: email, phone: phone);
-      return rawData['tempToken'] as String;
-    } catch (e) {
-      throw Exception('Registration failed: $e');
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Verify OTP
-  // ---------------------------------------------------------------------------
-
-  /// Verifies OTP and returns whether verification succeeded.
-  Future<bool> verifyOtp({
-    required String otp,
-    required String tempToken,
-  }) async {
-    try {
-      final rawData = await service.verifyOtp(otp: otp, tempToken: tempToken);
-      return rawData['verified'] as bool;
-    } catch (e) {
-      throw Exception('OTP verification failed: $e');
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Create Password
-  // ---------------------------------------------------------------------------
-
-  /// Creates a password after OTP verification and returns [AuthResponse].
-  ///
-  /// This completes the registration flow — the user is now fully logged in.
-  Future<AuthResponse> createPassword({
     required String password,
-    required String confirmPassword,
-    required String tempToken,
+    String? name,
+    String? phone,
   }) async {
     try {
-      final rawData = await service.createPassword(
+      final rawData = await service.registerWithEmailPassword(
+        email: email,
         password: password,
-        confirmPassword: confirmPassword,
-        tempToken: tempToken,
+        name: name,
+        phone: phone,
       );
       final authResponse = AuthResponse.fromJson(rawData);
 
@@ -113,7 +79,25 @@ class AuthRepository {
 
       return authResponse;
     } catch (e) {
-      throw Exception('Password creation failed: $e');
+      throw Exception('Registration failed: $e');
+    }
+  }
+
+  /// Sends a verification email to the current user.
+  Future<void> sendVerificationEmail() async {
+    try {
+      await service.sendVerificationEmail();
+    } catch (e) {
+      throw Exception('Failed to send verification email: $e');
+    }
+  }
+
+  /// Checks if the user's email is verified.
+  Future<bool> checkEmailVerified() async {
+    try {
+      return await service.checkEmailVerified();
+    } catch (e) {
+      throw Exception('Failed to check verification status: $e');
     }
   }
 

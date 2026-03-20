@@ -5,13 +5,23 @@ import 'dart:async';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: kIsWeb 
-      ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com" 
-      : null,
-  );
+  
+  // GoogleSignIn is now a singleton in version 7.x
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _isGoogleSignInInitialized = false;
 
   AuthService({required dynamic apiClient}); // Keep constructor for compatibility
+
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (_isGoogleSignInInitialized) return;
+    
+    await _googleSignIn.initialize(
+      clientId: kIsWeb 
+        ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com" 
+        : null,
+    );
+    _isGoogleSignInInitialized = true;
+  }
  
    User? get currentUser => _auth.currentUser;
 
@@ -39,6 +49,7 @@ class AuthService {
           'name': user?.displayName ?? email.split('@').first,
           'email': user?.email,
           'phone': user?.phoneNumber,
+          'avatarUrl': user?.photoURL,
         },
       };
     } on FirebaseAuthException catch (e) {
@@ -47,61 +58,67 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------------
-  // Register (Phone Verification)
+  // Register (Email/Password + Verification)
   // ---------------------------------------------------------------------------
 
-  Future<Map<String, dynamic>> register({
+  /// Creates a new user with email and password and sends verification email.
+  Future<Map<String, dynamic>> registerWithEmailPassword({
     required String email,
-    required String phone,
+    required String password,
+    String? name,
+    String? phone,
   }) async {
-    final completer = Completer<Map<String, dynamic>>();
-
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phone,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // This can happen automatically on some Android devices
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          completer.completeError(Exception(e.message ?? 'Verification failed'));
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          completer.complete({
-            'message': 'OTP sent successfully',
-            'tempToken': verificationId, // Use verificationId as tempToken
-          });
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
+      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
       );
-      return completer.future;
-    } catch (e) {
-      throw Exception('Registration failed: $e');
+
+      final user = userCredential.user;
+      
+      // Update display name if provided
+      if (name != null && user != null) {
+        await user.updateDisplayName(name);
+      }
+
+      // Send verification email
+      await user?.sendEmailVerification();
+
+      final token = await user?.getIdToken();
+
+      return {
+        'token': token,
+        'user': {
+          'id': user?.uid,
+          'name': user?.displayName ?? name ?? email.split('@').first,
+          'email': user?.email,
+          'phone': phone ?? user?.phoneNumber,
+          'avatarUrl': user?.photoURL,
+          'isEmailVerified': user?.emailVerified ?? false,
+        },
+      };
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Registration failed');
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Verify OTP
-  // ---------------------------------------------------------------------------
-
-  Future<Map<String, dynamic>> verifyOtp({
-    required String otp,
-    required String tempToken,
-  }) async {
+  /// Sends a verification email to the currently signed-in user.
+  Future<void> sendVerificationEmail() async {
     try {
-      final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: tempToken,
-        smsCode: otp,
-      );
-
-      final userCredential = await _auth.signInWithCredential(credential);
-      
-      return {
-        'verified': true,
-        'user': userCredential.user,
-      };
+      final user = _auth.currentUser;
+      await user?.sendEmailVerification();
     } on FirebaseAuthException catch (e) {
-      throw Exception(e.message ?? 'OTP verification failed');
+      throw Exception(e.message ?? 'Failed to send verification email');
     }
+  }
+
+  /// Reloads the user and checks if the email is verified.
+  Future<bool> checkEmailVerified() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    
+    await user.reload();
+    return _auth.currentUser?.emailVerified ?? false;
   }
 
   // ---------------------------------------------------------------------------
@@ -141,12 +158,12 @@ class AuthService {
 
   Future<Map<String, dynamic>> googleSignIn() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) throw Exception('Google sign-in cancelled');
+      await _ensureGoogleSignInInitialized();
+      
+      final googleUser = await _googleSignIn.authenticate();
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -160,6 +177,7 @@ class AuthService {
           'id': user?.uid,
           'name': user?.displayName,
           'email': user?.email,
+          'avatarUrl': user?.photoURL,
         },
       };
     } on FirebaseAuthException catch (e) {
@@ -173,6 +191,7 @@ class AuthService {
 
   Future<void> logout() async {
     await _auth.signOut();
+    await _ensureGoogleSignInInitialized();
     await _googleSignIn.signOut();
   }
 }

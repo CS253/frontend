@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/trip_header.dart';
 import '../widgets/participant_row.dart';
@@ -17,18 +18,8 @@ import '../dialogs/trip_details_dialog.dart';
 ///   • Delegates all data fetching to the provider (no API calls here)
 ///   • Composes extracted widgets for each UI section
 ///   • Handles loading, error, and data states
-///   • Navigates to feature screens via the [onNavigate] callback
-///
-/// The [onNavigate] callback is provided by [MainScreen] to switch
-/// the bottom navigation tab, maintaining the existing IndexedStack
-/// navigation pattern.
 class DashboardScreen extends StatefulWidget {
-  /// Callback to switch the bottom navigation tab in [MainScreen].
-  /// The [int] parameter is the target tab index:
-  ///   0 = Home, 1 = Payments, 2 = Plan, 3 = Gallery, 4 = Documents
-  final void Function(int tabIndex)? onNavigate;
-
-  const DashboardScreen({super.key, this.onNavigate});
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -39,8 +30,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     // Fetch dashboard data when the screen is first mounted.
-    // Using addPostFrameCallback to ensure the widget tree is built
-    // before the provider triggers notifyListeners().
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DashboardProvider>().fetchDashboard();
     });
@@ -53,17 +42,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(bottom: false, child: _buildBody(provider)),
+      body: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            _buildBody(provider),
+            const Positioned(
+              top: 0,
+              left: 0,
+              child: GlassBackButton(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   /// Builds the appropriate body based on provider state.
-  ///
-  /// State machine:
-  ///   isLoading → loading indicator
-  ///   errorMessage.isNotEmpty → error message with retry
-  ///   hasData → full dashboard content
-  ///   else → empty state (shouldn't normally occur)
   Widget _buildBody(DashboardProvider provider) {
     // ── Loading state ──────────────────────────────────────────────
     if (provider.isLoading && !provider.hasData) {
@@ -120,12 +115,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: 24), // Extra space for back button
 
             // ── Trip header with trip name ────────────────────────
             TripHeader(
               tripName: provider.currentTrip?.name ?? 'My Trip',
-              onBackPressed: () => Navigator.of(context).pop(),
             ),
             const SizedBox(height: 24),
 
@@ -145,12 +139,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // ── Explore navigation grid ──────────────────────────
-            ExploreGrid(onNavigate: widget.onNavigate),
+            const ExploreGrid(),
             const SizedBox(height: 24),
 
             // ── Recent activity feed ─────────────────────────────
             ActivityList(activities: provider.activities),
-            const SizedBox(height: 32),
+            const SizedBox(height: 100), // Extra space for floating navbar
           ],
         ),
       ),

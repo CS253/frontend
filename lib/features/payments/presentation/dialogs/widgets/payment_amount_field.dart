@@ -40,9 +40,11 @@ class PaymentAmountField extends StatelessWidget {
             maxLines: maxLines,
             readOnly: readOnly,
             onTap: onTap,
-            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            keyboardType: isNumber
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
             inputFormatters: isNumber
-                ? [FilteringTextInputFormatter.digitsOnly]
+                ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))]
                 : null,
             decoration: InputDecoration(
               filled: true,
@@ -65,12 +67,17 @@ class PaymentAmountField extends StatelessWidget {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(9),
-                borderSide: const BorderSide(color: Color(0xFFEBE7E0), width: 0.75),
+                borderSide: const BorderSide(
+                  color: Color(0xFFEBE7E0),
+                  width: 0.75,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(9),
                 borderSide: BorderSide(
-                  color: readOnly ? const Color(0xFFEBE7E0) : const Color(0xFF6BB5E5),
+                  color: readOnly
+                      ? const Color(0xFFEBE7E0)
+                      : const Color(0xFF6BB5E5),
                   width: readOnly ? 0.75 : 1,
                 ),
               ),

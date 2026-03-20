@@ -49,7 +49,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (leading != null) leading!,
+              ?leading,
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,14 +113,15 @@ class SimpleAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       leading: showBackButton
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios, size: 18, color: AppTheme.textSubtitle),
+              icon: const Icon(
+                Icons.arrow_back_ios,
+                size: 18,
+                color: AppTheme.textSubtitle,
+              ),
               onPressed: onBackPressed ?? () => Navigator.pop(context),
             )
           : null,
-      title: Text(
-        title,
-        style: AppTheme.headingMedium.copyWith(fontSize: 18),
-      ),
+      title: Text(title, style: AppTheme.headingMedium.copyWith(fontSize: 18)),
       actions: actions,
     );
   }

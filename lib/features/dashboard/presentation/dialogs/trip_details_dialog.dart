@@ -408,10 +408,6 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
               ),
             ],
           ),
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.close, size: 24, color: Color(0xFF5A7184)),
-          ),
         ],
       ),
     );

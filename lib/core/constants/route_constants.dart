@@ -15,8 +15,7 @@ class RouteConstants {
   static const String launch = '/';
   static const String login = '/login';
   static const String register = '/register';
-  static const String otp = '/otp';
-  static const String createPassword = '/create-password';
+  static const String verifyEmail = '/verify-email';
   static const String googleSignIn = '/google-sign-in';
 
   // ---------------------------------------------------------------------------
@@ -43,4 +42,16 @@ class RouteConstants {
   static const String plan = '/plan';
   static const String gallery = '/gallery';
   static const String documents = '/documents';
+
+  // ---------------------------------------------------------------------------
+  // Settings Routes
+  // ---------------------------------------------------------------------------
+
+  static const String accountSettings = '/account-settings';
+  static const String personalInfo = '/account-settings/personal-info';
+  static const String changePassword = '/account-settings/change-password';
+
+  static const String tripSettings = '/trip-settings';
+  static const String tripNotifications = '/trip-settings/notifications';
+  static const String manageMembers = '/trip-settings/members';
 }

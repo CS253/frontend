@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/presentation/dialogs/add_payment/add_payment_flow.dart';
@@ -6,6 +7,7 @@ import 'package:travelly/features/payments/presentation/widgets/balance_card.dar
 import 'package:travelly/features/payments/presentation/widgets/summary_cards.dart';
 import 'package:travelly/features/payments/presentation/widgets/friend_balances.dart';
 import 'package:travelly/features/payments/presentation/widgets/expense_card.dart';
+import 'package:travelly/core/widgets/glass_back_button.dart';
 
 class PaymentsScreen extends StatelessWidget {
   final VoidCallback? onBackPressed;
@@ -16,70 +18,19 @@ class PaymentsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFCFAF8),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(74.0),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 4.0,
-                right: 16.0,
-                top: 22.0,
-                bottom: 8.0,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
-                    onPressed: onBackPressed ?? () => Navigator.maybePop(context),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text(
-                          'Payments & Expenses',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF212022),
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Track and split expenses',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF8B8893),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 14.6),
+            padding: EdgeInsets.only(
+              left: 14.6,
+              right: 14.6,
+              top: MediaQuery.of(context).padding.top + 120,
+              bottom: 120, // ample space for fab
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
                 BalanceCard(),
                 const SizedBox(height: 12),
                 const Center(child: SummaryCards()),
@@ -102,17 +53,77 @@ class PaymentsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const AllExpensesList(),
-                const SizedBox(height: 100),
               ],
             ),
           ),
           Positioned(
-            bottom: 24,
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            right: 16,
+            child: _buildGlassyHeader(),
+          ),
+          Positioned(
+            bottom: 70,
             left: 0,
             right: 0,
             child: Center(child: _buildAddPaymentButton(context)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGlassyHeader() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              GlassBackButton(onPressed: onBackPressed),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'Payments & Expenses',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF212022),
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Track and split expenses',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF8B8893),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,60 +1,51 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:travelly/features/dashboard/data/models/trip_model.dart';
 import 'package:travelly/features/dashboard/data/models/participant_model.dart';
+import 'package:travelly/features/dashboard/data/models/weather_model.dart';
+import 'package:travelly/features/dashboard/data/services/weather_service.dart';
+
 
 // =============================================================================
-// ParticipantRow — Trip info card on the dashboard.
+// ParticipantRow — Premium trip info card on the dashboard.
 //
-// Displays:
-//   • Cover photo background (if uploaded) or trip-type default gradient
-//   • Days remaining counter
-//   • Trip type emoji badge
-//   • Overlapping participant avatars
+// Visual Design:
+//   • Cover photo or stock fallback as background
+//   • Always-present dark gradient overlay ensures text readability
+//   • Frosted-glass pill for destination at the top
+//   • Bold trip duration headline
+//   • Glassmorphic info bar with date range + member count at the bottom
 //
-// Cover Photo Logic:
-//   1. If trip.coverImage is set and is a network URL → show CachedNetworkImage
-//   2. If trip.coverImage is set and is a local file  → show Image.file
-//   3. If no cover image → show a trip-type themed gradient
+// Fallback Logic:
+//   1. Custom Cover Photo: User-uploaded (network or local file)
+//   2. Stock Photo: High-quality Unsplash image based on tripType
+//   3. Gradient fallback: Last resort if network fails
 //
-// Trip-type gradient mapping:
-//   Beach   → sandy (#FFE4B5 → #F4A460)
-//   Mountain → alpine (#A8D5BA → #4A8C6F)
-//   City    → urban (#B0C4DE → #6A89CC)
-//   Nature  → forest (#C8E6C9 → #66BB6A)
-//   Island  → tropical (#B2EBF2 → #26C6DA)
-//   Other   → default blue (#C1EAFF → #D9F0FC)
+// Layout:
+//   ┌──────────────────────────────────────┐
+//   │  📍 Lahore, Pakistan        (pill)   │
+//   │                                      │
+//   │  10 Days Trip                        │
+//   │                                      │
+//   │  ┌─[glass bar]───────────────────┐   │
+//   │  │ 📅 Apr 10 – Apr 20  👥 6     │   │
+//   │  └───────────────────────────────┘   │
+//   └──────────────────────────────────────┘
 // =============================================================================
 
-/// Trip info card displaying days remaining, trip type emoji badge,
-/// and an overlapping row of participant avatars.
+/// Premium trip info card with dynamic background (Cover photo or Stock fallback),
+/// destination pill, trip duration, and glassmorphic info bar.
 ///
-/// Background shows the trip's cover photo (if uploaded) or a themed
-/// gradient based on the trip type.
+/// Text is always white with a dark gradient overlay applied regardless
+/// of the background, ensuring premium aesthetics and consistent readability.
 ///
-/// Layout:
-///   ┌──────────────────────────────────────┐
-///   │  [Cover Photo / Trip-Type Gradient]  │
-///   │  Trip starts in            [🏖️]      │
-///   │  5 Days                              │
-///   │                                      │
-///   │  😊 😎 🤗 😄  +2 travelers           │
-///   └──────────────────────────────────────┘
-///
-/// Tapping this card opens the [TripDetailsDialog] via [onTap].
-class ParticipantRow extends StatelessWidget {
-  /// Current trip data for the info card header.
+/// Tapping opens the [TripDetailsDialog] via [onTap].
+class ParticipantRow extends StatefulWidget {
   final TripModel trip;
-
-  /// List of participants to display as avatar bubbles.
   final List<ParticipantModel> participants;
-
-  /// Maximum number of avatars to show before "+N travelers" text.
   final int maxVisibleAvatars;
-
-  /// Callback when the entire card is tapped.
-  /// Used to open the Trip Details floating dialog.
   final VoidCallback? onTap;
 
   const ParticipantRow({
@@ -65,159 +56,211 @@ class ParticipantRow extends StatelessWidget {
     this.onTap,
   });
 
-  /// Returns the gradient colors for a given trip type.
-  /// Used as fallback when no cover photo is uploaded.
+  @override
+  State<ParticipantRow> createState() => _ParticipantRowState();
+}
+
+class _ParticipantRowState extends State<ParticipantRow> {
+  final PageController _pageController = PageController(initialPage: 1000);
+  int _currentPage = 0;
+
+  // Weather State
+  bool _isLoadingWeather = true;
+  WeatherData? _weatherData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadWeather() async {
+    final destination = widget.trip.destination.isNotEmpty 
+        ? widget.trip.destination 
+        : widget.trip.location;
+        
+    if (destination.isEmpty) {
+      if (mounted) setState(() => _isLoadingWeather = false);
+      return;
+    }
+
+    final data = await WeatherService().getWeather(destination);
+    
+    if (mounted) {
+      setState(() {
+        _weatherData = data;
+        _isLoadingWeather = false;
+      });
+    }
+  }
+
+  // ── Stock Photo Mapping ─────────────────────────────────────────────
+
+  /// Defines high-quality stock photo URLs for each trip type.
+  /// Used as a fallback when no custom cover photo is uploaded.
+  String _getStockPhotoForTripType(String tripType) {
+    switch (tripType) {
+      case 'Beach':
+        return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80';
+      case 'Mountain':
+        return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+      case 'City':
+        return 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80';
+      case 'Nature':
+        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
+      case 'Island':
+        return 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8aXNsYW5kfGVufDB8fDB8fHww';
+      case 'Other':
+      default:
+        return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+    }
+  }
+
+  // ── Gradient Mapping (Last resort fallback) ──────────────────────────
+
   List<Color> _getGradientForTripType(String tripType) {
     switch (tripType) {
       case 'Beach':
-        return [const Color(0xFFFFE4B5), const Color(0xFFF4A460)];
+        return [const Color(0xFFF9D29D), const Color(0xFFE8875C)];
       case 'Mountain':
-        return [const Color(0xFFA8D5BA), const Color(0xFF4A8C6F)];
+        return [const Color(0xFF8ECFAB), const Color(0xFF3B7A5A)];
       case 'City':
-        return [const Color(0xFFB0C4DE), const Color(0xFF6A89CC)];
+        return [const Color(0xFF94B3D4), const Color(0xFF4A6FA5)];
       case 'Nature':
-        return [const Color(0xFFC8E6C9), const Color(0xFF66BB6A)];
+        return [const Color(0xFFA5D6A7), const Color(0xFF388E3C)];
       case 'Island':
-        return [const Color(0xFFB2EBF2), const Color(0xFF26C6DA)];
+        return [const Color(0xFF80DEEA), const Color(0xFF00897B)];
       default:
-        return [const Color(0xFFC1EAFF), const Color(0xFFD9F0FC)];
+        return [const Color(0xFF90CAF9), const Color(0xFF42A5F5)];
     }
   }
 
-  /// Returns the emoji icon for a given trip type.
-  String _getEmojiForTripType(String tripType) {
-    switch (tripType) {
-      case 'Beach':
-        return '🏖️';
-      case 'Mountain':
-        return '⛰️';
-      case 'City':
-        return '🏙️';
-      case 'Nature':
-        return '🌿';
-      case 'Island':
-        return '🏝️';
-      default:
-        return '🌍';
-    }
-  }
+  // ── Computed properties ─────────────────────────────────────────────
 
-  /// Whether the trip has a valid cover image (network or local file).
   bool get _hasCoverImage =>
-      trip.coverImage != null && trip.coverImage!.isNotEmpty;
+      widget.trip.coverImage != null && widget.trip.coverImage!.isNotEmpty;
+
+  /// Trip duration in days from start → end date.
+  int get _tripDurationDays {
+    final start = DateTime.tryParse(widget.trip.startDate);
+    final end = DateTime.tryParse(widget.trip.endDate);
+    if (start != null && end != null) {
+      return end.difference(start).inDays;
+    }
+    return widget.trip.daysRemaining;
+  }
+
+  /// "Apr 10" format.
+  String _formatShortDate(String isoDate) {
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) return isoDate;
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}';
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
+        height: 160,
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF262F40).withValues(alpha: 0.1),
-              blurRadius: 13.6,
-              offset: const Offset(0, 4),
-              spreadRadius: -6,
+              color: const Color(0xFF262F40).withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
             ),
           ],
         ),
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            // ── Background: cover photo or trip-type gradient ──────────
-            Positioned.fill(
-              child: _buildBackground(),
-            ),
+            // ── Layer 1: Background photo (Cover or Stock) ───────────
+            _buildBackground(),
 
-            // ── Dark overlay for text readability on photos ───────────
-            if (_hasCoverImage)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.15),
-                        Colors.black.withValues(alpha: 0.55),
-                      ],
-                    ),
-                  ),
+            // ── Layer 2: Dark gradient overlay (always present) ───
+            // Ensures white text is readable on ANY background.
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.35, 1.0],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.10),
+                    Colors.black.withValues(alpha: 0.60),
+                  ],
                 ),
               ),
+            ),
 
-            // ── Content ───────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            // ── Layer 3: Swipeable Content (Vertical Infinite PageView) ──────────────
+            PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              itemCount: null, // Infinite scrolling
+              onPageChanged: (index) {
+                // Ensure page indicators update correctly (0 or 1)
+                setState(() => _currentPage = index % 2);
+              },
+              itemBuilder: (context, index) {
+                final pageIndex = index % 2;
+
+                return AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    double value = 1.0;
+                    if (_pageController.position.haveDimensions) {
+                      value = _pageController.page! - index;
+                      // Clamp the value to [-1, 1] range to prevent overscaling
+                      value = (1 - (value.abs() * 0.2)).clamp(0.8, 1.0);
+                    } else {
+                      // Initial render fallback
+                      final isInitial = index == _pageController.initialPage;
+                      value = isInitial ? 1.0 : 0.8;
+                    }
+
+                    return Transform.scale(
+                      scale: value,
+                      child: Opacity(
+                        // Fade out slightly when scaled down
+                        opacity: value.clamp(0.5, 1.0),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: pageIndex == 0 ? _buildTripInfoPage() : _buildWeatherPage(),
+                );
+              },
+            ),
+
+            // ── Layer 4: Vertical Page Indicators ───────────────────────────
+            Positioned(
+              right: 8,
+              top: 0,
+              bottom: 0,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ── Top row: days remaining + emoji badge ──────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Trip starts in',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: _hasCoverImage
-                                    ? Colors.white.withValues(alpha: 0.85)
-                                    : const Color(0x99212022),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${trip.daysRemaining} Days',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: _hasCoverImage
-                                    ? Colors.white
-                                    : const Color(0xFF212022),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Emoji badge in frosted container
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: _hasCoverImage
-                              ? Colors.white.withValues(alpha: 0.25)
-                              : Colors.white.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF262F40).withValues(alpha: 0.08),
-                              blurRadius: 16,
-                              offset: const Offset(0, 3),
-                              spreadRadius: -3,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            trip.emoji.isNotEmpty
-                                ? trip.emoji
-                                : _getEmojiForTripType(trip.tripType),
-                            style: const TextStyle(fontSize: 32),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Bottom row: participant avatars ────────────────
-                  _buildAvatarRow(),
+                  _buildDotIndicator(0),
+                  const SizedBox(height: 4),
+                  _buildDotIndicator(1),
                 ],
               ),
             ),
@@ -227,37 +270,418 @@ class ParticipantRow extends StatelessWidget {
     );
   }
 
-  /// Builds the card background: cover photo or trip-type gradient.
-  Widget _buildBackground() {
-    // 1. Cover photo is available
-    if (_hasCoverImage) {
-      final coverImage = trip.coverImage!;
+  Widget _buildDotIndicator(int index) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: _currentPage == index ? 16 : 6,
+      width: 6,
+      decoration: BoxDecoration(
+        color: _currentPage == index 
+            ? Colors.white 
+            : Colors.white.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(3),
+      ),
+    );
+  }
 
-      // Network image (URL from backend)
+  // ── Pages ───────────────────────────────────────────────────────────
+
+  Widget _buildTripInfoPage() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Top: destination pill ────────────────────────
+          _buildDestinationPill(),
+
+          const Spacer(),
+
+          // ── Middle: trip duration ────────────────────────
+          Text(
+            '$_tripDurationDays Days Trip',
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+              height: 1.1,
+              shadows: [
+                Shadow(
+                  color: Color(0x66000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // ── Bottom: glassmorphic info bar ────────────────
+          _buildInfoBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeatherPage() {
+    final destination = widget.trip.destination.isNotEmpty
+        ? widget.trip.destination
+        : widget.trip.location.isNotEmpty
+            ? widget.trip.location
+            : 'Unknown';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top: App-style header
+          Row(
+            children: [
+              const Icon(Icons.cloud_outlined, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Weather Forecast',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 8),
+
+          // Location string clearly mapped to trip.location
+          Text(
+            destination,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const Spacer(),
+
+          if (_isLoadingWeather)
+            const Center(
+              child: SizedBox(
+                width: 24, height: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              ),
+            )
+          else if (_weatherData == null)
+            Center(
+              child: Text(
+                'Weather unavailable\nfor this destination.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 13,
+                ),
+              ),
+            )
+          else
+            // Weather Content
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Left: Current Weather
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${_weatherData!.currentTemp.round()}°',
+                        style: const TextStyle(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.0,
+                          shadows: [
+                            Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 2)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            _weatherData!.currentConditionIcon,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _weatherData!.currentConditionText,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.95),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Right: Hourly Forecast (Next 4 hours)
+                _buildHourlyForecast(),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHourlyForecast() {
+    if (_weatherData == null || _weatherData!.hourlyForecast.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Determine current hour in the local timezone of the destination
+    final now = DateTime.now().toUtc().add(Duration(seconds: _weatherData!.utcOffsetSeconds));
+    
+    // Find the next 4 hours
+    final upcomingHourly = _weatherData!.hourlyForecast.where((h) {
+      final hourTime = DateTime.tryParse(h.timeIso);
+      if (hourTime == null) return false;
+      return hourTime.isAfter(now.subtract(const Duration(hours: 1)));
+    }).take(4).toList();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: upcomingHourly.map((hour) {
+              final isFirst = upcomingHourly.indexOf(hour) == 0;
+              final time = DateTime.parse(hour.timeIso);
+              
+              return Padding(
+                padding: EdgeInsets.only(left: isFirst ? 0 : 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isFirst ? 'Now' : '${time.hour}:00',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isFirst ? FontWeight.w700 : FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      hour.conditionIcon,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${hour.temperature.round()}°',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Sub-widgets ─────────────────────────────────────────────────────
+
+  /// Frosted glass pill showing 📍 destination at the top of the card.
+  Widget _buildDestinationPill() {
+    final destination = widget.trip.destination.isNotEmpty
+        ? widget.trip.destination
+        : widget.trip.location.isNotEmpty
+            ? widget.trip.location
+            : 'Unknown';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.location_on,
+                size: 13,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  destination,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Glassmorphic bar at the bottom showing date range and member count.
+  Widget _buildInfoBar() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Date range
+              const Icon(
+                Icons.calendar_today_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${_formatShortDate(widget.trip.startDate)} – ${_formatShortDate(widget.trip.endDate)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.95),
+                ),
+              ),
+
+              const Spacer(),
+
+              // Divider dot
+              Container(
+                width: 3,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+              ),
+
+              const Spacer(),
+
+              // Member count
+              const Icon(
+                Icons.people_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${widget.participants.length} ${widget.participants.length == 1 ? 'member' : 'members'}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.95),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Background builders ─────────────────────────────────────────────
+
+  /// Builds the background layer:
+  /// 1. User specified Cover Photo (Custom)
+  /// 2. Stock Photo Fallback based on tripType (Dynamic)
+  /// 3. Gradient Fallback (Last resort)
+  Widget _buildBackground() {
+    // 1. Check for user-uploaded cover photo
+    if (_hasCoverImage) {
+      final coverImage = widget.trip.coverImage!;
+
       if (coverImage.startsWith('http')) {
         return CachedNetworkImage(
           imageUrl: coverImage,
           fit: BoxFit.cover,
-          placeholder: (context, url) => _buildGradientBackground(),
-          errorWidget: (context, url, error) => _buildGradientBackground(),
+          placeholder: (context, url) => _buildStockFallback(),
+          errorWidget: (context, url, error) => _buildStockFallback(),
         );
       }
 
-      // Local file image (just uploaded, not yet synced)
       return Image.file(
         File(coverImage),
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildGradientBackground(),
+        errorBuilder: (context, error, stackTrace) => _buildStockFallback(),
       );
     }
 
-    // 2. No cover photo — use trip-type themed gradient
-    return _buildGradientBackground();
+    // 2 & 3. Fallback to Stock Photo or Gradient
+    return _buildStockFallback();
   }
 
-  /// Trip-type themed gradient fallback.
+  /// Builds the stock photo fallback based on tripType.
+  /// Falls back to gradient if network image fails.
+  Widget _buildStockFallback() {
+    final stockUrl = _getStockPhotoForTripType(widget.trip.tripType);
+
+    return CachedNetworkImage(
+      imageUrl: stockUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => _buildGradientBackground(),
+      errorWidget: (context, url, error) => _buildGradientBackground(),
+    );
+  }
+
+  /// Last resort gradient fallback.
   Widget _buildGradientBackground() {
-    final gradientColors = _getGradientForTripType(trip.tripType);
+    final gradientColors = _getGradientForTripType(widget.trip.tripType);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -265,65 +689,7 @@ class ParticipantRow extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: gradientColors,
         ),
-        borderRadius: BorderRadius.circular(16),
       ),
-    );
-  }
-
-  /// Builds the overlapping avatar row with a "+N travelers" label.
-  Widget _buildAvatarRow() {
-    final visible = participants.take(maxVisibleAvatars).toList();
-    final remaining = participants.length - visible.length;
-
-    return Row(
-      children: [
-        // Overlapping emoji avatars
-        ...visible.asMap().entries.map((entry) {
-          final isLast = entry.key == visible.length - 1;
-          final participant = entry.value;
-          return Align(
-            widthFactor: isLast ? 1.0 : 0.7,
-            child: _buildEmojiAvatar(participant.emoji),
-          );
-        }),
-
-        // "+N travelers" text
-        if (remaining > 0) ...[
-          const SizedBox(width: 8),
-          Text(
-            '+$remaining travelers',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              color: _hasCoverImage
-                  ? Colors.white.withValues(alpha: 0.9)
-                  : const Color(0xB3212022),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// Individual circular emoji avatar.
-  Widget _buildEmojiAvatar(String emoji) {
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF262F40).withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 3),
-            spreadRadius: -3,
-          ),
-        ],
-      ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 11))),
     );
   }
 }

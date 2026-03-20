@@ -31,7 +31,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
 
     if (!mounted) return;
 
-    // If user is already authenticated (from Firebase session), skip launch screen
+    // If user is already authenticated, go to trips
     if (authProvider.isAuthenticated) {
       Navigator.pushNamedAndRemoveUntil(
         context,

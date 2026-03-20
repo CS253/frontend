@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/route_constants.dart';
 import 'explore_card.dart';
 
 /// 2×2 grid of explore navigation cards on the dashboard.
@@ -12,23 +13,9 @@ import 'explore_card.dart';
 ///   │ Plan     │  │ Documents│
 ///   └──────────┘  └──────────┘
 ///
-/// Navigation is handled by calling [onNavigate] with the target
-/// bottom navigation index. This avoids coupling the widget to
-/// any particular navigation implementation.
-///
-/// These cards do NOT require backend data — they use static
-/// configuration defined in this widget.
+/// Navigation is handled by pushing routes to the root navigator.
 class ExploreGrid extends StatelessWidget {
-  /// Callback to navigate to a feature screen.
-  /// The [int] parameter represents the bottom nav bar index:
-  ///   0 = Home (Dashboard)
-  ///   1 = Payments
-  ///   2 = Plan
-  ///   3 = Gallery
-  ///   4 = Documents
-  final void Function(int tabIndex)? onNavigate;
-
-  const ExploreGrid({super.key, this.onNavigate});
+  const ExploreGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +48,7 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.account_balance_wallet_outlined,
               iconBgColor: const Color(0xFF7EF1CB),
               cardBgColor: const Color(0xFFE5F8F1),
-              onTap: () => onNavigate?.call(1),
+              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.payments),
             ),
             ExploreCard(
               title: 'Gallery',
@@ -69,7 +56,7 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.image_outlined,
               iconBgColor: const Color(0xFFFFCA9B),
               cardBgColor: const Color(0xFFFFF0DD),
-              onTap: () => onNavigate?.call(3),
+              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.gallery),
             ),
             ExploreCard(
               title: 'Plan',
@@ -77,7 +64,7 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.map_outlined,
               iconBgColor: const Color(0xFF7DD2ED),
               cardBgColor: const Color(0xFFE7F8FA),
-              onTap: () => onNavigate?.call(2),
+              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.plan),
             ),
             ExploreCard(
               title: 'Documents',
@@ -85,7 +72,7 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.description_outlined,
               iconBgColor: const Color(0xFFFFE591),
               cardBgColor: const Color(0xFFFEF9EA),
-              onTap: () => onNavigate?.call(4),
+              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.documents),
             ),
           ],
         ),
