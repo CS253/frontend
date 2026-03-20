@@ -14,10 +14,7 @@
 // =============================================================================
 
 // NOTE: Uncomment when real multipart API calls are enabled.
-// import 'package:http/http.dart' as http;
 import '../../../../core/api/api_client.dart';
-// NOTE: ApiEndpoints import should be uncommented when real API calls are enabled.
-// import '../../../../core/api/api_endpoints.dart';
 
 class TripsService {
   final ApiClient apiClient;
@@ -36,10 +33,9 @@ class TripsService {
   /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> getTrips({int page = 1, int limit = 10}) async {
     // -------------------------------------------------------------------------
-    // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
-    // TODO: Replace mock data once backend API is connected
+    // MOCK DATA — Active by default
     // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 800));
     return {
       'trips': [
         {
@@ -75,45 +71,25 @@ class TripsService {
           'membersCount': 8,
           'createdBy': 'user-001',
         },
-        {
-          'id': 'trip-004',
-          'name': 'Jungle Safari',
-          'destination': 'Costa Rica',
-          'coverImage': 'https://images.unsplash.com/photo-1518182170546-076616fd6cbf?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-03-01',
-          'endDate': '2024-03-12',
-          'tripType': 'Nature',
-          'membersCount': 6,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-005',
-          'name': 'Beach Bliss',
-          'destination': 'Maldives',
-          'coverImage': 'https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-01-01',
-          'endDate': '2024-01-14',
-          'tripType': 'Island',
-          'membersCount': 4,
-          'createdBy': 'user-001',
-        },
       ],
-      'total': 5,
+      'total': 3,
       'page': page,
       'limit': limit,
     };
+
     // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
-    // BACKEND CALL: GET /trips with pagination query params
-    // return await apiClient.get(
-    //   ApiEndpoints.trips,
-    //   queryParams: {
-    //     'page': page.toString(),
-    //     'limit': limit.toString(),
-    //   },
-    // );
+    // REAL API CALL — Commented out until backend is ready
     // -------------------------------------------------------------------------
+    /*
+    final response = await apiClient.get(
+      ApiEndpoints.trips,
+      queryParams: {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      },
+    );
+    return response as Map<String, dynamic>;
+    */
   }
 
   // ---------------------------------------------------------------------------

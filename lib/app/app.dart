@@ -15,7 +15,12 @@ import 'routes.dart';
 import 'app_providers.dart';
 
 class App extends StatelessWidget {
-  const App({super.key});
+  final bool startFromTrips;
+
+  const App({
+    super.key,
+    this.startFromTrips = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,7 @@ class App extends StatelessWidget {
         title: 'Travelly',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: RouteConstants.launch,
+        initialRoute: startFromTrips ? RouteConstants.trips : RouteConstants.launch,
         onGenerateRoute: AppRoutes.generateRoute,
       ),
     );

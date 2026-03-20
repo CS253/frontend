@@ -10,6 +10,7 @@
 // Now: Provider-driven list loaded from TripsProvider.trips.
 // =============================================================================
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../trips/presentation/providers/trips_provider.dart';
@@ -32,6 +33,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     // Load trips when screen initializes — this calls the provider
     // which calls the repository → service → API (or mock).
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().initialize();
       context.read<TripsProvider>().loadTrips(refresh: true);
     });
   }
@@ -42,17 +44,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.white,
-                const Color(0xFFF3F9FD).withValues(alpha: 0.5),
-                const Color(0xFFEBF5FB),
-              ],
-            ),
-          ),
+          color: Colors.white,
           child: Stack(
           children: [
             // Background Design — subtle dots pattern
@@ -67,93 +59,143 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                 // Custom App Bar — now uses TripsProvider for trip count
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Image.asset(
-                            'assets/images/launch_icon.png',
-                            height: 28,
-                            width: 28,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'My Trips',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF282828),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/images/app_logo.png',
+                              height: 50,
+                              width: 50,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            const Text(
+                              'My Trips',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF282828),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       // Trip count badge — dynamically reflects provider state
                       Consumer<TripsProvider>(
                         builder: (context, tripsProvider, _) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFBCE3F7),
                               borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.star_border, size: 14, color: Color(0xFF4A4A4A)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${tripsProvider.tripCount} Trips',
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF4A4A4A),
-                                  ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.5),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star_border, size: 14, color: Color(0xFF4A4A4A)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${tripsProvider.tripCount} Trips',
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF4A4A4A),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           );
                         },
                       ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, color: Color(0xFF282828), size: 22),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onSelected: (value) async {
-                          if (value == 'logout') {
-                            await context.read<AuthProvider>().logout();
-                            if (context.mounted) {
-                              Navigator.of(context).pushNamedAndRemoveUntil(
-                                RouteConstants.login,
-                                (route) => false,
-                              );
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert, color: Color(0xFF282828), size: 22),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onSelected: (value) async {
+                            if (value == 'account_settings') {
+                              Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.accountSettings);
+                            } else if (value == 'logout') {
+                              await context.read<AuthProvider>().logout();
+                              if (context.mounted) {
+                                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                                  RouteConstants.login,
+                                  (route) => false,
+                                );
+                              }
                             }
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'logout',
-                            height: 40,
-                            child: Row(
-                              children: [
-                                Icon(Icons.logout_rounded, color: Colors.red.shade400, size: 18),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Logout', 
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'account_settings',
+                              height: 40,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.settings_outlined, color: Color(0xFF4A4A4A), size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Account Settings', 
+                                    style: TextStyle(
+                                      color: Color(0xFF4A4A4A),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            PopupMenuItem(
+                              value: 'logout',
+                              height: 40,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.logout_rounded, color: Colors.red.shade400, size: 18),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Logout', 
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -181,7 +223,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                               const Icon(Icons.error_outline, size: 48, color: Color(0xFFB0B0B0)),
                               const SizedBox(height: 16),
                               Text(
-                                'Failed to load trips',
+                                tripsProvider.errorMessage ?? 'Failed to load trips',
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 16,

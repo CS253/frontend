@@ -55,14 +55,14 @@ class DashboardService {
     return {
       'currentTrip': {
         'id': 'trip_mock_001',
-        'name': 'The Lyaari Trip',
-        'location': 'Pakistan',
-        'destination': 'Lahore, Pakistan',
+        'name': 'Less Gooo',
+        'location': 'Maldives',
+        'destination': 'Maldives',
         'startDate': '2026-04-10',
         'endDate': '2026-04-20',
         'daysRemaining': 5,
         'emoji': '♠️',
-        'tripType': 'City',
+        'tripType': 'Island',
         'coverImage': null, // No cover photo — will use trip-type default
         'participants': [
           {

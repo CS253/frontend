@@ -1,15 +1,15 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-// import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/gallery_provider.dart';
 import '../widgets/photo_card.dart';
+import '../../../../core/widgets/glass_back_button.dart';
 
 class GalleryScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
 
-  const GalleryScreen({Key? key, this.onBackPressed}) : super(key: key);
+  const GalleryScreen({super.key, this.onBackPressed});
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -19,7 +19,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch photos on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GalleryProvider>().fetchPhotos();
     });
@@ -32,37 +31,19 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(74.0),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Color(0xFFEDEDED), width: 0.8),
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 4.0,
-                right: 16.0,
-                top: 22.0,
-                bottom: 8.0,
-              ),
-              child: inSelectionMode
-                  ? _buildSelectionHeader(provider)
-                  : _buildStandardHeader(provider),
-            ),
-          ),
-        ),
-      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           _buildGrid(provider),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            right: 16,
+            child: _buildGlassyHeader(provider, inSelectionMode),
+          ),
           if (!inSelectionMode)
             Positioned(
-              bottom: 24,
+              bottom: 70, // lower
               left: 0,
               right: 0,
               child: Center(child: _buildAddButton()),
@@ -72,17 +53,43 @@ class _GalleryScreenState extends State<GalleryScreen> {
     );
   }
 
-  Widget _buildStandardHeader(GalleryProvider provider) {
+  Widget _buildGlassyHeader(GalleryProvider provider, bool inSelectionMode) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: inSelectionMode
+            ? _buildSelectionHeaderContent(provider)
+            : _buildStandardHeaderContent(provider),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStandardHeaderContent(GalleryProvider provider) {
     return Row(
       children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF212022), size: 22),
-          onPressed: widget.onBackPressed ?? () => Navigator.maybePop(context),
-        ),
+        GlassBackButton(onPressed: widget.onBackPressed),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 'Gallery',
@@ -104,24 +111,23 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ],
           ),
         ),
-        const Icon(Icons.menu, color: Color(0xFF212022), size: 24),
       ],
     );
   }
 
-  Widget _buildSelectionHeader(GalleryProvider provider) {
+  Widget _buildSelectionHeaderContent(GalleryProvider provider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.close, color: Color(0xFF212022)),
-              onPressed: () {
+            GestureDetector(
+              onTap: () {
                 provider.clearSelection();
               },
+              child: const Icon(Icons.close, color: Color(0xFF212022)),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Text(
               '${provider.selectedPhotoIds.length} Selected',
               style: const TextStyle(
@@ -132,11 +138,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ),
           ],
         ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
-          onPressed: () {
+        GestureDetector(
+          onTap: () {
             provider.deleteSelected();
           },
+          child: const Icon(Icons.delete_outline, color: Colors.red),
         ),
       ],
     );
@@ -158,10 +164,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ).copyWith(bottom: 100),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: MediaQuery.of(context).padding.top + 120,
+        bottom: 120, // ample space for fab
+      ),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 16,
