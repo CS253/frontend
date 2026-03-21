@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
 
 class PaymentSplitRow extends StatelessWidget {
   final MemberModel member;
   final TextEditingController controller;
   final VoidCallback onManualEdit;
+  final String currencySymbol;
 
   const PaymentSplitRow({
     super.key,
     required this.member,
     required this.controller,
     required this.onManualEdit,
+    required this.currencySymbol,
   });
 
   @override
@@ -71,7 +72,7 @@ class PaymentSplitRow extends StatelessWidget {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFFCFAF8),
-                prefixText: '${AppCurrency.symbol} ',
+                prefixText: '$currencySymbol ',
                 prefixStyle: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.bold,
                   fontSize: 11,

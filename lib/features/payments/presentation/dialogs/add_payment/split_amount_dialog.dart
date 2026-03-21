@@ -300,6 +300,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
                           child: PaymentSplitRow(
                             member: member,
                             controller: controller,
+                            currencySymbol: currencySymbol,
                             onManualEdit: () {
                               if (splitEqually) {
                                 setState(() {
