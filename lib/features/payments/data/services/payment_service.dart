@@ -95,8 +95,8 @@ class PaymentService {
 
   /// Create a new expense.
   Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) async {
-    // Inject currency symbol dynamically
-    body['currency'] = AppCurrency.code;
+    // Inject currency symbol dynamically if not provided
+    body['currency'] ??= AppCurrency.code;
     return await _apiClient.post(ApiEndpoints.expenses, body: body) as Map<String, dynamic>;
   }
 

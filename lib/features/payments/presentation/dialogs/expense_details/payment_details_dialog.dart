@@ -53,6 +53,8 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     final amount = _expenseDetails?['amount'] ?? '0';
     final payerName = _expenseDetails?['payer_name'] ?? _expenseDetails?['payerName'] ?? 'Unknown';
     final splits = _expenseDetails?['splits'] as List<dynamic>? ?? [];
+    final currencyCode = _expenseDetails?['currency'] ?? AppCurrency.code;
+    final currencySymbol = currencyCode == 'INR' ? '₹' : currencyCode == 'USD' ? '\$' : currencyCode == 'EUR' ? '€' : currencyCode == 'GBP' ? '£' : AppCurrency.symbol;
 
     return Dialog(
       backgroundColor: const Color(0xFFFCFAF8),
@@ -97,7 +99,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(s['name'].toString(), style: GoogleFonts.plusJakartaSans()),
-                  Text('${AppCurrency.symbol}${s['amount']}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500)),
+                  Text('$currencySymbol${s['amount']}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500)),
                 ],
               ),
             )),
@@ -108,7 +110,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Total:', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                Text('${AppCurrency.symbol}$amount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('$currencySymbol$amount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
           ],

@@ -24,6 +24,7 @@ class PaymentDetailsDialog extends StatefulWidget {
 class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
   String? selectedPayer;
   String _selectedEmoji = '✈️';
+  late String selectedCurrency;
   late TextEditingController amountController;
   late TextEditingController descriptionController;
   late TextEditingController dateController;
@@ -36,6 +37,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     super.initState();
     selectedPayer = widget.initialDetails?['payer'];
     _selectedEmoji = widget.initialDetails?['emoji'] ?? '✈️';
+    selectedCurrency = widget.initialDetails?['currency'] ?? AppCurrency.code;
     amountController = TextEditingController(text: widget.initialDetails?['amount'] ?? '');
     descriptionController = TextEditingController(text: widget.initialDetails?['description'] ?? '');
     dateController = TextEditingController(text: widget.initialDetails?['date'] ?? '');
@@ -115,7 +117,41 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               hintText: 'e.g., 2000',
               controller: amountController,
               isNumber: true,
-              prefixText: '${AppCurrency.symbol}   ',
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12.0, right: 8.0),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedCurrency,
+                    icon: const Padding(
+                      padding: EdgeInsets.only(left: 4.0),
+                      child: Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF8A8075)),
+                    ),
+                    isDense: true,
+                    alignment: Alignment.center,
+                    items: ['INR', 'USD', 'EUR', 'GBP'].map((String val) {
+                      String symbol = val == 'INR' ? '₹' : val == 'USD' ? '\$' : val == 'EUR' ? '€' : val == 'GBP' ? '£' : val;
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(
+                          '$symbol $val',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: const Color(0xFF38332E),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedCurrency = val;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -228,6 +264,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   'emoji': _selectedEmoji,
                   'payer': selectedPayer!,
                   'date': dateController.text,
+                  'currency': selectedCurrency,
                 });
               },
             ),

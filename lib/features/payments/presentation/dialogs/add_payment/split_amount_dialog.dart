@@ -119,6 +119,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
       'emoji': widget.paymentDetails['emoji'],
       'payer': widget.paymentDetails['payer'],
       'date': widget.paymentDetails['date'],
+      'currency': widget.paymentDetails['currency'] ?? AppCurrency.code,
       'transaction_id': widget.paymentDetails['transaction_id'],
       'splits': controllers.entries
           .map((e) => {'name': e.key, 'amount': e.value.text})
@@ -150,6 +151,9 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
     final activeMembers = _members
         .where((m) => widget.selectedPeopleNames.contains(m.name))
         .toList();
+
+    final currencyCode = widget.paymentDetails['currency'] ?? AppCurrency.code;
+    final currencySymbol = currencyCode == 'INR' ? '₹' : currencyCode == 'USD' ? '\$' : currencyCode == 'EUR' ? '€' : currencyCode == 'GBP' ? '£' : AppCurrency.symbol;
 
     return Dialog(
       backgroundColor: const Color(0xFFFCFAF8),
@@ -210,7 +214,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
                     ),
                   ),
                   Text(
-                    '${AppCurrency.symbol}${widget.paymentDetails['amount']}',
+                    '$currencySymbol${widget.paymentDetails['amount']}',
                     style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,

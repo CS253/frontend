@@ -75,6 +75,7 @@ class _AllExpensesListState extends State<AllExpensesList> {
                   date: expense['date'],
                   yourShare: expense['your_share'],
                   status: expense['status'],
+                  currency: expense['currency'] ?? AppCurrency.code,
                   onDelete: () => _deleteExpense(expense['id']),
                 ),
                 const SizedBox(height: 10),
@@ -89,7 +90,7 @@ class _AllExpensesListState extends State<AllExpensesList> {
 
 /// Individual expense card widget.
 class ExpenseCard extends StatelessWidget {
-  final String id, title, amount, payerName, payerInitials, date, yourShare, status;
+  final String id, title, amount, payerName, payerInitials, date, yourShare, status, currency;
   final String shareTextPrefix;
   final Color payerColor;
   final VoidCallback? onDelete;
@@ -106,11 +107,14 @@ class ExpenseCard extends StatelessWidget {
     required this.yourShare,
     this.shareTextPrefix = 'Your share: ',
     required this.status,
+    required this.currency,
     this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
+    final currencySymbol = currency == 'INR' ? '₹' : currency == 'USD' ? '\$' : currency == 'EUR' ? '€' : currency == 'GBP' ? '£' : AppCurrency.symbol;
+
     return GestureDetector(
       onTap: () {
         showDialog(
@@ -161,7 +165,7 @@ class ExpenseCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '${AppCurrency.symbol}$amount',
+                          '$currencySymbol$amount',
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.bold,
                             fontSize: 16.5,
@@ -262,7 +266,7 @@ class ExpenseCard extends StatelessWidget {
                             ),
                           Flexible(
                             child: Text(
-                              shareTextPrefix == 'Your share: ' ? '${AppCurrency.symbol}$yourShare' : '$shareTextPrefix ${AppCurrency.symbol}$yourShare',
+                              shareTextPrefix == 'Your share: ' ? '$currencySymbol$yourShare' : '$shareTextPrefix $currencySymbol$yourShare',
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12.8,

@@ -8,6 +8,7 @@ class PaymentAmountField extends StatelessWidget {
   final TextEditingController? controller;
   final bool isNumber;
   final String? prefixText;
+  final Widget? prefixIcon;
   final Color? filledColor;
   final int maxLines;
   final bool readOnly;
@@ -20,6 +21,7 @@ class PaymentAmountField extends StatelessWidget {
     this.controller,
     this.isNumber = false,
     this.prefixText,
+    this.prefixIcon,
     this.filledColor,
     this.maxLines = 1,
     this.readOnly = false,
@@ -49,7 +51,8 @@ class PaymentAmountField extends StatelessWidget {
             decoration: InputDecoration(
               filled: true,
               fillColor: filledColor ?? const Color(0xFFFCFAF8),
-              prefixText: prefixText,
+              prefixText: prefixIcon != null ? null : prefixText,
+              prefixIcon: prefixIcon,
               prefixStyle: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,

@@ -10,6 +10,7 @@ class ExpenseModel {
   final double yourShare;
   final String shareTextPrefix;
   final String status; // 'Pending' | 'Settled'
+  final String currency;
 
   const ExpenseModel({
     required this.id,
@@ -22,6 +23,7 @@ class ExpenseModel {
     required this.yourShare,
     this.shareTextPrefix = 'Your share: ',
     required this.status,
+    this.currency = 'INR',
   });
 
   factory ExpenseModel.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class ExpenseModel {
       yourShare: (json['your_share'] as num?)?.toDouble() ?? 0.0,
       shareTextPrefix: json['share_text_prefix'] as String? ?? 'Your share: ',
       status: json['status'] as String? ?? 'Pending',
+      currency: json['currency'] as String? ?? 'INR',
     );
   }
 
@@ -51,6 +54,7 @@ class ExpenseModel {
       'your_share': yourShare,
       'share_text_prefix': shareTextPrefix,
       'status': status,
+      'currency': currency,
     };
   }
 
