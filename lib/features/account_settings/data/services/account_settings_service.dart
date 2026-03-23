@@ -61,7 +61,7 @@ class AccountSettingsService {
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'wrong-password') {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         throw Exception('Incorrect current password');
       }
       throw Exception(e.message ?? 'Failed to change password');

@@ -106,9 +106,12 @@ class AccountSettingsProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = e.toString().contains('Incorrect')
-          ? 'Incorrect current password'
-          : 'Failed to change password. Please try again.';
+      final errorMsg = e.toString();
+      if (errorMsg.contains('Incorrect current password')) {
+        _errorMessage = 'Incorrect current password';
+      } else {
+        _errorMessage = 'Failed to change password. Please try again.';
+      }
       notifyListeners();
       debugPrint('Error changing password: $e');
       return false;
