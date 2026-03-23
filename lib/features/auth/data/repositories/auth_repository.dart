@@ -21,10 +21,7 @@ class AuthRepository {
   final AuthService service;
   final ApiClient apiClient;
 
-  AuthRepository({
-    required this.service,
-    required this.apiClient,
-  });
+  AuthRepository({required this.service, required this.apiClient});
 
   // ---------------------------------------------------------------------------
   // Login

@@ -114,9 +114,7 @@ class AppRoutes {
       default:
         return _buildRoute(
           Scaffold(
-            body: Center(
-              child: Text('Route not found: ${settings.name}'),
-            ),
+            body: Center(child: Text('Route not found: ${settings.name}')),
           ),
           settings,
         );
@@ -125,18 +123,15 @@ class AppRoutes {
 
   /// Builds a MaterialPageRoute with the given widget and settings.
   static MaterialPageRoute _buildRoute(Widget widget, RouteSettings settings) {
-    return MaterialPageRoute(
-      builder: (_) => widget,
-      settings: settings,
-    );
+    return MaterialPageRoute(builder: (_) => widget, settings: settings);
   }
 
   /// Builds a CupertinoPageRoute to provide native iOS swipe-back
   /// and right-to-left slide transition on all platforms.
-  static CupertinoPageRoute _buildCupertinoRoute(Widget widget, RouteSettings settings) {
-    return CupertinoPageRoute(
-      builder: (_) => widget,
-      settings: settings,
-    );
+  static CupertinoPageRoute _buildCupertinoRoute(
+    Widget widget,
+    RouteSettings settings,
+  ) {
+    return CupertinoPageRoute(builder: (_) => widget, settings: settings);
   }
 }

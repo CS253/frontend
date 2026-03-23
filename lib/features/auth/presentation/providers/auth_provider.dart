@@ -63,7 +63,7 @@ class AuthProvider with ChangeNotifier {
   /// Checks if a user is already logged in on app startup.
   Future<void> initialize() async {
     _status = AuthStatus.initial;
-    
+
     final currentUser = repository.service.currentUser;
     if (currentUser != null) {
       final token = await currentUser.getIdToken();
@@ -123,7 +123,7 @@ class AuthProvider with ChangeNotifier {
 
   /// Registers a new user with email and password.
   Future<void> register({
-    required String email, 
+    required String email,
     required String password,
     String? name,
     String? phone,

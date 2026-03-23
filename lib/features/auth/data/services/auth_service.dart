@@ -5,25 +5,27 @@ import 'dart:async';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   // GoogleSignIn is now a singleton in version 7.x
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool _isGoogleSignInInitialized = false;
 
-  AuthService({required dynamic apiClient}); // Keep constructor for compatibility
+  AuthService({
+    required dynamic apiClient,
+  }); // Keep constructor for compatibility
 
   Future<void> _ensureGoogleSignInInitialized() async {
     if (_isGoogleSignInInitialized) return;
-    
+
     await _googleSignIn.initialize(
-      clientId: kIsWeb 
-        ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com" 
-        : null,
+      clientId: kIsWeb
+          ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com"
+          : null,
     );
     _isGoogleSignInInitialized = true;
   }
- 
-   User? get currentUser => _auth.currentUser;
+
+  User? get currentUser => _auth.currentUser;
 
   // ---------------------------------------------------------------------------
   // Login
@@ -34,11 +36,9 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email, password: password);
+
       final user = userCredential.user;
       final token = await user?.getIdToken();
 
@@ -69,13 +69,11 @@ class AuthService {
     String? phone,
   }) async {
     try {
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final user = userCredential.user;
-      
+
       // Update display name if provided
       if (name != null && user != null) {
         await user.updateDisplayName(name);
@@ -116,7 +114,7 @@ class AuthService {
   Future<bool> checkEmailVerified() async {
     final user = _auth.currentUser;
     if (user == null) return false;
-    
+
     await user.reload();
     return _auth.currentUser?.emailVerified ?? false;
   }
@@ -148,7 +146,7 @@ class AuthService {
       if (user == null) throw Exception('User not signed in');
 
       await user.updatePassword(password);
-      
+
       final token = await user.getIdToken();
 
       return {
@@ -202,7 +200,7 @@ class AuthService {
   Future<Map<String, dynamic>> googleSignIn() async {
     try {
       await _ensureGoogleSignInInitialized();
-      
+
       final googleUser = await _googleSignIn.authenticate();
 
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;

@@ -153,7 +153,15 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
         .toList();
 
     final currencyCode = widget.paymentDetails['currency'] ?? AppCurrency.code;
-    final currencySymbol = currencyCode == 'INR' ? '₹' : currencyCode == 'USD' ? '\$' : currencyCode == 'EUR' ? '€' : currencyCode == 'GBP' ? '£' : AppCurrency.symbol;
+    final currencySymbol = currencyCode == 'INR'
+        ? '₹'
+        : currencyCode == 'USD'
+        ? '\$'
+        : currencyCode == 'EUR'
+        ? '€'
+        : currencyCode == 'GBP'
+        ? '£'
+        : AppCurrency.symbol;
 
     return Dialog(
       backgroundColor: const Color(0xFFFCFAF8),

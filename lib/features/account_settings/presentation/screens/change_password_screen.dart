@@ -152,7 +152,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         obscureText: _obscureConfirm,
                         onToggleObscure: () =>
                             setState(() => _obscureConfirm = !_obscureConfirm),
-                        validator: (value) => Validators.validateConfirmPassword(value, _newPasswordController.text),
+                        validator: (value) =>
+                            Validators.validateConfirmPassword(
+                              value,
+                              _newPasswordController.text,
+                            ),
                       ),
                     ],
                   ),

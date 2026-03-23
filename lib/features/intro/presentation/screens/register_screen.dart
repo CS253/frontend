@@ -80,14 +80,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Navigator.canPop(context) 
-            ? const BackButton(color: Colors.black) 
+        leading: Navigator.canPop(context)
+            ? const BackButton(color: Colors.black)
             : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -140,11 +143,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     validator: Validators.validatePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: const Color(0xFF828282),
                         size: 20,
                       ),
-                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                      onPressed: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -154,7 +161,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _confirmPasswordController,
                     hintText: 'Confirm Password',
                     obscureText: !_isPasswordVisible,
-                    validator: (v) => Validators.validateConfirmPassword(v, _passwordController.text),
+                    validator: (v) => Validators.validateConfirmPassword(
+                      v,
+                      _passwordController.text,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -174,7 +184,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: authProvider.isLoading ? null : _handleRegister,
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : _handleRegister,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6BB5E5),
                             elevation: 0,
@@ -188,7 +200,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
@@ -224,7 +238,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                           recognizer: TapGestureRecognizer()
-                            ..onTap = () => Navigator.pushReplacementNamed(context, RouteConstants.login),
+                            ..onTap = () => Navigator.pushReplacementNamed(
+                              context,
+                              RouteConstants.login,
+                            ),
                         ),
                       ],
                     ),
@@ -243,7 +260,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         height: 1.5,
                       ),
                       children: [
-                        const TextSpan(text: 'By clicking register, you agree to our '),
+                        const TextSpan(
+                          text: 'By clicking register, you agree to our ',
+                        ),
                         TextSpan(
                           text: 'Terms of Service',
                           style: const TextStyle(color: Colors.black),
@@ -294,7 +313,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           color: Color(0xFF828282),
         ),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         suffixIcon: suffixIcon,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
