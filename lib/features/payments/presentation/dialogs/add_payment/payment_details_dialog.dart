@@ -24,6 +24,7 @@ class PaymentDetailsDialog extends StatefulWidget {
 class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
   String? selectedPayer;
   String _selectedEmoji = '✈️';
+  late String selectedCurrency;
   late TextEditingController amountController;
   late TextEditingController descriptionController;
   late TextEditingController dateController;
@@ -36,9 +37,16 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     super.initState();
     selectedPayer = widget.initialDetails?['payer'];
     _selectedEmoji = widget.initialDetails?['emoji'] ?? '✈️';
-    amountController = TextEditingController(text: widget.initialDetails?['amount'] ?? '');
-    descriptionController = TextEditingController(text: widget.initialDetails?['description'] ?? '');
-    dateController = TextEditingController(text: widget.initialDetails?['date'] ?? '');
+    selectedCurrency = widget.initialDetails?['currency'] ?? AppCurrency.code;
+    amountController = TextEditingController(
+      text: widget.initialDetails?['amount'] ?? '',
+    );
+    descriptionController = TextEditingController(
+      text: widget.initialDetails?['description'] ?? '',
+    );
+    dateController = TextEditingController(
+      text: widget.initialDetails?['date'] ?? '',
+    );
     _fetchMembers();
   }
 
@@ -115,7 +123,53 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               hintText: 'e.g., 2000',
               controller: amountController,
               isNumber: true,
-              prefixText: '${AppCurrency.symbol}   ',
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12.0, right: 8.0),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedCurrency,
+                    icon: const Padding(
+                      padding: EdgeInsets.only(left: 4.0),
+                      child: Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 16,
+                        color: Color(0xFF8A8075),
+                      ),
+                    ),
+                    isDense: true,
+                    alignment: Alignment.center,
+                    items: ['INR', 'USD', 'EUR', 'GBP'].map((String val) {
+                      String symbol = val == 'INR'
+                          ? '₹'
+                          : val == 'USD'
+                          ? '\$'
+                          : val == 'EUR'
+                          ? '€'
+                          : val == 'GBP'
+                          ? '£'
+                          : val;
+                      return DropdownMenuItem<String>(
+                        value: val,
+                        child: Text(
+                          '$symbol $val',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: const Color(0xFF38332E),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedCurrency = val;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -139,7 +193,10 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                       ),
                     ),
                     child: Center(
-                      child: Text(_selectedEmoji, style: const TextStyle(fontSize: 28)),
+                      child: Text(
+                        _selectedEmoji,
+                        style: const TextStyle(fontSize: 28),
+                      ),
                     ),
                   ),
                 ),
@@ -162,14 +219,20 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFCFAF8),
                       borderRadius: BorderRadius.circular(9),
-                      border: Border.all(color: const Color(0xFFEBE7E0), width: 0.75),
+                      border: Border.all(
+                        color: const Color(0xFFEBE7E0),
+                        width: 0.75,
+                      ),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: const Center(
                       child: SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8A8075)),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF8A8075),
+                        ),
                       ),
                     ),
                   )
@@ -198,7 +261,8 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                       );
                       if (picked != null) {
                         setState(() {
-                          dateController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+                          dateController.text =
+                              "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
                         });
                       }
                     },
@@ -211,15 +275,23 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               text: 'Continue',
               onPressed: () {
                 if (amountController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter an amount')),
+                  );
                   return;
                 }
                 if (descriptionController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a description')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a description')),
+                  );
                   return;
                 }
                 if (selectedPayer == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select who paid for this')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please select who paid for this'),
+                    ),
+                  );
                   return;
                 }
                 widget.onContinue({
@@ -228,6 +300,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   'emoji': _selectedEmoji,
                   'payer': selectedPayer!,
                   'date': dateController.text,
+                  'currency': selectedCurrency,
                 });
               },
             ),
@@ -269,25 +342,31 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-          value: items.contains(value) ? value : null,
-          hint: Text('Select Person', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF8A8075), fontSize: 14)),
-          isExpanded: true,
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            color: Color(0xFF8A8075),
-            size: 16,
+            value: items.contains(value) ? value : null,
+            hint: Text(
+              'Select Person',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF8A8075),
+                fontSize: 14,
+              ),
+            ),
+            isExpanded: true,
+            icon: const Icon(
+              Icons.keyboard_arrow_down,
+              color: Color(0xFF8A8075),
+              size: 16,
+            ),
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              color: const Color(0xFF38332E),
+            ),
+            onChanged: onChanged,
+            items: items.map<DropdownMenuItem<String>>((String val) {
+              return DropdownMenuItem<String>(value: val, child: Text(val));
+            }).toList(),
           ),
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-            color: const Color(0xFF38332E),
-          ),
-          onChanged: onChanged,
-          items: items.map<DropdownMenuItem<String>>((String val) {
-            return DropdownMenuItem<String>(value: val, child: Text(val));
-          }).toList(),
         ),
-      ),
       ),
     );
   }

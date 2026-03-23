@@ -1,5 +1,5 @@
 name: travelly
-description: "A new Flutter project."
+description: "All in one Travel App"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -80,7 +80,6 @@ flutter:
   assets:
     - assets/images/
     - assets/images/gallery/
-    - assets/icons/
     - assets/fonts/
     - assets/app_logo.png
 

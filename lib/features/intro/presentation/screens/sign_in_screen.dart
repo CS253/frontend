@@ -3,7 +3,7 @@
 //
 // VALIDATION:
 //   • Email *  — Required, must be valid email format
-//   • Password * — Required, cannot be empty
+//   • Password * — Required, min 6 characters
 //   • Continue button is BLOCKED until form validation passes
 //
 // BACKEND CALL: AuthProvider.login() → AuthRepository → AuthService
@@ -35,7 +35,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
   bool _isPasswordVisible = false;
 
   @override
@@ -77,8 +76,6 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,14 +83,17 @@ class _SignInScreenState extends State<SignInScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Navigator.canPop(context) 
-            ? const BackButton(color: Colors.black) 
+        leading: Navigator.canPop(context)
+            ? const BackButton(color: Colors.black)
             : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
             // Wrap in Form widget for validation support
             child: Form(
               key: _formKey,
@@ -151,7 +151,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         color: Color(0xFF828282),
                       ),
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -176,12 +179,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required';
-                      }
-                      return null;
-                    },
+                    validator: Validators.validatePassword,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     style: const TextStyle(
                       fontFamily: 'Inter',
@@ -196,7 +194,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         color: Color(0xFF828282),
                       ),
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -215,7 +216,9 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: const Color(0xFF828282),
                           size: 20,
                         ),
@@ -231,40 +234,17 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Remember Me & Forgot Password
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Checkbox(
-                              value: _rememberMe,
-                              onChanged: (value) {
-                                setState(() {
-                                  _rememberMe = value ?? false;
-                                });
-                              },
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              side: const BorderSide(color: Color(0xFF828282)),
-                              activeColor: const Color(0xFF6BB5E5),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Remember Me',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF828282),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Text(
+                  // Forgot Password
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          RouteConstants.forgotPassword,
+                        );
+                      },
+                      child: const Text(
                         'Forgot Password?',
                         style: TextStyle(
                           fontFamily: 'Inter',
@@ -273,7 +253,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           color: Color(0xFF828282),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -284,7 +264,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         width: double.infinity,
                         height: 40,
                         child: ElevatedButton(
-                          onPressed: authProvider.isLoading ? null : _handleLogin,
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : _handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6BB5E5),
                             elevation: 0,
@@ -298,7 +280,9 @@ class _SignInScreenState extends State<SignInScreen> {
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
@@ -365,7 +349,11 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.person_outline, color: Colors.black, size: 20),
+                          Icon(
+                            Icons.person_outline,
+                            color: Colors.black,
+                            size: 20,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             'Create an Account',
@@ -388,7 +376,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     height: 40,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, RouteConstants.googleSignIn);
+                        Navigator.pushNamed(
+                          context,
+                          RouteConstants.googleSignIn,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEEEEEE),
@@ -406,7 +397,11 @@ class _SignInScreenState extends State<SignInScreen> {
                             width: 20,
                             height: 20,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.g_mobiledata, color: Colors.black, size: 24),
+                                const Icon(
+                                  Icons.g_mobiledata,
+                                  color: Colors.black,
+                                  size: 24,
+                                ),
                           ),
                           const SizedBox(width: 8),
                           const Text(
@@ -435,7 +430,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         height: 1.5,
                       ),
                       children: [
-                        const TextSpan(text: 'By clicking continue, you agree to our\n'),
+                        const TextSpan(
+                          text: 'By clicking continue, you agree to our\n',
+                        ),
                         TextSpan(
                           text: 'Terms of Service',
                           style: const TextStyle(color: Colors.black),

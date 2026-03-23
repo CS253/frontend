@@ -5,7 +5,7 @@ import 'package:travelly/core/constants/currency.dart';
 
 class PaymentDetailsDialog extends StatefulWidget {
   final String expenseId;
-  
+
   const PaymentDetailsDialog({super.key, required this.expenseId});
 
   @override
@@ -24,7 +24,9 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
 
   Future<void> _fetchDetails() async {
     try {
-      final details = await PaymentService().fetchExpenseDetails(widget.expenseId);
+      final details = await PaymentService().fetchExpenseDetails(
+        widget.expenseId,
+      );
       if (mounted) {
         setState(() {
           _expenseDetails = details;
@@ -44,15 +46,30 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
       return const Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        child: Center(child: CircularProgressIndicator(color: Color(0xFF9FDFCA))),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF9FDFCA)),
+        ),
       );
     }
 
     final title = _expenseDetails?['title'] ?? 'Payment Name';
     final date = _expenseDetails?['date'] ?? 'Date';
     final amount = _expenseDetails?['amount'] ?? '0';
-    final payerName = _expenseDetails?['payer_name'] ?? _expenseDetails?['payerName'] ?? 'Unknown';
+    final payerName =
+        _expenseDetails?['payer_name'] ??
+        _expenseDetails?['payerName'] ??
+        'Unknown';
     final splits = _expenseDetails?['splits'] as List<dynamic>? ?? [];
+    final currencyCode = _expenseDetails?['currency'] ?? AppCurrency.code;
+    final currencySymbol = currencyCode == 'INR'
+        ? '₹'
+        : currencyCode == 'USD'
+        ? '\$'
+        : currencyCode == 'EUR'
+        ? '€'
+        : currencyCode == 'GBP'
+        ? '£'
+        : AppCurrency.symbol;
 
     return Dialog(
       backgroundColor: const Color(0xFFFCFAF8),
@@ -78,37 +95,79 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   onTap: () => Navigator.pop(context),
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
-                  child: const Icon(Icons.close, size: 20, color: Color(0xFF38332E)),
+                  child: const Icon(
+                    Icons.close,
+                    size: 20,
+                    color: Color(0xFF38332E),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(date, style: GoogleFonts.plusJakartaSans(color: const Color(0xFF8A8075))),
-            const SizedBox(height: 8),
-            Text('Paid By: $payerName', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500)),
-            const SizedBox(height: 24),
-            Text('Split Between:', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ...splits.map((s) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(s['name'].toString(), style: GoogleFonts.plusJakartaSans()),
-                  Text('${AppCurrency.symbol}${s['amount']}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500)),
-                ],
+            Text(
+              title,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-            )),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              date,
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF8A8075),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Paid By: $payerName',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Split Between:',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ...splits.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      s['name'].toString(),
+                      style: GoogleFonts.plusJakartaSans(),
+                    ),
+                    Text(
+                      '$currencySymbol${s['amount']}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             const Divider(color: Color(0xFFEBE7E0)),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total:', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                Text('${AppCurrency.symbol}$amount', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  'Total:',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '$currencySymbol$amount',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ],
             ),
           ],

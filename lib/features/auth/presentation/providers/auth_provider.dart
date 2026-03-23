@@ -63,7 +63,7 @@ class AuthProvider with ChangeNotifier {
   /// Checks if a user is already logged in on app startup.
   Future<void> initialize() async {
     _status = AuthStatus.initial;
-    
+
     final currentUser = repository.service.currentUser;
     if (currentUser != null) {
       final token = await currentUser.getIdToken();
@@ -123,7 +123,7 @@ class AuthProvider with ChangeNotifier {
 
   /// Registers a new user with email and password.
   Future<void> register({
-    required String email, 
+    required String email,
     required String password,
     String? name,
     String? phone,
@@ -176,6 +176,21 @@ class AuthProvider with ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
+    }
+  }
+
+  /// Sends a password reset email.
+  Future<void> sendPasswordResetEmail(String email) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      await repository.sendPasswordResetEmail(email);
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      rethrow; // Rethrow to let the screen handle specific post-success UI if needed
+    } finally {
+      _setLoading(false);
     }
   }
 

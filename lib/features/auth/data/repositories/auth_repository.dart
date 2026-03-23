@@ -21,10 +21,7 @@ class AuthRepository {
   final AuthService service;
   final ApiClient apiClient;
 
-  AuthRepository({
-    required this.service,
-    required this.apiClient,
-  });
+  AuthRepository({required this.service, required this.apiClient});
 
   // ---------------------------------------------------------------------------
   // Login
@@ -98,6 +95,15 @@ class AuthRepository {
       return await service.checkEmailVerified();
     } catch (e) {
       throw Exception('Failed to check verification status: $e');
+    }
+  }
+
+  /// Sends a password reset email to the given [email].
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await service.sendPasswordResetEmail(email);
+    } catch (e) {
+      throw Exception('Failed to send password reset email: $e');
     }
   }
 

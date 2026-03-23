@@ -220,7 +220,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         child: ElevatedButton(
                           onPressed: provider.isLoading ? null : _handleSave,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF90CDEF),
+                            backgroundColor: const Color(0xFF6BB5E5),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -331,7 +331,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFF90CDEF),
+                color: Color(0xFF6BB5E5),
                 width: 1.5,
               ),
             ),

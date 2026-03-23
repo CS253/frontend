@@ -15,6 +15,7 @@ import '../features/intro/presentation/screens/sign_in_screen.dart';
 import '../features/intro/presentation/screens/register_screen.dart';
 import '../features/intro/presentation/screens/otp_screen.dart';
 import '../features/intro/presentation/screens/google_sign_in_screen.dart';
+import '../features/intro/presentation/screens/forgot_password_screen.dart';
 
 // Trip screens
 import '../features/trips/presentation/screens/my_trips_screen.dart';
@@ -66,6 +67,9 @@ class AppRoutes {
       case RouteConstants.googleSignIn:
         return _buildRoute(const GoogleSignInScreen(), settings);
 
+      case RouteConstants.forgotPassword:
+        return _buildRoute(const ForgotPasswordScreen(), settings);
+
       // Trips
       case RouteConstants.trips:
         return _buildRoute(const MyTripsScreen(), settings);
@@ -110,9 +114,7 @@ class AppRoutes {
       default:
         return _buildRoute(
           Scaffold(
-            body: Center(
-              child: Text('Route not found: ${settings.name}'),
-            ),
+            body: Center(child: Text('Route not found: ${settings.name}')),
           ),
           settings,
         );
@@ -121,18 +123,15 @@ class AppRoutes {
 
   /// Builds a MaterialPageRoute with the given widget and settings.
   static MaterialPageRoute _buildRoute(Widget widget, RouteSettings settings) {
-    return MaterialPageRoute(
-      builder: (_) => widget,
-      settings: settings,
-    );
+    return MaterialPageRoute(builder: (_) => widget, settings: settings);
   }
 
   /// Builds a CupertinoPageRoute to provide native iOS swipe-back
   /// and right-to-left slide transition on all platforms.
-  static CupertinoPageRoute _buildCupertinoRoute(Widget widget, RouteSettings settings) {
-    return CupertinoPageRoute(
-      builder: (_) => widget,
-      settings: settings,
-    );
+  static CupertinoPageRoute _buildCupertinoRoute(
+    Widget widget,
+    RouteSettings settings,
+  ) {
+    return CupertinoPageRoute(builder: (_) => widget, settings: settings);
   }
 }
