@@ -31,7 +31,7 @@ All validation is performed client-side before any backend call is made.
 ### Create Password Screen
 | Field | Validator | Rules |
 |-------|-----------|-------|
-| Create Password * | `Validators.validatePassword` | Required, min 8 chars, at least 1 letter + 1 number |
+| Create Password * | `Validators.validatePassword` | Required, min 6 characters |
 | Confirm Password * | `Validators.validateConfirmPassword` | Required, must exactly match password field |
 
 If passwords don't match, the error shown is: **"Passwords do not match"**

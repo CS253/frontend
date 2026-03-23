@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/account_settings_provider.dart';
+import '../../../../core/utils/validators.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -142,12 +143,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         obscureText: _obscureNew,
                         onToggleObscure: () =>
                             setState(() => _obscureNew = !_obscureNew),
-                        validator: (value) {
-                          if (value == null || value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
+                        validator: Validators.validatePassword,
                       ),
                       const SizedBox(height: 24),
                       _buildPasswordField(
@@ -156,12 +152,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         obscureText: _obscureConfirm,
                         onToggleObscure: () =>
                             setState(() => _obscureConfirm = !_obscureConfirm),
-                        validator: (value) {
-                          if (value != _newPasswordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
+                        validator: (value) => Validators.validateConfirmPassword(value, _newPasswordController.text),
                       ),
                     ],
                   ),
@@ -205,7 +196,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               ? null
                               : _handleChangePassword,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF90CDEF),
+                            backgroundColor: const Color(0xFF6BB5E5),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -304,7 +295,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFF90CDEF),
+                color: Color(0xFF6BB5E5),
                 width: 1.5,
               ),
             ),

@@ -179,6 +179,21 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Sends a password reset email.
+  Future<void> sendPasswordResetEmail(String email) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      await repository.sendPasswordResetEmail(email);
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      rethrow; // Rethrow to let the screen handle specific post-success UI if needed
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Signs in with Google OAuth.
   Future<void> googleSignIn() async {
     _setLoading(true);

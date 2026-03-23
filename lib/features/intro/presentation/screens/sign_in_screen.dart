@@ -3,7 +3,7 @@
 //
 // VALIDATION:
 //   • Email *  — Required, must be valid email format
-//   • Password * — Required, cannot be empty
+//   • Password * — Required, min 6 characters
 //   • Continue button is BLOCKED until form validation passes
 //
 // BACKEND CALL: AuthProvider.login() → AuthRepository → AuthService
@@ -35,7 +35,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = false;
   bool _isPasswordVisible = false;
 
   @override
@@ -176,12 +175,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required';
-                      }
-                      return null;
-                    },
+                    validator: Validators.validatePassword,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     style: const TextStyle(
                       fontFamily: 'Inter',
@@ -231,40 +225,14 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Remember Me & Forgot Password
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Checkbox(
-                              value: _rememberMe,
-                              onChanged: (value) {
-                                setState(() {
-                                  _rememberMe = value ?? false;
-                                });
-                              },
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              side: const BorderSide(color: Color(0xFF828282)),
-                              activeColor: const Color(0xFF6BB5E5),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Remember Me',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF828282),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Text(
+                  // Forgot Password
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, RouteConstants.forgotPassword);
+                      },
+                      child: const Text(
                         'Forgot Password?',
                         style: TextStyle(
                           fontFamily: 'Inter',
@@ -273,7 +241,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           color: Color(0xFF828282),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 

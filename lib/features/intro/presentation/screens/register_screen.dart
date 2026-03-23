@@ -4,7 +4,7 @@
 // VALIDATION:
 //   • Name *     — Required
 //   • Email *    — Required, must be valid email format
-//   • Password * — Required, min 8 chars with letter and number
+//   • Password * — Required, min 6 characters
 //   • Continue button is BLOCKED until form validation passes
 //
 // Data Flow: RegisterScreen → AuthProvider.register() → AuthRepository → AuthService

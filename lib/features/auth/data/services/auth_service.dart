@@ -122,6 +122,19 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------------
+  // Password Reset
+  // ---------------------------------------------------------------------------
+
+  /// Sends a password reset email to the specified email address.
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Failed to send password reset email');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Create Password
   // ---------------------------------------------------------------------------
 
@@ -149,6 +162,36 @@ class AuthService {
       };
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Password update failed');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Change Password
+  // ---------------------------------------------------------------------------
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) {
+        throw Exception('User not signed in');
+      }
+
+      // Re-authenticate user before changing password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw Exception('Incorrect current password');
+      }
+      throw Exception(e.message ?? 'Failed to change password');
     }
   }
 

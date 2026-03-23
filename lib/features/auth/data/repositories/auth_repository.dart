@@ -101,6 +101,15 @@ class AuthRepository {
     }
   }
 
+  /// Sends a password reset email to the given [email].
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await service.sendPasswordResetEmail(email);
+    } catch (e) {
+      throw Exception('Failed to send password reset email: $e');
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Google Sign-In
   // ---------------------------------------------------------------------------
