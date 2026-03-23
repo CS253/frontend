@@ -55,14 +55,15 @@ class Validators {
     return null;
   }
 
-  /// Validates phone number (mandatory exactly 10 digits).
+  /// Validates phone number (must include country code +).
   static String? validatePhone(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Phone number is required';
     }
-    final phoneRegex = RegExp(r'^\d{10}$');
+    // Simple E.164 regex: + followed by 10-15 digits
+    final phoneRegex = RegExp(r'^\+\d{10,15}$');
     if (!phoneRegex.hasMatch(value.trim())) {
-      return 'Enter a valid 10-digit phone number';
+      return 'Enter a valid phone number with country code (e.g. +919027878787)';
     }
     return null;
   }

@@ -45,7 +45,35 @@ class _OtpScreenState extends State<OtpScreen> {
 
     if (authProvider.isEmailVerified && mounted) {
       _pollingTimer?.cancel();
-      _navigateToHome();
+      
+      final phone = authProvider.user?.phone;
+      if (phone != null && phone.isNotEmpty) {
+        // Start MFA enrollment before navigating
+        final success = await authProvider.startMfaEnrollment(phone);
+        if (mounted && success) {
+          Helpers.showSuccessSnackbar(context, 'MFA Code Sent to $phone');
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            RouteConstants.otpVerification,
+            (route) => false,
+            arguments: {
+              'isSignIn': false,
+              'phoneNumber': phone,
+            },
+          );
+        } else {
+          // Fallback if MFA start fails
+          if (mounted) {
+            Helpers.showErrorSnackbar(
+              context, 
+              'MFA Enrollment skipped: ${authProvider.errorMessage ?? "Not supported on this platform"}'
+            );
+          }
+          _navigateToHome();
+        }
+      } else {
+        _navigateToHome();
+      }
     }
   }
 

@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/auth_response.dart';
 import '../../data/repositories/auth_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Enum representing the current authentication status.
 enum AuthStatus {
@@ -55,6 +56,13 @@ class AuthProvider with ChangeNotifier {
   /// Error message from the last failed operation.
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  // MFA State
+  MultiFactorResolver? _mfaResolver;
+  String? _verificationId;
+
+  MultiFactorResolver? get mfaResolver => _mfaResolver;
+  String? get verificationId => _verificationId;
 
   // ---------------------------------------------------------------------------
   // Session Persistence
@@ -113,12 +121,146 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+    } on FirebaseAuthMultiFactorException catch (e) {
+      _mfaResolver = e.resolver;
+      _errorMessage = 'mfa-required'; // Special code for UI to redirect
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
     }
 
     _setLoading(false);
+  }
+
+  // ---------------------------------------------------------------------------
+  // MFA Operations
+  // ---------------------------------------------------------------------------
+
+  /// Starts the MFA enrollment process by sending an SMS code.
+  Future<bool> startMfaEnrollment(String phoneNumber) async {
+    _setLoading(true);
+    _clearError();
+
+    // Ensure phone number is trimmed
+    String formattedPhone = phoneNumber.trim();
+
+    final user = repository.service.currentUser;
+    if (user == null) {
+      _errorMessage = 'No user signed in';
+      _setLoading(false);
+      return false;
+    }
+
+    try {
+      final session = await user.multiFactor.getSession();
+      await repository.service.verifyPhoneNumberForMfa(
+        session: session,
+        phoneNumber: formattedPhone,
+        onCodeSent: (String vid, int? token) {
+          _verificationId = vid;
+          notifyListeners();
+        },
+        onVerificationFailed: (e) {
+          if (e.code == 'quota-exceeded' || e.code == 'too-many-requests' || e.code == 'sms-quota-exceeded') {
+            _errorMessage = 'Daily SMS limit (10/day) reached. Please try again tomorrow.';
+          } else {
+            _errorMessage = e.message;
+          }
+          notifyListeners();
+        },
+      );
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Completes the MFA enrollment process.
+  Future<bool> completeMfaEnrollment(String smsCode) async {
+    if (_verificationId == null) return false;
+    _setLoading(true);
+
+    try {
+      await repository.service.enrollMfa(
+        verificationId: _verificationId!,
+        smsCode: smsCode,
+        displayName: 'My Phone',
+      );
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Resolves an MFA sign-in challenge.
+  Future<bool> resolveMfaSignIn(String smsCode) async {
+    if (_mfaResolver == null || _verificationId == null) return false;
+    _setLoading(true);
+
+    try {
+      final userCredential = await repository.service.resolveMfaSignIn(
+        resolver: _mfaResolver!,
+        verificationId: _verificationId!,
+        smsCode: smsCode,
+      );
+
+      final user = userCredential.user;
+      final token = await user?.getIdToken();
+
+      _token = token;
+      _user = UserModel(
+        id: user?.uid ?? '',
+        name: user?.displayName ?? 'Traveller',
+        email: user?.email ?? '',
+        phone: user?.phoneNumber,
+        avatarUrl: user?.photoURL,
+        isEmailVerified: user?.emailVerified ?? false,
+      );
+      _status = AuthStatus.authenticated;
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Sends code for a specific MFA hint during sign-in.
+  Future<bool> sendMfaSignInCode(MultiFactorInfo hint) async {
+    if (_mfaResolver == null) return false;
+    _setLoading(true);
+
+    try {
+      await repository.service.verifyPhoneNumberForMfa(
+        session: _mfaResolver!.session,
+        hint: hint,
+        onCodeSent: (String vid, int? token) {
+          _verificationId = vid;
+          notifyListeners();
+        },
+        onVerificationFailed: (e) {
+          if (e.code == 'quota-exceeded' || e.code == 'too-many-requests' || e.code == 'sms-quota-exceeded') {
+            _errorMessage = 'Daily SMS limit (10/day) reached. Please try again tomorrow.';
+          } else {
+            _errorMessage = e.message;
+          }
+          notifyListeners();
+        },
+      );
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      _setLoading(false);
+      return false;
+    }
   }
 
   /// Registers a new user with email and password.

@@ -71,6 +71,22 @@ class _SignInScreenState extends State<SignInScreen> {
         RouteConstants.trips,
         (route) => false,
       );
+    } else if (authProvider.errorMessage == 'mfa-required') {
+      // Trigger code sending for the first available hint
+      final hint = authProvider.mfaResolver?.hints.first;
+      if (hint != null) {
+        await authProvider.sendMfaSignInCode(hint);
+        if (mounted) {
+          Navigator.pushNamed(
+            context,
+            RouteConstants.otpVerification,
+            arguments: {
+              'isSignIn': true,
+              'phoneNumber': hint.displayName ?? 'your phone',
+            },
+          );
+        }
+      }
     } else if (authProvider.errorMessage != null) {
       Helpers.showErrorSnackbar(context, authProvider.errorMessage!);
     }

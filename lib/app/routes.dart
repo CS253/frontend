@@ -16,6 +16,7 @@ import '../features/intro/presentation/screens/register_screen.dart';
 import '../features/intro/presentation/screens/otp_screen.dart';
 import '../features/intro/presentation/screens/google_sign_in_screen.dart';
 import '../features/intro/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/otp_verification_screen.dart';
 
 // Trip screens
 import '../features/trips/presentation/screens/my_trips_screen.dart';
@@ -69,6 +70,14 @@ class AppRoutes {
 
       case RouteConstants.forgotPassword:
         return _buildRoute(const ForgotPasswordScreen(), settings);
+
+      case RouteConstants.otpVerification:
+        return _buildRoute(
+          OtpVerificationScreen(
+            arguments: settings.arguments as Map<String, dynamic>?,
+          ),
+          settings,
+        );
 
       // Trips
       case RouteConstants.trips:

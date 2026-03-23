@@ -9,6 +9,7 @@ class AuthService {
   // GoogleSignIn is now a singleton in version 7.x
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool _isGoogleSignInInitialized = false;
+  RecaptchaVerifier? _webRecaptchaVerifier;
 
   AuthService({
     required dynamic apiClient,
@@ -52,9 +53,110 @@ class AuthService {
           'avatarUrl': user?.photoURL,
         },
       };
+    } on FirebaseAuthMultiFactorException catch (_) {
+      // Re-throw specific MFA exception to be handled by the provider/UI
+      rethrow;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Login failed');
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-Factor Authentication (MFA)
+  // ---------------------------------------------------------------------------
+
+  /// Sends a verification code to the given phone number for MFA enrollment.
+  Future<void> verifyPhoneNumberForMfa({
+    required MultiFactorSession session,
+    String? phoneNumber,
+    MultiFactorInfo? hint,
+    required void Function(String verificationId, int? resendToken) onCodeSent,
+    required void Function(FirebaseAuthException e) onVerificationFailed,
+  }) async {
+    // Web requires a RecaptchaVerifier to be initialized even if not passed to verifyPhoneNumber
+    if (kIsWeb && _webRecaptchaVerifier == null) {
+      _webRecaptchaVerifier = RecaptchaVerifier(
+        container: 'auth-container', // This ID must exist in your index.html
+        size: RecaptchaVerifierSize.compact,
+        auth: _auth as dynamic,
+      );
+      // On web, the verifier needs to be rendered
+      _webRecaptchaVerifier?.render();
+    }
+
+    try {
+      if (phoneNumber != null) {
+        // For enrollment
+        await _auth.verifyPhoneNumber(
+          phoneNumber: phoneNumber,
+          multiFactorSession: session,
+          verificationCompleted: (_) {},
+          verificationFailed: onVerificationFailed,
+          codeSent: onCodeSent,
+          codeAutoRetrievalTimeout: (_) {},
+        );
+      } else if (hint != null) {
+        // For sign-in challenge
+        await _auth.verifyPhoneNumber(
+          multiFactorInfo: hint as PhoneMultiFactorInfo,
+          multiFactorSession: session,
+          verificationCompleted: (_) {},
+          verificationFailed: onVerificationFailed,
+          codeSent: onCodeSent,
+          codeAutoRetrievalTimeout: (_) {},
+        );
+      } else {
+        throw Exception('Either phoneNumber or hint must be provided');
+      }
+    } catch (e) {
+      throw Exception('Failed to send verification code: $e');
+    }
+  }
+
+  /// Completes the MFA enrollment process.
+  Future<void> enrollMfa({
+    required String verificationId,
+    required String smsCode,
+    String? displayName,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('No user signed in');
+
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+
+      final assertion = PhoneMultiFactorGenerator.getAssertion(credential);
+      await user.multiFactor.enroll(assertion, displayName: displayName);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'MFA enrollment failed');
+    }
+  }
+
+  /// Resolves an MFA sign-in challenge.
+  Future<UserCredential> resolveMfaSignIn({
+    required MultiFactorResolver resolver,
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+
+      final assertion = PhoneMultiFactorGenerator.getAssertion(credential);
+      return await resolver.resolveSignIn(assertion);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'MFA verification failed');
+    }
+  }
+
+  /// Helper to get MultiFactorResolver from a FirebaseAuthMultiFactorException
+  MultiFactorResolver getResolver(FirebaseAuthMultiFactorException e) {
+    return e.resolver;
   }
 
   // ---------------------------------------------------------------------------
