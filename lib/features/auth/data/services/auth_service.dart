@@ -276,13 +276,14 @@ class AuthService {
     String? phone,
   }) async {
     debugPrint('DEBUG: Starting backend sync...');
+    debugPrint('DEBUG: Sync Params - Name: $name, Phone: $phone');
     try {
       final response = await _apiClient.post(
         ApiEndpoints.userSync,
         body: {
           'idToken': token,
-          if (name != null) 'name': name,
-          if (phone != null) 'phoneNumber': phone,
+          if (name != null && name.isNotEmpty) 'name': name,
+          if (phone != null && phone.isNotEmpty) 'phoneNumber': phone,
         },
       );
 

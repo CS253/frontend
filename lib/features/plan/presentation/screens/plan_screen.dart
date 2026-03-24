@@ -15,18 +15,15 @@ class _PlanScreenState extends State<PlanScreen> {
   bool _isOptimized = true;
   String _departureTime = "11:00";
   
-  // Start location
+  // Start location initial state (Empty)
   Location _startLocation = Location(
-    name: 'Connaught Place, Delhi',
-    lat: 28.6315,
-    lng: 77.2167,
+    name: '',
+    lat: 0,
+    lng: 0,
   );
 
-  // Destinations list
-  final List<Location> _destinations = [
-    Location(name: 'India Gate, Delhi', lat: 28.6129, lng: 77.2295),
-    Location(name: 'Z Square Mall, Kanpur', lat: 26.4499, lng: 80.3319),
-  ];
+  // Destinations list (Empty)
+  final List<Location> _destinations = [];
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
@@ -42,6 +39,59 @@ class _PlanScreenState extends State<PlanScreen> {
     setState(() {
       _destinations.removeAt(index);
     });
+  }
+
+  Future<void> _editLocation(int index, bool isStart) async {
+    final TextEditingController controller = TextEditingController(
+      text: isStart ? _startLocation.name : _destinations[index].name,
+    );
+
+    final String? newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isStart ? 'Edit Start Location' : 'Edit Destination'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Enter location name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFCC33),
+              foregroundColor: const Color(0xFF212022),
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty) {
+      setState(() {
+        if (isStart) {
+          _startLocation = Location(
+            name: newName,
+            lat: _startLocation.lat,
+            lng: _startLocation.lng,
+          );
+        } else {
+          _destinations[index] = Location(
+            name: newName,
+            lat: _destinations[index].lat,
+            lng: _destinations[index].lng,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _planRoute() async {
@@ -70,18 +120,23 @@ class _PlanScreenState extends State<PlanScreen> {
   Widget build(BuildContext context) {
     final planProvider = Provider.of<PlanProvider>(context);
     final routeResponse = planProvider.routeResponse;
+    
+    final bool canPlan = _startLocation.name.isNotEmpty && _destinations.any((d) => d.name.isNotEmpty);
+    final String subtitle = _destinations.isEmpty 
+        ? 'Add destinations to start' 
+        : '${_destinations.length} Stops Added';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: planProvider.isLoading ? null : _planRoute,
-        backgroundColor: const Color(0xFFFFCC33),
-        elevation: 4,
+        onPressed: (planProvider.isLoading || !canPlan) ? null : _planRoute,
+        backgroundColor: canPlan ? const Color(0xFFFFCC33) : const Color(0xFFE0E0E0),
+        elevation: canPlan ? 4 : 0,
         highlightElevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         icon: planProvider.isLoading 
           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Color(0xFF212022), strokeWidth: 2))
-          : const Icon(Icons.auto_fix_high, color: Color(0xFF212022)),
+          : Icon(Icons.auto_fix_high, color: canPlan ? const Color(0xFF212022) : const Color(0xFF9E9E9E)),
         label: const Text(
           'Plan My Route',
           style: TextStyle(
@@ -160,7 +215,6 @@ class _PlanScreenState extends State<PlanScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Start Location
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -169,6 +223,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     index: 0,
                     isFirst: true,
                     onDelete: () {},
+                    onEdit: () => _editLocation(0, true),
                   ),
                 ),
               ),
@@ -185,6 +240,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       index: index + 1,
                       isFirst: false,
                       onDelete: () => _deleteStop(index),
+                      onEdit: () => _editLocation(index, false),
                     ),
                   ),
                   itemCount: _destinations.length,
@@ -312,6 +368,7 @@ class _PlanScreenState extends State<PlanScreen> {
             right: 16,
             child: PlanHeader(
               onBack: () => Navigator.pop(context),
+              subtitle: subtitle,
               onMap: () {
                 // Future Map Feature
               },

@@ -5,49 +5,47 @@ import '../../data/models/route_model.dart';
 class PlanHeader extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onMap;
+  final String subtitle;
 
   const PlanHeader({
     super.key,
     required this.onBack,
     required this.onMap,
+    required this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withAlpha(5),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: const Color(0xFFF7F7F7),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(5),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF212022)),
+              icon: const Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF212022)),
               onPressed: onBack,
+              padding: EdgeInsets.zero,
             ),
           ),
-          const SizedBox(width: 20),
-          const Expanded(
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -55,17 +53,17 @@ class PlanHeader extends StatelessWidget {
                 Text(
                   'Route Planner',
                   style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                     color: Color(0xFF212022),
                     fontFamily: 'Inter',
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  'Optimized Journey Planning',
+                  subtitle,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF8B8893),
                     fontFamily: 'Inter',
@@ -75,7 +73,7 @@ class PlanHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.map_outlined, color: Color(0xFF8B8893)),
+            icon: const Icon(Icons.map_outlined, color: Color(0xFF8B8893), size: 22),
             onPressed: onMap,
           ),
         ],
@@ -165,6 +163,7 @@ class LocationCard extends StatelessWidget {
   final Location location;
   final int index;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
   final bool isFirst;
 
   const LocationCard({
@@ -172,46 +171,69 @@ class LocationCard extends StatelessWidget {
     required this.location,
     required this.index,
     required this.onDelete,
+    required this.onEdit,
     this.isFirst = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool hasName = location.name.isNotEmpty;
+    final String displayName = hasName 
+        ? location.name 
+        : (isFirst ? 'Enter starting point' : 'Enter stop name');
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
+            color: Colors.black.withAlpha(5),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
+          // Icon Box (Rounded Square)
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: const Color(0xFFE3F2FD),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               isFirst ? Icons.my_location : Icons.location_on,
-              size: 22,
+              size: 20,
               color: const Color(0xFF6BB5E5),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
+          
+          // Labels
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isFirst ? 'Start Location' : 'Destination ${index}',
+                  displayName,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: hasName ? const Color(0xFF212022) : const Color(0xFFBDBDBD),
+                    fontFamily: 'Inter',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isFirst ? 'Start Location' : 'Destination $index',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -219,26 +241,29 @@ class LocationCard extends StatelessWidget {
                     fontFamily: 'Inter',
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  location.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF212022),
-                    fontFamily: 'Inter',
-                  ),
-                ),
               ],
             ),
           ),
-          if (!isFirst)
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 22, color: Color(0xFF8B8893)),
-              onPressed: onDelete,
-              constraints: const BoxConstraints(),
-              padding: EdgeInsets.zero,
-            ),
+
+          // Action Icons
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8B8893)),
+                onPressed: onEdit,
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(8),
+              ),
+              if (!isFirst)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF8B8893)),
+                  onPressed: onDelete,
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(8),
+                ),
+            ],
+          ),
         ],
       ),
     );
