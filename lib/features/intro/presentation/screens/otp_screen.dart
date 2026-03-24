@@ -87,12 +87,8 @@ class _OtpScreenState extends State<OtpScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () async {
-            final navigator = Navigator.of(context);
-            await context.read<AuthProvider>().logout();
-            if (mounted) {
-              navigator.pushReplacementNamed(RouteConstants.launch);
-            }
+          onPressed: () {
+            Navigator.pop(context);
           },
         ),
       ),
@@ -186,13 +182,11 @@ class _OtpScreenState extends State<OtpScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-  
-                // Action Buttons
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: authProvider.isLoading ? null : _checkStatus,
+                    onPressed: authProvider.isLoading ? null : _resendVerification,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6BB5E5),
                       elevation: 0,
@@ -201,26 +195,13 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                     ),
                     child: const Text(
-                      'I\'ve Verified',
+                      'Resend Verification Email',
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: authProvider.isLoading ? null : _resendVerification,
-                  child: const Text(
-                    'Resend Verification Email',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF6BB5E5),
                     ),
                   ),
                 ),

@@ -35,6 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   @override
   void dispose() {
@@ -75,6 +76,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Standard defensive check for newly added fields during Hot Reload
+    final bool passwordVisible = _isPasswordVisible;
+    final bool confirmVisible = _isConfirmPasswordVisible;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -139,11 +144,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   _buildTextField(
                     controller: _passwordController,
                     hintText: 'Password',
-                    obscureText: !_isPasswordVisible,
+                    obscureText: !passwordVisible,
                     validator: Validators.validatePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible
+                        passwordVisible
                             ? Icons.visibility
                             : Icons.visibility_off,
                         color: const Color(0xFF828282),
@@ -156,14 +161,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Confirm Password Field
                   _buildTextField(
                     controller: _confirmPasswordController,
                     hintText: 'Confirm Password',
-                    obscureText: !_isPasswordVisible,
+                    obscureText: !confirmVisible,
                     validator: (v) => Validators.validateConfirmPassword(
                       v,
                       _passwordController.text,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        confirmVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: const Color(0xFF828282),
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 20,
+                      onPressed: () {
+                        setState(() {
+                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                        });
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),
