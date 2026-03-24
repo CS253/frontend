@@ -52,7 +52,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Spacer(flex: 2),
+              const Spacer(),
               Center(
                 child: SizedBox(
                   width: 248,
@@ -103,7 +103,7 @@ class _LaunchScreenState extends State<LaunchScreen> {
                   ),
                 ),
               ),
-              const Spacer(flex: 1),
+              const Spacer(),
             ],
           ),
         ),
