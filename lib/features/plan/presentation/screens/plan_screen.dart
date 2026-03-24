@@ -1,89 +1,185 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:travelly/core/widgets/glass_back_button.dart';
+import '../widgets/route_planner_widgets.dart';
 
-class PlanScreen extends StatelessWidget {
+class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
+
+  @override
+  State<PlanScreen> createState() => _PlanScreenState();
+}
+
+class _PlanScreenState extends State<PlanScreen> {
+  bool _isOptimized = true;
+  
+  // Mock data for stops
+  final List<String> _stops = [
+    'Connaught Place',
+    'Z square mall',
+    'Kanpur Central',
+    'IIT Kanpur',
+    'Lulu mall Lucknow',
+  ];
+
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final item = _stops.removeAt(oldIndex);
+      _stops.insert(newIndex, item);
+    });
+  }
+
+  void _deleteStop(int index) {
+    setState(() {
+      _stops.removeAt(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      extendBodyBehindAppBar: true,
+      backgroundColor: const Color(0xFFFAFAFA),
       body: Stack(
         children: [
-          const Center(
-            child: Text(
-              'Upcoming Feature',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF212022),
+          // Main Content
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Spacing for Header
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+
+              // Mode Toggle
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: ModeToggle(
+                    isOptimized: _isOptimized,
+                    onChanged: (value) => setState(() => _isOptimized = value),
+                  ),
+                ),
               ),
-            ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // Stops List (Reorderable)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                sliver: SliverReorderableList(
+                  itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
+                    key: ValueKey(_stops[index]),
+                    index: index,
+                    child: LocationCard(
+                      location: _stops[index],
+                      index: index,
+                      isFirst: index == 0,
+                      onDelete: () => _deleteStop(index),
+                    ),
+                  ),
+                  itemCount: _stops.length,
+                  onReorder: _onReorder,
+                ),
+              ),
+
+              // Add Stop Button
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _stops.add('New Destination');
+                      });
+                    },
+                    icon: const Icon(Icons.add, size: 18, color: Color(0xFF6BB5E5)),
+                    label: const Text(
+                      'Add Stop',
+                      style: TextStyle(
+                        color: Color(0xFF6BB5E5),
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Nunito',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+              // Summary Cards
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Row(
+                    children: const [
+                      SummaryCard(
+                        label: 'Total Distance',
+                        value: '24.5 km',
+                        icon: Icons.directions_car_outlined,
+                        iconColor: Color(0xFF6BB5E5),
+                      ),
+                      SizedBox(width: 16),
+                      SummaryCard(
+                        label: 'Est. Time',
+                        value: '2h 10m',
+                        icon: Icons.access_time,
+                        iconColor: Color(0xFF4DB6AC),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+
+              // Itinerary Timeline Header
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+                  child: Text(
+                    'Trip Itinerary',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF212022),
+                      fontFamily: 'Nunito',
+                    ),
+                  ),
+                ),
+              ),
+
+              // Itinerary Timeline List
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => TimelineStop(
+                      title: _stops[index],
+                      distance: index < _stops.length - 1 ? '${(index + 2) * 2.1} km' : '',
+                      isLast: index == _stops.length - 1,
+                    ),
+                    childCount: _stops.length,
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
           ),
+
+          // Sticky Header
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 16,
             right: 16,
-            child: _buildGlassyHeader(context),
+            child: PlanHeader(
+              onBack: () => Navigator.pop(context),
+              onMap: () {
+                // Future Map Feature
+              },
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGlassyHeader(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(128), // 0.5 * 255
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withAlpha(153), width: 1.5), // 0.6 * 255
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(13), // 0.05 * 255
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              GlassBackButton(onPressed: () => Navigator.pop(context)),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Plan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF212022),
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Customize your route',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF8B8893),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
