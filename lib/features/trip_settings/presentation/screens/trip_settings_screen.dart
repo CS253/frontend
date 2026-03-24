@@ -11,7 +11,7 @@ import '../../../../features/dashboard/presentation/providers/dashboard_provider
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/trip_settings_provider.dart';
 import 'manage_members_screen.dart';
-import 'notification_settings_screen.dart';
+
 
 class TripSettingsScreen extends StatefulWidget {
   const TripSettingsScreen({super.key});
@@ -21,6 +21,8 @@ class TripSettingsScreen extends StatefulWidget {
 }
 
 class _TripSettingsScreenState extends State<TripSettingsScreen> {
+  bool _notificationsEnabled = true;
+
   @override
   void initState() {
     super.initState();
@@ -83,34 +85,20 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                                 endIndent: 16,
                               ),
                               SettingItem(
-                                title: 'Notification Settings',
-                                subtitle: 'Alerts, Splits...',
+                                title: 'Notifications',
+                                subtitle: 'Enable or disable alerts',
                                 icon: Icons.notifications_none,
                                 iconBgColor: const Color(0xFFE3D9F2),
                                 iconColor: const Color(0xFF8757C3),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const NotificationSettingsScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFEDEDED),
-                                indent: 16,
-                                endIndent: 16,
-                              ),
-                              SettingItem(
-                                title: 'Change Currency',
-                                subtitle: 'Choose the currency for payments',
-                                icon: Icons.payments_outlined,
-                                iconBgColor: const Color(0xFFF8DA78),
-                                iconColor: const Color(0xFFD3A117),
-                                onTap: () {},
+                                trailing: _buildSwitch(
+                                  _notificationsEnabled,
+                                  (value) {
+                                    setState(() {
+                                      _notificationsEnabled = value;
+                                    });
+                                  },
+                                ),
+                                showChevron: false,
                               ),
                               const Divider(
                                 height: 1,
