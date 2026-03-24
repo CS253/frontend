@@ -2,17 +2,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'package:travelly/core/api/api_client.dart';
+import 'package:travelly/core/api/api_endpoints.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  final ApiClient _apiClient;
 
   // GoogleSignIn is now a singleton in version 7.x
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool _isGoogleSignInInitialized = false;
 
   AuthService({
-    required dynamic apiClient,
-  }); // Keep constructor for compatibility
+    required ApiClient apiClient,
+  }) : _apiClient = apiClient;
 
   Future<void> _ensureGoogleSignInInitialized() async {
     if (_isGoogleSignInInitialized) return;
@@ -41,6 +45,10 @@ class AuthService {
 
       final user = userCredential.user;
       final token = await user?.getIdToken();
+
+      if (token != null) {
+        await syncWithBackend(token);
+      }
 
       return {
         'token': token,
@@ -83,6 +91,10 @@ class AuthService {
       await user?.sendEmailVerification();
 
       final token = await user?.getIdToken();
+
+      if (token != null) {
+        await syncWithBackend(token);
+      }
 
       return {
         'token': token,
@@ -212,6 +224,10 @@ class AuthService {
       final user = userCredential.user;
       final token = await user?.getIdToken();
 
+      if (token != null) {
+        await syncWithBackend(token);
+      }
+
       return {
         'token': token,
         'user': {
@@ -234,5 +250,33 @@ class AuthService {
     await _auth.signOut();
     await _ensureGoogleSignInInitialized();
     await _googleSignIn.signOut();
+    _apiClient.clearAuthToken();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backend Synchronization
+  // ---------------------------------------------------------------------------
+
+  /// Syncs the Firebase user with the backend Neon DB.
+  Future<void> syncWithBackend(String token) async {
+    debugPrint('DEBUG: Starting backend sync...');
+    debugPrint('DEBUG: Token: ${token.substring(0, 10)}...');
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.userSync,
+        body: {'idToken': token},
+      );
+
+      debugPrint('DEBUG: Sync response: $response');
+
+      if (response != null && response['success'] == true) {
+        debugPrint('DEBUG: Sync successful, setting auth token');
+        _apiClient.setAuthToken(token);
+      } else {
+        debugPrint('DEBUG: Sync failed: ${response?['error']}');
+      }
+    } catch (e) {
+      debugPrint('DEBUG: Backend sync error: $e');
+    }
   }
 }

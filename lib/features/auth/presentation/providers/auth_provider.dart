@@ -78,6 +78,11 @@ class AuthProvider with ChangeNotifier {
       );
       _status = AuthStatus.authenticated;
       repository.apiClient.setAuthToken(token ?? '');
+      
+      // Async sync with backend
+      if (token != null) {
+        repository.service.syncWithBackend(token);
+      }
     } else {
       _status = AuthStatus.unauthenticated;
     }
