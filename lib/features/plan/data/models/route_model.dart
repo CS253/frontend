@@ -9,6 +9,16 @@ class Location {
     required this.lng,
   });
 
+  Location copyWith({
+    String? name,
+    double? lat,
+    double? lng,
+  }) => Location(
+    name: name ?? this.name,
+    lat: lat ?? this.lat,
+    lng: lng ?? this.lng,
+  );
+
   Map<String, dynamic> toJson() => {
         'name': name,
         'lat': lat,

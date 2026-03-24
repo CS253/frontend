@@ -51,32 +51,56 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Future<void> _editLocation(int index, bool isStart) async {
+    final Location loc = isStart ? _startLocation : _destinations[index];
     final TextEditingController controller = TextEditingController(
-      text: isStart ? _startLocation.name : _destinations[index].name,
+      text: loc.name,
     );
 
-    final String? newName = await showDialog<String>(
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isStart ? 'Edit Start Location' : 'Edit Destination'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          loc.name.isEmpty 
+            ? (isStart ? 'Enter Start Location' : 'Enter Stop Location')
+            : (isStart ? 'Edit Start Location' : 'Edit Stop Location'),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF212022),
+            fontFamily: 'Inter',
+          ),
+        ),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter location name',
-            border: OutlineInputBorder(),
-          ),
           autofocus: true,
+          decoration: InputDecoration(
+            hintText: isStart ? 'e.g. Connaught Place' : 'e.g. India Gate',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF8B8893))),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            onPressed: () {
+              setState(() {
+                if (isStart) {
+                  _startLocation = _startLocation.copyWith(name: controller.text);
+                } else {
+                  _destinations[index] = _destinations[index].copyWith(name: controller.text);
+                }
+              });
+              Navigator.pop(context);
+            },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFCC33),
-              foregroundColor: const Color(0xFF212022),
+              backgroundColor: const Color(0xFF6BB5E5),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Save'),
           ),
@@ -84,23 +108,6 @@ class _PlanScreenState extends State<PlanScreen> {
       ),
     );
 
-    if (newName != null && newName.isNotEmpty) {
-      setState(() {
-        if (isStart) {
-          _startLocation = Location(
-            name: newName,
-            lat: _startLocation.lat,
-            lng: _startLocation.lng,
-          );
-        } else {
-          _destinations[index] = Location(
-            name: newName,
-            lat: _destinations[index].lat,
-            lng: _destinations[index].lng,
-          );
-        }
-      });
-    }
   }
 
   Future<void> _planRoute() async {
@@ -369,12 +376,12 @@ class _PlanScreenState extends State<PlanScreen> {
             right: 0,
             child: Center(
               child: planProvider.isLoading 
-                ? const CircularProgressIndicator(color: Color(0xFFFFCC33))
+                ? const CircularProgressIndicator(color: Color(0xFF6BB5E5))
                 : PrimaryFabButton(
                     label: 'Plan My Route',
                     icon: Icons.auto_fix_high,
-                    backgroundColor: canPlan ? const Color(0xFFF8DA78) : const Color(0xFFE0E0E0),
-                    foregroundColor: canPlan ? const Color(0xFF1A1A1A) : const Color(0xFF9E9E9E),
+                    backgroundColor: canPlan ? const Color(0xFF6BB5E5) : const Color(0xFFE0E0E0),
+                    foregroundColor: canPlan ? Colors.white : const Color(0xFF9E9E9E),
                     onPressed: canPlan ? _planRoute : () {},
                   ),
             ),

@@ -161,11 +161,20 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                           child: PopupMenuButton<String>(
                             icon: const Icon(
                               Icons.more_vert,
-                              color: Color(0xFF282828),
+                              color: Color(0xFF212022),
                               size: 22,
                             ),
+                            elevation: 6, // Slightly softer shadow
+                            offset: const Offset(0, 45), // Position slightly lower
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16), // Slightly smaller radius
+                            ),
+                            color: const Color(0xFFF8F9FA),
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            constraints: const BoxConstraints(
+                              minWidth: 160, // Controlled width
+                              maxWidth: 180,
+                            ),
                             onSelected: (value) async {
                               if (value == 'account_settings') {
                                 Navigator.of(
@@ -186,45 +195,64 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                               }
                             },
                             itemBuilder: (context) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'account_settings',
-                                height: 40,
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
                                 child: Row(
                                   children: [
-                                    Icon(
-                                      Icons.settings_outlined,
-                                      color: Color(0xFF4A4A4A),
-                                      size: 18,
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE3F2FD),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.settings_outlined,
+                                        color: Color(0xFF6BB5E5),
+                                        size: 14, // Smaller icon
+                                      ),
                                     ),
-                                    SizedBox(width: 8),
-                                    Text(
+                                    const SizedBox(width: 10),
+                                    const Text(
                                       'Account Settings',
                                       style: TextStyle(
-                                        color: Color(0xFF4A4A4A),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF212022),
+                                        fontSize: 13, // Smaller text
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
+                              const PopupMenuDivider(height: 1),
                               PopupMenuItem(
                                 value: 'logout',
-                                height: 40,
+                                height: 38, // More compact height
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
                                 child: Row(
                                   children: [
-                                    Icon(
-                                      Icons.logout_rounded,
-                                      color: Colors.red.shade400,
-                                      size: 18,
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFEBEE),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.logout_rounded,
+                                        color: Color(0xFFE57373),
+                                        size: 14, // Smaller icon
+                                      ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 10),
                                     const Text(
                                       'Logout',
                                       style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFFD32F2F),
+                                        fontSize: 13, // Smaller text
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                   ],
