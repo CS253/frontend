@@ -21,15 +21,12 @@ class _PlanScreenState extends State<PlanScreen> {
     super.initState();
     // Initialize with current time
     final now = TimeOfDay.now();
-    _departureTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    _departureTime =
+        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
   }
-  
+
   // Start location initial state (Empty)
-  Location _startLocation = Location(
-    name: '',
-    lat: 0,
-    lng: 0,
-  );
+  Location _startLocation = Location(name: '', lat: 0, lng: 0);
 
   // Destinations list (Empty)
   final List<Location> _destinations = [];
@@ -62,9 +59,9 @@ class _PlanScreenState extends State<PlanScreen> {
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
-          loc.name.isEmpty 
-            ? (isStart ? 'Enter Start Location' : 'Enter Stop Location')
-            : (isStart ? 'Edit Start Location' : 'Edit Stop Location'),
+          loc.name.isEmpty
+              ? (isStart ? 'Enter Start Location' : 'Enter Stop Location')
+              : (isStart ? 'Edit Start Location' : 'Edit Stop Location'),
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -83,15 +80,22 @@ class _PlanScreenState extends State<PlanScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF8B8893))),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF8B8893)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               setState(() {
                 if (isStart) {
-                  _startLocation = _startLocation.copyWith(name: controller.text);
+                  _startLocation = _startLocation.copyWith(
+                    name: controller.text,
+                  );
                 } else {
-                  _destinations[index] = _destinations[index].copyWith(name: controller.text);
+                  _destinations[index] = _destinations[index].copyWith(
+                    name: controller.text,
+                  );
                 }
               });
               Navigator.pop(context);
@@ -100,14 +104,15 @@ class _PlanScreenState extends State<PlanScreen> {
               backgroundColor: const Color(0xFF6BB5E5),
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('Save'),
           ),
         ],
       ),
     );
-
   }
 
   Future<void> _planRoute() async {
@@ -127,7 +132,8 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     if (picked != null) {
       setState(() {
-        _departureTime = "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+        _departureTime =
+            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
       });
     }
   }
@@ -136,10 +142,12 @@ class _PlanScreenState extends State<PlanScreen> {
   Widget build(BuildContext context) {
     final planProvider = Provider.of<PlanProvider>(context);
     final routeResponse = planProvider.routeResponse;
-    
-    final bool canPlan = _startLocation.name.isNotEmpty && _destinations.any((d) => d.name.isNotEmpty);
-    final String subtitle = _destinations.isEmpty 
-        ? 'Add destinations to start' 
+
+    final bool canPlan =
+        _startLocation.name.isNotEmpty &&
+        _destinations.any((d) => d.name.isNotEmpty);
+    final String subtitle = _destinations.isEmpty
+        ? 'Add destinations to start'
         : '${_destinations.length} Stops Added';
 
     return Scaffold(
@@ -168,7 +176,11 @@ class _PlanScreenState extends State<PlanScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.access_time_filled, color: Color(0xFF6BB5E5), size: 20),
+                          const Icon(
+                            Icons.access_time_filled,
+                            color: Color(0xFF6BB5E5),
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           const Text(
                             'Departure Time',
@@ -189,7 +201,10 @@ class _PlanScreenState extends State<PlanScreen> {
                               fontFamily: 'Inter',
                             ),
                           ),
-                          const Icon(Icons.arrow_drop_down, color: Color(0xFF8B8893)),
+                          const Icon(
+                            Icons.arrow_drop_down,
+                            color: Color(0xFF8B8893),
+                          ),
                         ],
                       ),
                     ),
@@ -229,17 +244,20 @@ class _PlanScreenState extends State<PlanScreen> {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 sliver: SliverReorderableList(
-                  itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
-                    key: ValueKey(_destinations[index].name + index.toString()),
-                    index: index,
-                    child: LocationCard(
-                      location: _destinations[index],
-                      index: index + 1,
-                      isFirst: false,
-                      onDelete: () => _deleteStop(index),
-                      onEdit: () => _editLocation(index, false),
-                    ),
-                  ),
+                  itemBuilder: (context, index) =>
+                      ReorderableDelayedDragStartListener(
+                        key: ValueKey(
+                          _destinations[index].name + index.toString(),
+                        ),
+                        index: index,
+                        child: LocationCard(
+                          location: _destinations[index],
+                          index: index + 1,
+                          isFirst: false,
+                          onDelete: () => _deleteStop(index),
+                          onEdit: () => _editLocation(index, false),
+                        ),
+                      ),
                   itemCount: _destinations.length,
                   onReorder: _onReorder,
                 ),
@@ -255,7 +273,11 @@ class _PlanScreenState extends State<PlanScreen> {
                         _destinations.add(Location(name: '', lat: 0, lng: 0));
                       });
                     },
-                    icon: const Icon(Icons.add_circle_outline, size: 22, color: Color(0xFF6BB5E5)),
+                    icon: const Icon(
+                      Icons.add_circle_outline,
+                      size: 22,
+                      color: Color(0xFF6BB5E5),
+                    ),
                     label: const Text(
                       'Add Stop',
                       style: TextStyle(
@@ -282,8 +304,8 @@ class _PlanScreenState extends State<PlanScreen> {
                       child: Text(
                         planProvider.errorMessage!,
                         style: const TextStyle(
-                          color: Colors.redAccent, 
-                          fontSize: 14, 
+                          color: Colors.redAccent,
+                          fontSize: 14,
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w600,
                         ),
@@ -325,7 +347,10 @@ class _PlanScreenState extends State<PlanScreen> {
                 // Itinerary Timeline Header
                 const SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 24,
+                    ),
                     child: Text(
                       'Optimized Itinerary',
                       style: TextStyle(
@@ -375,15 +400,19 @@ class _PlanScreenState extends State<PlanScreen> {
             left: 0,
             right: 0,
             child: Center(
-              child: planProvider.isLoading 
-                ? const CircularProgressIndicator(color: Color(0xFF6BB5E5))
-                : PrimaryFabButton(
-                    label: 'Plan My Route',
-                    icon: Icons.auto_fix_high,
-                    backgroundColor: canPlan ? const Color(0xFF6BB5E5) : const Color(0xFFE0E0E0),
-                    foregroundColor: canPlan ? Colors.white : const Color(0xFF9E9E9E),
-                    onPressed: canPlan ? _planRoute : () {},
-                  ),
+              child: planProvider.isLoading
+                  ? const CircularProgressIndicator(color: Color(0xFF6BB5E5))
+                  : PrimaryFabButton(
+                      label: 'Plan My Route',
+                      icon: Icons.auto_fix_high,
+                      backgroundColor: canPlan
+                          ? const Color(0xFF6BB5E5)
+                          : const Color(0xFFE0E0E0),
+                      foregroundColor: canPlan
+                          ? Colors.white
+                          : const Color(0xFF9E9E9E),
+                      onPressed: canPlan ? _planRoute : () {},
+                    ),
             ),
           ),
         ],
