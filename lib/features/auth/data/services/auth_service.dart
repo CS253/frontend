@@ -46,20 +46,24 @@ class AuthService {
       final user = userCredential.user;
       final token = await user?.getIdToken();
 
-      if (token != null) {
-        await syncWithBackend(token);
-      }
+        if (token != null) {
+          await syncWithBackend(
+            token: token,
+            name: user?.displayName,
+            phone: user?.phoneNumber,
+          );
+        }
 
-      return {
-        'token': token,
-        'user': {
-          'id': user?.uid,
-          'name': user?.displayName ?? email.split('@').first,
-          'email': user?.email,
-          'phone': user?.phoneNumber,
-          'avatarUrl': user?.photoURL,
-        },
-      };
+        return {
+          'token': token,
+          'user': {
+            'id': user?.uid,
+            'name': user?.displayName ?? email.split('@').first,
+            'email': user?.email,
+            'phone': user?.phoneNumber,
+            'avatarUrl': user?.photoURL,
+          },
+        };
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Login failed');
     }
@@ -93,7 +97,11 @@ class AuthService {
       final token = await user?.getIdToken();
 
       if (token != null) {
-        await syncWithBackend(token);
+        await syncWithBackend(
+          token: token,
+          name: name,
+          phone: phone,
+        );
       }
 
       return {
@@ -225,7 +233,11 @@ class AuthService {
       final token = await user?.getIdToken();
 
       if (token != null) {
-        await syncWithBackend(token);
+        await syncWithBackend(
+          token: token,
+          name: user?.displayName,
+          phone: user?.phoneNumber,
+        );
       }
 
       return {
@@ -258,13 +270,20 @@ class AuthService {
   // ---------------------------------------------------------------------------
 
   /// Syncs the Firebase user with the backend Neon DB.
-  Future<void> syncWithBackend(String token) async {
+  Future<void> syncWithBackend({
+    required String token,
+    String? name,
+    String? phone,
+  }) async {
     debugPrint('DEBUG: Starting backend sync...');
-    debugPrint('DEBUG: Token: ${token.substring(0, 10)}...');
     try {
       final response = await _apiClient.post(
         ApiEndpoints.userSync,
-        body: {'idToken': token},
+        body: {
+          'idToken': token,
+          if (name != null) 'name': name,
+          if (phone != null) 'phoneNumber': phone,
+        },
       );
 
       debugPrint('DEBUG: Sync response: $response');

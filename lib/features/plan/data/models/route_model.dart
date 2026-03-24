@@ -1,0 +1,110 @@
+class Location {
+  final String name;
+  final double lat;
+  final double lng;
+
+  Location({
+    required this.name,
+    required this.lat,
+    required this.lng,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'lat': lat,
+        'lng': lng,
+      };
+
+  factory Location.fromJson(Map<String, dynamic> json) => Location(
+        name: json['name'],
+        lat: (json['lat'] as num).toDouble(),
+        lng: (json['lng'] as num).toDouble(),
+      );
+}
+
+class RouteRequest {
+  final String departureTime;
+  final Location start;
+  final List<Location> destinations;
+
+  RouteRequest({
+    required this.departureTime,
+    required this.start,
+    required this.destinations,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'departureTime': departureTime,
+        'start': start.toJson(),
+        'destinations': destinations.map((d) => d.toJson()).toList(),
+      };
+}
+
+class Stop {
+  final String name;
+  final double lat;
+  final double lng;
+  final String placeStatus;
+  final String timingText;
+  final String opensAt;
+  final String closesAt;
+  final String? openingHoursRaw;
+  final String timingSource;
+
+  Stop({
+    required this.name,
+    required this.lat,
+    required this.lng,
+    required this.placeStatus,
+    required this.timingText,
+    required this.opensAt,
+    required this.closesAt,
+    this.openingHoursRaw,
+    required this.timingSource,
+  });
+
+  factory Stop.fromJson(Map<String, dynamic> json) => Stop(
+        name: json['name'],
+        lat: (json['lat'] as num).toDouble(),
+        lng: (json['lng'] as num).toDouble(),
+        placeStatus: json['placeStatus'] ?? 'Not available',
+        timingText: json['timingText'] ?? 'Not available',
+        opensAt: json['opensAt'] ?? 'Not available',
+        closesAt: json['closesAt'] ?? 'Not available',
+        openingHoursRaw: json['openingHoursRaw'],
+        timingSource: json['timingSource'] ?? 'Unknown',
+      );
+}
+
+class RouteResponse {
+  final bool success;
+  final String mode;
+  final String departureTime;
+  final Location start;
+  final List<Stop> stops;
+  final String totalDistanceKm;
+  final String totalDurationMinutes;
+
+  RouteResponse({
+    required this.success,
+    required this.mode,
+    required this.departureTime,
+    required this.start,
+    required this.stops,
+    required this.totalDistanceKm,
+    required this.totalDurationMinutes,
+  });
+
+  factory RouteResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return RouteResponse(
+      success: json['success'],
+      mode: json['mode'],
+      departureTime: data['departureTime'],
+      start: Location.fromJson(data['start']),
+      stops: (data['stops'] as List).map((s) => Stop.fromJson(s)).toList(),
+      totalDistanceKm: data['totalDistanceKm'],
+      totalDurationMinutes: data['totalDurationMinutes'],
+    );
+  }
+}

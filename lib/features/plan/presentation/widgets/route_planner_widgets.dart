@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../../core/widgets/glass_back_button.dart';
+import '../../data/models/route_model.dart';
 
 class PlanHeader extends StatelessWidget {
   final VoidCallback onBack;
@@ -14,61 +14,71 @@ class PlanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(128),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withAlpha(153), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(13),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          child: Row(
-            children: [
-              GlassBackButton(onPressed: onBack),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Route Planner',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF212022),
-                        fontFamily: 'Nunito',
-                      ),
-                    ),
-                    Text(
-                      'Plan your journey efficiently',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF8B8893),
-                        fontFamily: 'Nunito',
-                      ),
-                    ),
-                  ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(5),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.map_outlined, color: Color(0xFF212022)),
-                onPressed: onMap,
-              ),
-            ],
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF212022)),
+              onPressed: onBack,
+            ),
           ),
-        ),
+          const SizedBox(width: 20),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Route Planner',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF212022),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Optimized Journey Planning',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF8B8893),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.map_outlined, color: Color(0xFF8B8893)),
+            onPressed: onMap,
+          ),
+        ],
       ),
     );
   }
@@ -87,23 +97,21 @@ class ModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.all(4),
+      height: 54,
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: const Color(0xFFF2F2F2),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(27),
       ),
       child: Row(
         children: [
           _buildToggleItem(
             label: 'Optimized',
-            icon: Icons.flash_on,
             isActive: isOptimized,
             onTap: () => onChanged(true),
           ),
           _buildToggleItem(
             label: 'Manual',
-            icon: Icons.pan_tool_outlined,
             isActive: !isOptimized,
             onTap: () => onChanged(false),
           ),
@@ -114,7 +122,6 @@ class ModeToggle extends StatelessWidget {
 
   Widget _buildToggleItem({
     required String label,
-    required IconData icon,
     required bool isActive,
     required VoidCallback onTap,
   }) {
@@ -122,39 +129,31 @@ class ModeToggle extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
             color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: Colors.black.withAlpha(13),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withAlpha(15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
                   ]
                 : null,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isActive ? const Color(0xFF6BB5E5) : const Color(0xFF8B8893),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                color: isActive ? const Color(0xFF212022) : const Color(0xFF8B8893),
+                fontFamily: 'Inter',
               ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive ? const Color(0xFF212022) : const Color(0xFF8B8893),
-                  fontFamily: 'Nunito',
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -163,7 +162,7 @@ class ModeToggle extends StatelessWidget {
 }
 
 class LocationCard extends StatelessWidget {
-  final String location;
+  final Location location;
   final int index;
   final VoidCallback onDelete;
   final bool isFirst;
@@ -179,44 +178,63 @@ class LocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF2F2F2)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(6),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.drag_indicator, color: Color(0xFFD1D1D6), size: 20),
-          const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isFirst ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0)),
-              shape: BoxShape.circle,
+              color: const Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
-              Icons.location_on,
-              size: 16,
-              color: isFirst ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
+              isFirst ? Icons.my_location : Icons.location_on,
+              size: 22,
+              color: const Color(0xFF6BB5E5),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              location,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF212022),
-                fontFamily: 'Nunito',
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isFirst ? 'Start Location' : 'Destination ${index}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF8B8893),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  location.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF212022),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
             ),
           ),
           if (!isFirst)
             IconButton(
-              icon: const Icon(Icons.close, size: 18, color: Color(0xFF8B8893)),
+              icon: const Icon(Icons.delete_outline, size: 22, color: Color(0xFF8B8893)),
               onPressed: onDelete,
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
@@ -245,36 +263,48 @@ class SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FBFF),
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(5),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: iconColor, size: 24),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF8B8893),
-                    fontFamily: 'Nunito',
-                  ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF212022),
-                    fontFamily: 'Nunito',
-                  ),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withAlpha(26),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF828282),
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF212022),
+                fontFamily: 'Inter',
+              ),
             ),
           ],
         ),
@@ -284,19 +314,22 @@ class SummaryCard extends StatelessWidget {
 }
 
 class TimelineStop extends StatelessWidget {
-  final String title;
-  final String distance;
+  final Stop stop;
+  final int index;
   final bool isLast;
 
   const TimelineStop({
     super.key,
-    required this.title,
-    this.distance = '',
+    required this.stop,
+    required this.index,
     this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    bool isOpen = stop.placeStatus.toLowerCase().contains('open');
+    bool isClosed = stop.placeStatus.toLowerCase().contains('closed');
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,8 +345,14 @@ class TimelineStop extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFF2F2F2)),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(5),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,40 +360,88 @@ class TimelineStop extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF212022),
-                              fontFamily: 'Nunito',
+                          Expanded(
+                            child: Text(
+                              stop.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF212022),
+                                fontFamily: 'Inter',
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const Text(
-                            '#1',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFFBDBDBD),
-                              fontFamily: 'Nunito',
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2F2F2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Stop #${index + 1}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF6BB5E5),
+                                fontFamily: 'Inter',
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      const Row(
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          Icon(Icons.access_time, size: 14, color: Color(0xFF8B8893)),
-                          SizedBox(width: 4),
-                          Text(
-                            'Opening/Closing time Not Available',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF8B8893),
-                              fontFamily: 'Nunito',
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isOpen 
+                                  ? const Color(0xFFE8F5E9) 
+                                  : (isClosed ? const Color(0xFFFFEBEE) : const Color(0xFFF2F2F2)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              stop.placeStatus,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isOpen 
+                                    ? const Color(0xFF4CAF50) 
+                                    : (isClosed ? const Color(0xFFF44336) : const Color(0xFF8B8893)),
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF8B8893)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              stop.timingText,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF5A7184),
+                                fontFamily: 'Inter',
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
+                      if (stop.timingSource != 'Unknown') ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Data provided by ${stop.timingSource}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFFBDBDBD),
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -389,33 +476,9 @@ class TimelineStop extends StatelessWidget {
         ),
         if (!isLast)
           Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 2,
-                  color: const Color(0xFF6BB5E5).withAlpha(51),
-                ),
-                if (distance.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6BB5E5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: RotatedBox(
-                      quarterTurns: 3,
-                      child: Text(
-                        distance,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            child: Container(
+              width: 2,
+              color: const Color(0xFF6BB5E5).withAlpha(51),
             ),
           ),
       ],

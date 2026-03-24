@@ -97,134 +97,136 @@ class _OtpScreenState extends State<OtpScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Center(
-                child: SizedBox(
-                  width: 243,
-                  height: 243,
-                  child: Image.asset(
-                    'assets/images/signin_icon.png',
-                    fit: BoxFit.contain,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Center(
+                  child: SizedBox(
+                    width: 243,
+                    height: 243,
+                    child: Image.asset(
+                      'assets/images/signin_icon.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Verify Your Email',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                const SizedBox(height: 24),
+                const Text(
+                  'Verify Your Email',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: const TextStyle(
+                const SizedBox(height: 16),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      color: Color(0xFF828282),
+                      height: 1.5,
+                    ),
+                    children: [
+                      const TextSpan(
+                        text: 'We\'ve sent a verification email to\n',
+                      ),
+                      TextSpan(
+                        text: email,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Please click the link in the email to verify your account. Once verified, you\'ll be logged in automatically.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
-                    color: Color(0xFF828282),
+                    color: Color(0xFF5A7184),
                     height: 1.5,
                   ),
+                ),
+                const SizedBox(height: 48),
+  
+                // Loading/Checking Indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const TextSpan(
-                      text: 'We\'ve sent a verification email to\n',
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF6BB5E5),
+                        ),
+                      ),
                     ),
-                    TextSpan(
-                      text: email,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Waiting for verification...',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: Color(0xFF828282),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Please click the link in the email to verify your account. Once verified, you\'ll be logged in automatically.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: Color(0xFF5A7184),
-                  height: 1.5,
-                ),
-              ),
-              const Spacer(),
-
-              // Loading/Checking Indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF6BB5E5),
+                const SizedBox(height: 32),
+  
+                // Action Buttons
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: authProvider.isLoading ? null : _checkStatus,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6BB5E5),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'I\'ve Verified',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Waiting for verification...',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: Color(0xFF828282),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Action Buttons
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: authProvider.isLoading ? null : _checkStatus,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6BB5E5),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: authProvider.isLoading ? null : _resendVerification,
                   child: const Text(
-                    'I\'ve Verified',
+                    'Resend Verification Email',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      color: Color(0xFF6BB5E5),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: authProvider.isLoading ? null : _resendVerification,
-                child: const Text(
-                  'Resend Verification Email',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF6BB5E5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),

@@ -165,4 +165,11 @@ class ApiEndpoints {
   static const String photos = '/photos';
   static const String uploadPhoto = '/photos/upload';
   static const String deletePhotos = '/photos/delete';
+
+  // ---------------------------------------------------------------------------
+  // Plan/Route Endpoints
+  // ---------------------------------------------------------------------------
+
+  /// POST — Get optimized route and place timings.
+  static const String planRoute = '/plan/route';
 }
