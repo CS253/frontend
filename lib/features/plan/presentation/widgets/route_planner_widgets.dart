@@ -4,13 +4,11 @@ import '../../data/models/route_model.dart';
 
 class PlanHeader extends StatelessWidget {
   final VoidCallback onBack;
-  final VoidCallback onMap;
   final String subtitle;
 
   const PlanHeader({
     super.key,
     required this.onBack,
-    required this.onMap,
     required this.subtitle,
   });
 
@@ -39,7 +37,11 @@ class PlanHeader extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF212022)),
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                size: 16,
+                color: Color(0xFF212022),
+              ),
               onPressed: onBack,
               padding: EdgeInsets.zero,
             ),
@@ -53,8 +55,8 @@ class PlanHeader extends StatelessWidget {
                 Text(
                   'Route Planner',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF212022),
                     fontFamily: 'Inter',
                   ),
@@ -71,10 +73,6 @@ class PlanHeader extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.map_outlined, color: Color(0xFF8B8893), size: 22),
-            onPressed: onMap,
           ),
         ],
       ),
@@ -96,22 +94,52 @@ class ModeToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 54,
-      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(27),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          _buildToggleItem(
-            label: 'Optimized',
-            isActive: isOptimized,
-            onTap: () => onChanged(true),
+          // Sliding Background Selector
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: isOptimized ? Alignment.centerLeft : Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(10),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          _buildToggleItem(
-            label: 'Manual',
-            isActive: !isOptimized,
-            onTap: () => onChanged(false),
+          
+          // Tap Targets and Labels
+          Row(
+            children: [
+              _buildToggleItem(
+                label: 'Optimized',
+                isActive: isOptimized,
+                onTap: () => onChanged(true),
+              ),
+              _buildToggleItem(
+                label: 'Manual',
+                isActive: !isOptimized,
+                onTap: () => onChanged(false),
+              ),
+            ],
           ),
         ],
       ),
@@ -126,32 +154,18 @@ class ModeToggle extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                color: isActive ? const Color(0xFF212022) : const Color(0xFF8B8893),
-                fontFamily: 'Inter',
-              ),
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+              color: isActive ? const Color(0xFF212022) : const Color(0xFF8B8893),
+              fontFamily: 'Inter',
             ),
+            child: Text(label),
           ),
         ),
       ),
@@ -178,8 +192,8 @@ class LocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasName = location.name.isNotEmpty;
-    final String displayName = hasName 
-        ? location.name 
+    final String displayName = hasName
+        ? location.name
         : (isFirst ? 'Enter starting point' : 'Enter stop name');
 
     return Container(
@@ -213,7 +227,7 @@ class LocationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          
+
           // Labels
           Expanded(
             child: Column(
@@ -225,7 +239,9 @@ class LocationCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: hasName ? const Color(0xFF212022) : const Color(0xFFBDBDBD),
+                    color: hasName
+                        ? const Color(0xFF212022)
+                        : const Color(0xFFBDBDBD),
                     fontFamily: 'Inter',
                   ),
                   maxLines: 1,
@@ -250,14 +266,22 @@ class LocationCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF8B8893)),
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  size: 20,
+                  color: Color(0xFF8B8893),
+                ),
                 onPressed: onEdit,
                 constraints: const BoxConstraints(),
                 padding: const EdgeInsets.all(8),
               ),
               if (!isFirst)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF8B8893)),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Color(0xFF8B8893),
+                  ),
                   onPressed: onDelete,
                   constraints: const BoxConstraints(),
                   padding: const EdgeInsets.all(8),
@@ -398,7 +422,10 @@ class TimelineStop extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF2F2F2),
                               borderRadius: BorderRadius.circular(10),
@@ -419,11 +446,16 @@ class TimelineStop extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: isOpen 
-                                  ? const Color(0xFFE8F5E9) 
-                                  : (isClosed ? const Color(0xFFFFEBEE) : const Color(0xFFF2F2F2)),
+                              color: isOpen
+                                  ? const Color(0xFFE8F5E9)
+                                  : (isClosed
+                                        ? const Color(0xFFFFEBEE)
+                                        : const Color(0xFFF2F2F2)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -431,15 +463,21 @@ class TimelineStop extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: isOpen 
-                                    ? const Color(0xFF4CAF50) 
-                                    : (isClosed ? const Color(0xFFF44336) : const Color(0xFF8B8893)),
+                                color: isOpen
+                                    ? const Color(0xFF4CAF50)
+                                    : (isClosed
+                                          ? const Color(0xFFF44336)
+                                          : const Color(0xFF8B8893)),
                                 fontFamily: 'Inter',
                               ),
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF8B8893)),
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 16,
+                            color: Color(0xFF8B8893),
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(

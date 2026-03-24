@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../widgets/route_planner_widgets.dart';
 import '../providers/plan_provider.dart';
 import '../../data/models/route_model.dart';
+import '../../../../core/widgets/primary_button.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
@@ -13,7 +14,15 @@ class PlanScreen extends StatefulWidget {
 
 class _PlanScreenState extends State<PlanScreen> {
   bool _isOptimized = true;
-  String _departureTime = "11:00";
+  String _departureTime = "";
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with current time
+    final now = TimeOfDay.now();
+    _departureTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+  }
   
   // Start location initial state (Empty)
   Location _startLocation = Location(
@@ -128,25 +137,6 @@ class _PlanScreenState extends State<PlanScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: (planProvider.isLoading || !canPlan) ? null : _planRoute,
-        backgroundColor: canPlan ? const Color(0xFFFFCC33) : const Color(0xFFE0E0E0),
-        elevation: canPlan ? 4 : 0,
-        highlightElevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        icon: planProvider.isLoading 
-          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Color(0xFF212022), strokeWidth: 2))
-          : Icon(Icons.auto_fix_high, color: canPlan ? const Color(0xFF212022) : const Color(0xFF9E9E9E)),
-        label: const Text(
-          'Plan My Route',
-          style: TextStyle(
-            fontWeight: FontWeight.w800, 
-            fontFamily: 'Inter',
-            color: Color(0xFF212022),
-            fontSize: 15,
-          ),
-        ),
-      ),
       body: Stack(
         children: [
           // Main Content
@@ -255,7 +245,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   child: TextButton.icon(
                     onPressed: () {
                       setState(() {
-                        _destinations.add(Location(name: 'New Destination', lat: 0, lng: 0));
+                        _destinations.add(Location(name: '', lat: 0, lng: 0));
                       });
                     },
                     icon: const Icon(Icons.add_circle_outline, size: 22, color: Color(0xFF6BB5E5)),
@@ -369,9 +359,24 @@ class _PlanScreenState extends State<PlanScreen> {
             child: PlanHeader(
               onBack: () => Navigator.pop(context),
               subtitle: subtitle,
-              onMap: () {
-                // Future Map Feature
-              },
+            ),
+          ),
+
+          // Primary Action Button (Matches Documents Screen)
+          Positioned(
+            bottom: 70,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: planProvider.isLoading 
+                ? const CircularProgressIndicator(color: Color(0xFFFFCC33))
+                : PrimaryFabButton(
+                    label: 'Plan My Route',
+                    icon: Icons.auto_fix_high,
+                    backgroundColor: canPlan ? const Color(0xFFF8DA78) : const Color(0xFFE0E0E0),
+                    foregroundColor: canPlan ? const Color(0xFF1A1A1A) : const Color(0xFF9E9E9E),
+                    onPressed: canPlan ? _planRoute : () {},
+                  ),
             ),
           ),
         ],
