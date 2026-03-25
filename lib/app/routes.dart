@@ -103,7 +103,9 @@ class AppRoutes {
 
       // Features
       case RouteConstants.payments:
-        return _buildCupertinoRoute(const PaymentsScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final groupId = args['groupId'] as String? ?? '';
+        return _buildCupertinoRoute(PaymentsScreen(groupId: groupId), settings);
 
       case RouteConstants.gallery:
         return _buildCupertinoRoute(const GalleryScreen(), settings);

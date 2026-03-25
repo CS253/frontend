@@ -63,7 +63,6 @@ class TripsRepository {
     required DateTime startDate,
     required DateTime endDate,
     required String tripType,
-    String? coverImagePath,
   }) async {
     try {
       final rawData = await service.createTrip(
@@ -72,7 +71,6 @@ class TripsRepository {
         startDate: startDate.toIso8601String(),
         endDate: endDate.toIso8601String(),
         tripType: tripType,
-        coverImagePath: coverImagePath,
       );
       return TripModel.fromJson(rawData['trip'] as Map<String, dynamic>);
     } catch (e) {

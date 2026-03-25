@@ -9,10 +9,24 @@ import 'package:travelly/features/payments/presentation/widgets/friend_balances.
 import 'package:travelly/features/payments/presentation/widgets/expense_card.dart';
 import 'package:travelly/core/widgets/glass_back_button.dart';
 
-class PaymentsScreen extends StatelessWidget {
+class PaymentsScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
+  final String groupId;
 
-  const PaymentsScreen({super.key, this.onBackPressed});
+  const PaymentsScreen({super.key, this.onBackPressed, required this.groupId});
+
+  @override
+  State<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends State<PaymentsScreen> {
+  Key _refreshKey = UniqueKey();
+
+  void _reload() {
+    setState(() {
+      _refreshKey = UniqueKey();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +34,7 @@ class PaymentsScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFCFAF8),
       extendBodyBehindAppBar: true,
       body: Stack(
+        fit: StackFit.expand,
         children: [
           SingleChildScrollView(
             padding: EdgeInsets.only(
@@ -29,17 +44,19 @@ class PaymentsScreen extends StatelessWidget {
               bottom: 120, // ample space for fab
             ),
             child: Column(
+              key: _refreshKey,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                BalanceCard(),
+                BalanceCard(groupId: widget.groupId),
                 const SizedBox(height: 12),
-                const Center(child: SummaryCards()),
+                Center(child: SummaryCards(groupId: widget.groupId)),
                 const SizedBox(height: 16),
                 _buildBalancesHeader(),
                 const SizedBox(height: 10),
                 FriendBalances(
-                  onSettle: (name, initials, amount) {
-                    SettleBalanceFlow.show(context, name: name, initials: initials, amount: amount);
+                  groupId: widget.groupId,
+                  onSettle: (name, initials, amount, {String? fromUserId, String? toUserId, String? currency}) {
+                    SettleBalanceFlow.show(context, groupId: widget.groupId, name: name, initials: initials, amount: amount, fromUserId: fromUserId ?? '', toUserId: toUserId ?? '', currency: currency ?? 'INR', onComplete: _reload);
                   },
                 ),
                 const SizedBox(height: 16),
@@ -52,7 +69,7 @@ class PaymentsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const AllExpensesList(),
+                AllExpensesList(groupId: widget.groupId),
               ],
             ),
           ),
@@ -94,7 +111,7 @@ class PaymentsScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              GlassBackButton(onPressed: onBackPressed),
+              GlassBackButton(onPressed: widget.onBackPressed),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -144,7 +161,7 @@ class PaymentsScreen extends StatelessWidget {
 
   Widget _buildAddPaymentButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => AddPaymentFlow.show(context),
+      onTap: () => AddPaymentFlow.show(context, groupId: widget.groupId, onComplete: _reload),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF75CCFE),

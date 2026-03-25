@@ -5,23 +5,26 @@ import 'select_people_dialog.dart';
 import 'split_amount_dialog.dart';
 
 class AddPaymentFlow {
-  static void show(BuildContext context) {
-    _showDetails(context, null, null);
+  static void show(BuildContext context, {required String groupId, VoidCallback? onComplete}) {
+    _showDetails(context, groupId, null, null, onComplete);
   }
 
   static void _showDetails(
     BuildContext context,
+    String groupId,
     Map<String, String>? initialDetails,
-    List<String>? initialPeople,
+    List<String>? initialPeopleIds,
+    VoidCallback? onComplete,
   ) {
     showDialog(
       context: context,
       builder: (context) => KeyboardSafeDialog(
         child: PaymentDetailsDialog(
+          groupId: groupId,
           initialDetails: initialDetails,
           onContinue: (details) {
             Navigator.pop(context);
-            _showSelectPeople(context, details, initialPeople);
+            _showSelectPeople(context, groupId, details, initialPeopleIds, onComplete);
           },
         ),
       ),
@@ -30,21 +33,24 @@ class AddPaymentFlow {
 
   static void _showSelectPeople(
     BuildContext context,
+    String groupId,
     Map<String, String> details,
-    List<String>? initialPeople,
+    List<String>? initialPeopleIds,
+    VoidCallback? onComplete,
   ) {
     showDialog(
       context: context,
       builder: (context) => KeyboardSafeDialog(
         child: SelectPeopleDialog(
-          initialPeople: initialPeople,
+          groupId: groupId,
+          initialPeopleIds: initialPeopleIds,
           onBack: () {
             Navigator.pop(context);
-            _showDetails(context, details, initialPeople);
+            _showDetails(context, groupId, details, initialPeopleIds, onComplete);
           },
-          onContinue: (people) {
+          onContinue: (peopleIds) {
             Navigator.pop(context);
-            _showSplitAmount(context, details, people);
+            _showSplitAmount(context, groupId, details, peopleIds, onComplete);
           },
         ),
       ),
@@ -53,19 +59,23 @@ class AddPaymentFlow {
 
   static void _showSplitAmount(
     BuildContext context,
+    String groupId,
     Map<String, String> details,
-    List<String> people,
+    List<String> peopleIds,
+    VoidCallback? onComplete,
   ) {
     showDialog(
       context: context,
       builder: (context) => KeyboardSafeDialog(
         child: SplitAmountDialog(
+          groupId: groupId,
           paymentDetails: details,
-          selectedPeopleNames: people,
+          selectedPeopleIds: peopleIds,
           onBack: () {
             Navigator.pop(context);
-            _showSelectPeople(context, details, people);
+            _showSelectPeople(context, groupId, details, peopleIds, onComplete);
           },
+          onComplete: onComplete,
         ),
       ),
     );

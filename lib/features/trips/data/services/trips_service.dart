@@ -4,16 +4,10 @@
 // This service communicates with the backend via ApiClient.
 // It does NOT transform data — that's the repository's job.
 //
-// IMAGE UPLOAD:
-//   When creating a trip with a cover photo, the service sends a
-//   multipart/form-data request using MultipartFile.fromFile.
 //   Fields: tripName, destination, startDate, endDate, tripType
-//   File: coverImage
-//
 // TODO: Replace mock implementations with real API calls when backend is ready.
 // =============================================================================
 
-// NOTE: Uncomment when real multipart API calls are enabled.
 import '../../../../core/api/api_client.dart';
 
 class TripsService {
@@ -39,21 +33,23 @@ class TripsService {
     return {
       'trips': [
         {
-          'id': 'trip-001',
-          'name': 'Santorini Dreams',
-          'destination': 'Santorini, Greece',
-          'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'id': '1983ef7e-c05d-48da-8dd5-132157e29317',
+          'name': 'Maldives Trip',
+          'destination': 'Maldives',
+          'coverImage':
+              'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
           'startDate': '2024-05-01',
           'endDate': '2024-05-15',
           'tripType': 'Beach',
           'membersCount': 5,
-          'createdBy': 'user-001',
+          'createdBy': 'c7c95318-9322-43dc-9396-37e7ad2ef248',
         },
         {
           'id': 'trip-002',
           'name': 'Paris Escape',
           'destination': 'Paris, France',
-          'coverImage': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'coverImage':
+              'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
           'startDate': '2024-07-01',
           'endDate': '2024-07-10',
           'tripType': 'City',
@@ -64,7 +60,8 @@ class TripsService {
           'id': 'trip-003',
           'name': 'Mountain Trek',
           'destination': 'Swiss Alps',
-          'coverImage': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'coverImage':
+              'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
           'startDate': '2024-06-01',
           'endDate': '2024-06-10',
           'tripType': 'Mountain',
@@ -112,7 +109,8 @@ class TripsService {
         'id': tripId,
         'name': 'Santorini Dreams',
         'destination': 'Santorini, Greece',
-        'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1',
+        'coverImage':
+            'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1',
         'startDate': '2024-05-01',
         'endDate': '2024-05-15',
         'tripType': 'Beach',
@@ -136,9 +134,6 @@ class TripsService {
   ///
   /// BACKEND CALL: POST /trips
   ///
-  /// When coverImagePath is provided, sends multipart/form-data request:
-  ///   Fields: name, destination, startDate, endDate, tripType
-  ///   File: coverImage (MultipartFile.fromFile)
   ///
   /// When no cover image, sends regular JSON POST request.
   ///
@@ -149,7 +144,6 @@ class TripsService {
     required String startDate,
     required String endDate,
     required String tripType,
-    String? coverImagePath,
   }) async {
     // -------------------------------------------------------------------------
     // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
@@ -161,7 +155,7 @@ class TripsService {
         'id': 'trip-new-${DateTime.now().millisecondsSinceEpoch}',
         'name': name,
         'destination': destination,
-        'coverImage': coverImagePath,
+        'coverImage': null,
         'startDate': startDate,
         'endDate': endDate,
         'tripType': tripType,
@@ -169,55 +163,6 @@ class TripsService {
         'createdBy': 'user-001',
       },
     };
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
-    // BACKEND CALL: POST /trips — Creates trip with multipart/form-data
-    //
-    // if (coverImagePath != null) {
-    //   // Multipart upload with cover image using MultipartFile.fromFile
-    //   final uri = Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.trips}');
-    //   final request = http.MultipartRequest('POST', uri);
-    //
-    //   // Add auth header
-    //   final token = apiClient.authToken;
-    //   if (token != null) {
-    //     request.headers['Authorization'] = 'Bearer $token';
-    //   }
-    //
-    //   // Add text fields
-    //   request.fields['name'] = name;
-    //   request.fields['destination'] = destination;
-    //   request.fields['startDate'] = startDate;
-    //   request.fields['endDate'] = endDate;
-    //   request.fields['tripType'] = tripType;
-    //
-    //   // Add cover image file
-    //   request.files.add(
-    //     await http.MultipartFile.fromPath('coverImage', coverImagePath),
-    //   );
-    //
-    //   final streamedResponse = await request.send();
-    //   final response = await http.Response.fromStream(streamedResponse);
-    //
-    //   if (response.statusCode == 200 || response.statusCode == 201) {
-    //     return jsonDecode(response.body);
-    //   } else {
-    //     throw Exception('Failed to create trip: ${response.statusCode}');
-    //   }
-    // } else {
-    //   // JSON POST without cover image
-    //   return await apiClient.post(
-    //     ApiEndpoints.trips,
-    //     body: {
-    //       'name': name,
-    //       'destination': destination,
-    //       'startDate': startDate,
-    //       'endDate': endDate,
-    //       'tripType': tripType,
-    //     },
-    //   );
-    // }
     // -------------------------------------------------------------------------
   }
 
@@ -241,11 +186,15 @@ class TripsService {
     // -------------------------------------------------------------------------
     await Future.delayed(const Duration(milliseconds: 500));
     return {
-      'members': members.map((m) => {
-        ...m,
-        'id': 'member-${DateTime.now().millisecondsSinceEpoch}',
-        'role': 'member',
-      }).toList(),
+      'members': members
+          .map(
+            (m) => {
+              ...m,
+              'id': 'member-${DateTime.now().millisecondsSinceEpoch}',
+              'role': 'member',
+            },
+          )
+          .toList(),
     };
     // -------------------------------------------------------------------------
     // REAL API CALL — Uncomment when backend is ready:
@@ -275,8 +224,18 @@ class TripsService {
     await Future.delayed(const Duration(milliseconds: 500));
     return {
       'members': [
-        {'id': 'member-001', 'name': 'Alice', 'phone': '+1234567890', 'role': 'admin'},
-        {'id': 'member-002', 'name': 'Bob', 'phone': '+0987654321', 'role': 'member'},
+        {
+          'id': 'member-001',
+          'name': 'Alice',
+          'phone': '+1234567890',
+          'role': 'admin',
+        },
+        {
+          'id': 'member-002',
+          'name': 'Bob',
+          'phone': '+0987654321',
+          'role': 'member',
+        },
       ],
     };
     // -------------------------------------------------------------------------

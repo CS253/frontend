@@ -6,13 +6,15 @@ import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_p
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_user_tile.dart';
 
 class SelectPeopleDialog extends StatefulWidget {
-  final List<String>? initialPeople;
+  final String groupId;
+  final List<String>? initialPeopleIds;
   final VoidCallback onBack;
   final Function(List<String>) onContinue;
 
   const SelectPeopleDialog({
     super.key,
-    this.initialPeople,
+    required this.groupId,
+    this.initialPeopleIds,
     required this.onBack,
     required this.onContinue,
   });
@@ -22,22 +24,22 @@ class SelectPeopleDialog extends StatefulWidget {
 }
 
 class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
-  final Set<String> selectedNames = {};
+  final Set<String> selectedIds = {};
   bool _isLoading = true;
   List<MemberModel> _members = [];
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialPeople != null) {
-      selectedNames.addAll(widget.initialPeople!);
+    if (widget.initialPeopleIds != null) {
+      selectedIds.addAll(widget.initialPeopleIds!);
     }
     _fetchMembers();
   }
 
   Future<void> _fetchMembers() async {
     try {
-      final members = await PaymentRepository().getTripMembers();
+      final members = await PaymentRepository().getGroupMembers(widget.groupId);
       if (mounted) {
         setState(() {
           _members = members;
@@ -106,16 +108,16 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
                     itemCount: _members.length,
                     itemBuilder: (context, index) {
                       final member = _members[index];
-                      final isSelected = selectedNames.contains(member.name);
+                      final isSelected = selectedIds.contains(member.userId);
                       return PaymentUserTile(
                         member: member,
                         isSelected: isSelected,
                         onTap: () {
                           setState(() {
                             if (isSelected) {
-                              selectedNames.remove(member.name);
+                              selectedIds.remove(member.userId);
                             } else {
-                              selectedNames.add(member.name);
+                              selectedIds.add(member.userId);
                             }
                           });
                         },
@@ -127,13 +129,13 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
             DialogPrimaryButton(
               text: 'Continue',
               onPressed: () {
-                if (selectedNames.isEmpty) {
+                if (selectedIds.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please select at least one person')),
                   );
                   return;
                 }
-                widget.onContinue(selectedNames.toList());
+                widget.onContinue(selectedIds.toList());
               },
             ),
           ],

@@ -1,33 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/features/payments/data/models/balance_model.dart';
+import 'package:travelly/features/payments/data/models/settlement_model.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/core/constants/currency.dart';
+import 'package:travelly/core/services/user_identity_service.dart';
 
 /// Horizontal scrollable friend balance cards with dynamic data.
 class FriendBalances extends StatefulWidget {
-  final Function(String name, String initials, String amount)? onSettle;
+  final String groupId;
+  final Function(String name, String initials, String amount, {String? fromUserId, String? toUserId, String? currency})? onSettle;
 
-  const FriendBalances({super.key, this.onSettle});
+  const FriendBalances({super.key, required this.groupId, this.onSettle});
 
   @override
   State<FriendBalances> createState() => _FriendBalancesState();
 }
 
 class _FriendBalancesState extends State<FriendBalances> {
-  late Future<List<BalanceModel>> _balancesFuture;
+  late Future<_SettlementsData> _dataFuture;
   final PaymentRepository _repository = PaymentRepository();
 
   @override
   void initState() {
     super.initState();
-    _balancesFuture = _repository.getBalances();
+    _dataFuture = _fetchData();
+  }
+
+  Future<_SettlementsData> _fetchData() async {
+    final results = await Future.wait([
+      _repository.getSettlements(widget.groupId, simplifyDebts: false),
+      UserIdentityService.instance.getBackendUserId(widget.groupId),
+    ]);
+    return _SettlementsData(
+      settlements: results[0] as List<SettlementModel>,
+      currentUserId: results[1] as String,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<BalanceModel>>(
-      future: _balancesFuture,
+    return FutureBuilder<_SettlementsData>(
+      future: _dataFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
@@ -36,39 +49,69 @@ class _FriendBalancesState extends State<FriendBalances> {
           );
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No balances found.'));
+        } else if (!snapshot.hasData || snapshot.data!.settlements.isEmpty) {
+          return const Center(child: Text('All settled up! 🎉'));
         }
 
-        final balances = snapshot.data!;
+        final settlements = snapshot.data!.settlements;
+        final currentUserId = snapshot.data!.currentUserId;
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           clipBehavior: Clip.none,
           child: Row(
-            children: balances.asMap().entries.map((entry) {
+            children: settlements.asMap().entries.map((entry) {
               final index = entry.key;
-              final balance = entry.value;
-              final isLast = index == balances.length - 1;
+              final settlement = entry.value;
+              final isLast = index == settlements.length - 1;
 
-              // Check if "You owe" is in the status text to enable settlement
-              final isOwe = balance.statusText.toLowerCase().contains('you owe');
-              String amount = '';
-              if (isOwe) {
-                // Extract amount from "You owe ₹500" or similar
-                amount = balance.statusText.split(AppCurrency.symbol).last;
+              final currencySymbol = _getCurrencySymbol(settlement.currency);
+
+              // Determine direction relative to current user
+              final bool iOwe = settlement.fromUserId == currentUserId;
+              final bool owesMe = settlement.toUserId == currentUserId;
+
+              String displayName;
+              String statusText;
+              Color statusColor;
+              Color statusTextColor;
+
+              if (iOwe) {
+                displayName = settlement.toUserName;
+                statusText = 'I owe $currencySymbol${settlement.amount.toStringAsFixed(0)}';
+                statusColor = const Color(0xFFFDE8E8);
+                statusTextColor = const Color(0xFFD1475E);
+              } else if (owesMe) {
+                displayName = settlement.fromUserName;
+                statusText = 'Owes you $currencySymbol${settlement.amount.toStringAsFixed(0)}';
+                statusColor = const Color(0xFFE0F5EE);
+                statusTextColor = const Color(0xFF339977);
+              } else {
+                // Neither direction involves current user – show as neutral
+                displayName = '${settlement.fromUserName} → ${settlement.toUserName}';
+                statusText = '$currencySymbol${settlement.amount.toStringAsFixed(0)}';
+                statusColor = const Color(0xFFF0ECE8);
+                statusTextColor = const Color(0xFF8A8075);
               }
+
+              final initials = _getInitials(displayName);
 
               return Padding(
                 padding: EdgeInsets.only(right: isLast ? 0 : 10),
                 child: _card(
-                  avatarColor: Color(balance.avatarColorValue),
-                  initials: balance.initials,
-                  name: balance.name,
-                  statusColor: Color(balance.statusColorValue),
-                  statusTextColor: Color(balance.statusTextColorValue),
-                  statusText: balance.statusText,
-                  onTap: isOwe ? () => widget.onSettle?.call(balance.name, balance.initials, amount) : null,
+                  initials: initials,
+                  name: displayName,
+                  statusText: statusText,
+                  statusColor: statusColor,
+                  statusTextColor: statusTextColor,
+                  onTap: () => widget.onSettle?.call(
+                    displayName,
+                    initials,
+                    settlement.amount.toStringAsFixed(2),
+                    fromUserId: settlement.fromUserId,
+                    toUserId: settlement.toUserId,
+                    currency: settlement.currency,
+                  ),
                 ),
               );
             }).toList(),
@@ -78,8 +121,26 @@ class _FriendBalancesState extends State<FriendBalances> {
     );
   }
 
+  String _getCurrencySymbol(String code) {
+    switch (code) {
+      case 'INR': return '₹';
+      case 'USD': return '\$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      default: return AppCurrency.symbol;
+    }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return '??';
+    final parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
   Widget _card({
-    required Color avatarColor,
     required String initials,
     required String name,
     required Color statusColor,
@@ -105,10 +166,9 @@ class _FriendBalancesState extends State<FriendBalances> {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFEEECE8),
-                border: Border.all(color: avatarColor, width: 2),
+                color: Color(0xFFEEECE8),
               ),
               child: Center(
                 child: Text(
@@ -129,6 +189,7 @@ class _FriendBalancesState extends State<FriendBalances> {
                 fontSize: 13,
                 color: const Color(0xFF38332E),
               ),
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
             Container(
@@ -148,4 +209,11 @@ class _FriendBalancesState extends State<FriendBalances> {
       ),
     );
   }
+}
+
+class _SettlementsData {
+  final List<SettlementModel> settlements;
+  final String currentUserId;
+
+  _SettlementsData({required this.settlements, required this.currentUserId});
 }

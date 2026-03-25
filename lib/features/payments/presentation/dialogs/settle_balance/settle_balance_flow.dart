@@ -1,64 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 import 'select_settle_option_dialog.dart';
-import 'pay_with_upi_dialog.dart';
 import 'mark_as_paid_dialog.dart';
+import 'pay_with_upi_dialog.dart';
 
 class SettleBalanceFlow {
   static void show(
     BuildContext context, {
+    required String groupId,
     required String name,
     required String initials,
     required String amount,
+    required String fromUserId,
+    required String toUserId,
+    required String currency,
+    VoidCallback? onComplete,
   }) {
-    _showOptions(context, name: name, initials: initials, amount: amount);
+    _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
   }
 
-  static void _showOptions(
-    BuildContext context, {
-    required String name,
-    required String initials,
-    required String amount,
-  }) {
+  static void _showSelectOption(
+    BuildContext context,
+    String groupId,
+    String name,
+    String initials,
+    String amount,
+    String fromUserId,
+    String toUserId,
+    String currency,
+    VoidCallback? onComplete,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => KeyboardSafeDialog(
+      builder: (ctx) => KeyboardSafeDialog(
         child: SelectSettleOptionDialog(
           name: name,
           initials: initials,
           amount: amount,
-          onPayViaUPI: () {
-            Navigator.pop(context);
-            _showPayWithUPI(context, name: name, amount: amount);
-          },
+          currency: currency,
           onMarkAsPaid: () {
-            Navigator.pop(context);
-            _showMarkAsPaid(context, name: name, amount: amount, initials: initials);
+            Navigator.pop(ctx);
+            _showMarkAsPaid(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
           },
-        ),
-      ),
-    );
-  }
-
-  static void _showPayWithUPI(
-    BuildContext context, {
-    required String name,
-    required String amount,
-  }) {
-    showDialog(
-      context: context,
-      builder: (context) => KeyboardSafeDialog(
-        child: PayWithUPIDialog(
-          name: name,
-          amount: amount,
-          onBack: () {
-            Navigator.pop(context);
-            // Assuming we need initials to go back to options, but for now just pass a dummy or keep track
-            // Better: pass it along
-          },
-          onMarkAsPaid: () {
-            Navigator.pop(context);
-            _showMarkAsPaid(context, name: name, amount: amount, initials: ''); // Initials not needed for mark as paid?
+          onPayWithUpi: () {
+            Navigator.pop(ctx);
+            _showPayWithUpi(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
           },
         ),
       ),
@@ -66,18 +52,62 @@ class SettleBalanceFlow {
   }
 
   static void _showMarkAsPaid(
-    BuildContext context, {
-    required String name,
-    required String amount,
-    required String initials,
-  }) {
+    BuildContext context,
+    String groupId,
+    String name,
+    String initials,
+    String amount,
+    String fromUserId,
+    String toUserId,
+    String currency,
+    VoidCallback? onComplete,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => KeyboardSafeDialog(
+      builder: (ctx) => KeyboardSafeDialog(
         child: MarkAsPaidDialog(
+          groupId: groupId,
+          name: name,
+          initials: initials,
+          amount: amount,
+          fromUserId: fromUserId,
+          toUserId: toUserId,
+          currency: currency,
           onBack: () {
-            Navigator.pop(context);
-            _showOptions(context, name: name, amount: amount, initials: initials);
+            Navigator.pop(ctx);
+            _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
+          },
+          onComplete: onComplete,
+        ),
+      ),
+    );
+  }
+
+  static void _showPayWithUpi(
+    BuildContext context,
+    String groupId,
+    String name,
+    String initials,
+    String amount,
+    String fromUserId,
+    String toUserId,
+    String currency,
+    VoidCallback? onComplete,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => KeyboardSafeDialog(
+        child: PayWithUpiDialog(
+          groupId: groupId,
+          name: name,
+          initials: initials,
+          amount: amount,
+          fromUserId: fromUserId,
+          toUserId: toUserId,
+          currency: currency,
+          onBack: () {
+            Navigator.pop(ctx);
+            _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
           },
         ),
       ),

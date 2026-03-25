@@ -16,7 +16,7 @@ class DashboardService {
   final ApiClient _apiClient;
 
   DashboardService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   /// Fetches the full dashboard payload from GET /dashboard.
   ///
@@ -28,7 +28,8 @@ class DashboardService {
       final response = await _apiClient.get(ApiEndpoints.dashboard);
 
       // If the response contains valid trip data, return it directly.
-      if (response.containsKey('currentTrip') && response['currentTrip'] != null) {
+      if (response.containsKey('currentTrip') &&
+          response['currentTrip'] != null) {
         return response;
       }
     } catch (e) {
@@ -54,8 +55,8 @@ class DashboardService {
   Map<String, dynamic> _getMockDashboardData() {
     return {
       'currentTrip': {
-        'id': 'trip_mock_001',
-        'name': 'Less Gooo',
+        'id': '1983ef7e-c05d-48da-8dd5-132157e29317',
+        'name': 'Maldives Trip',
         'location': 'Maldives',
         'destination': 'Maldives',
         'startDate': '2026-04-10',
@@ -83,12 +84,7 @@ class DashboardService {
             'avatarUrl': '',
             'emoji': '🤗',
           },
-          {
-            'id': 'user_mock_4',
-            'name': 'Amit',
-            'avatarUrl': '',
-            'emoji': '😄',
-          },
+          {'id': 'user_mock_4', 'name': 'Amit', 'avatarUrl': '', 'emoji': '😄'},
           {
             'id': 'user_mock_5',
             'name': 'Priya',
@@ -109,7 +105,9 @@ class DashboardService {
           'type': 'payment_added',
           'actor': 'Ronit',
           'description': 'added ${AppCurrency.symbol}10000 for Hotel',
-          'timestamp': DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
+          'timestamp': DateTime.now()
+              .subtract(const Duration(hours: 2))
+              .toIso8601String(),
           'iconType': 'payment',
         },
         {
@@ -117,7 +115,9 @@ class DashboardService {
           'type': 'photo_shared',
           'actor': 'Sarim',
           'description': 'shared 12 photos',
-          'timestamp': DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
+          'timestamp': DateTime.now()
+              .subtract(const Duration(hours: 5))
+              .toIso8601String(),
           'iconType': 'photo',
         },
         {
@@ -125,7 +125,9 @@ class DashboardService {
           'type': 'document_uploaded',
           'actor': 'Rigved',
           'description': 'uploaded Flight Tickets',
-          'timestamp': DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+          'timestamp': DateTime.now()
+              .subtract(const Duration(days: 1))
+              .toIso8601String(),
           'iconType': 'document',
         },
       ],

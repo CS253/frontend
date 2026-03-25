@@ -24,10 +24,10 @@ class ApiEndpoints {
   /// Dynamically switches based on the platform.
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://localhost:5000/api';
+      return 'http://localhost:5001/api';
     } else {
       // Use 10.0.2.2 for Android emulators to access localhost.
-      // For iOS simulators and physical devices on the same network, 
+      // For iOS simulators and physical devices on the same network,
       // replace with your computer's local IP (e.g., 192.168.x.x).
       try {
         if (Platform.isAndroid) {
@@ -134,14 +134,60 @@ class ApiEndpoints {
       '/trips/$tripId/members/$memberId';
 
   // ---------------------------------------------------------------------------
-  // Payments Endpoints
+  // Groups & Payments Endpoints
   // ---------------------------------------------------------------------------
 
-  static const String payments = '/payments';
-  static const String expenses = '/payments/expenses';
-  static const String balances = '/payments/balances';
-  static const String settle = '/payments/settle';
-  static String paymentById(String id) => '/payments/expenses/$id';
+  /// POST — Create a new group.
+  static const String groups = '/groups';
+
+  /// GET — Get group details (includes members).
+  static String groupDetails(String groupId) => '/groups/$groupId';
+
+  /// PUT — Update group title/currency.
+  static String updateGroup(String groupId) => '/groups/$groupId';
+
+  /// POST — Add member to group.
+  static String groupMembers(String groupId) => '/groups/$groupId/members';
+
+  /// GET/POST — Group expenses.
+  static String groupExpenses(String groupId) => '/groups/$groupId/expenses';
+
+  /// GET/PUT/DELETE — Single expense.
+  static String groupExpense(String groupId, String expenseId) =>
+      '/groups/$groupId/expenses/$expenseId';
+
+  /// GET — Group balances (per-currency).
+  static String groupBalances(String groupId) => '/groups/$groupId/balances';
+
+  /// GET — Group settlements (with optional ?simplifyDebts=true/false).
+  static String groupSettlements(String groupId) =>
+      '/groups/$groupId/settlements';
+
+  /// POST — Mark a settlement as paid.
+  static String markSettlementPaid(String groupId) =>
+      '/groups/$groupId/settlements/mark-paid';
+
+  /// POST — Request payment from a debtor.
+  static String requestPayment(String groupId) =>
+      '/groups/$groupId/settlements/request-payment';
+
+  /// POST — Initiate UPI payment (get deep link).
+  static String initiatePayment(String groupId) =>
+      '/groups/$groupId/settlements/initiate-payment';
+
+  /// GET — Payment/reimbursement history.
+  static String paymentHistory(String groupId) =>
+      '/groups/$groupId/payment-history';
+
+  /// GET — Full expense history (chronological).
+  static String groupHistory(String groupId) => '/groups/$groupId/history';
+
+  /// GET — Group summary & stats.
+  static String groupSummary(String groupId) => '/groups/$groupId/summary';
+
+  /// PUT — Toggle simplify-debts setting.
+  static String simplifyDebts(String groupId) =>
+      '/groups/$groupId/settings/simplify-debts';
 
   // ---------------------------------------------------------------------------
   // Documents Endpoints

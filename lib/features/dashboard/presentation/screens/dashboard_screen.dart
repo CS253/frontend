@@ -139,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // ── Explore navigation grid ──────────────────────────
-            const ExploreGrid(),
+            ExploreGrid(tripId: provider.currentTrip?.id ?? ''),
             const SizedBox(height: 24),
 
             // ── Recent activity feed ─────────────────────────────
