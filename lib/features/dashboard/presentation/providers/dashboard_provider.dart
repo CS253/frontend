@@ -63,7 +63,7 @@ class DashboardProvider extends ChangeNotifier {
   ///
   /// Calls [notifyListeners] at each state transition so the UI
   /// can react (show loading spinner, render data, or show error).
-  Future<void> fetchDashboard() async {
+  Future<void> fetchDashboard(String tripId) async {
     // ── Step 1: Enter loading state ──────────────────────────────
     _isLoading = true;
     _errorMessage = '';
@@ -71,7 +71,7 @@ class DashboardProvider extends ChangeNotifier {
 
     try {
       // ── Step 2–3: Fetch and parse data ─────────────────────────
-      final response = await _repository.getDashboard();
+      final response = await _repository.getDashboard(tripId);
 
       _currentTrip = response.currentTrip;
       _participants = response.participants;
@@ -87,7 +87,7 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   /// Refreshes dashboard data. Convenience method for pull-to-refresh.
-  Future<void> refresh() => fetchDashboard();
+  Future<void> refresh(String tripId) => fetchDashboard(tripId);
 
   /// Updates trip details with all editable fields.
   ///

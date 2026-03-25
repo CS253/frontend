@@ -19,7 +19,9 @@ import '../dialogs/trip_details_dialog.dart';
 ///   • Composes extracted widgets for each UI section
 ///   • Handles loading, error, and data states
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String tripId;
+
+  const DashboardScreen({super.key, required this.tripId});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -31,7 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     // Fetch dashboard data when the screen is first mounted.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DashboardProvider>().fetchDashboard();
+      context.read<DashboardProvider>().fetchDashboard(widget.tripId);
     });
   }
 
@@ -92,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => provider.fetchDashboard(),
+                onPressed: () => provider.fetchDashboard(widget.tripId),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00A2FF),
                   foregroundColor: Colors.white,

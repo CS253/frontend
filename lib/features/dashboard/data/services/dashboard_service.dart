@@ -22,10 +22,10 @@ class DashboardService {
   ///
   /// Returns a JSON map matching the [DashboardResponseModel.fromJson]
   /// contract. On backend failure, returns mock data instead.
-  Future<Map<String, dynamic>> fetchDashboard() async {
+  Future<Map<String, dynamic>> fetchDashboard(String tripId) async {
     try {
       // ── Real API call ──────────────────────────────────────────────
-      final response = await _apiClient.get(ApiEndpoints.dashboard);
+      final response = await _apiClient.get('${ApiEndpoints.dashboard}?tripId=$tripId');
 
       // If the response contains valid trip data, return it directly.
       if (response.containsKey('currentTrip') &&
@@ -42,7 +42,7 @@ class DashboardService {
     // Once the backend GET /dashboard endpoint is live and tested,
     // delete everything from this comment to the closing brace and
     // simply `return response;` from the try block above.
-    return _getMockDashboardData();
+    return _getMockDashboardData(tripId);
     // ── END MOCK DATA ──────────────────────────────────────────────
   }
 
@@ -52,10 +52,10 @@ class DashboardService {
   ///
   /// Includes all trip fields used in the Trip Details dialog:
   ///   • name, destination, startDate, endDate, tripType, coverImage
-  Map<String, dynamic> _getMockDashboardData() {
+  Map<String, dynamic> _getMockDashboardData(String tripId) {
     return {
       'currentTrip': {
-        'id': '1983ef7e-c05d-48da-8dd5-132157e29317',
+        'id': tripId,
         'name': 'Maldives Trip',
         'location': 'Maldives',
         'destination': 'Maldives',

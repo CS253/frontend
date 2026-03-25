@@ -25,18 +25,23 @@ class ApiEndpoints {
   /// Base URL for the API server.
   /// Dynamically switches based on the platform.
   static String get baseUrl {
+    // Get from .env file
+    String? envBaseUrl = dotenv.env['BASE_URL'];
+
+    if (envBaseUrl != null && envBaseUrl.isNotEmpty) {
+      return envBaseUrl;
+    }
+
+    // Fallback logic
     if (kIsWeb) {
       return 'http://localhost:5000/api';
     } else {
-      // Use 10.0.2.2 for Android emulators to access localhost.
-      // For iOS simulators and physical devices on the same network,
-      // replace with your computer's local IP (e.g., 192.168.x.x).
       try {
         if (Platform.isAndroid) {
-          return 'http://172.23.36.189:5000/api';
+          return 'http://172.23.35.9:5000/api';
         }
       } catch (_) {}
-      return 'http://localhost:5000/api';
+      return 'http://localhost:5001/api';
     }
   }
 

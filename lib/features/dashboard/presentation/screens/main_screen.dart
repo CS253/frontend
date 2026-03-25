@@ -29,13 +29,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
-        return const DashboardScreen();
+        return DashboardScreen(tripId: widget.tripId ?? '');
       case 1:
         return TripSettingsScreen(tripId: widget.tripId);
       case 2:
         return const AccountSettingsScreen();
       default:
-        return const DashboardScreen();
+        return DashboardScreen(tripId: widget.tripId ?? '');
     }
   }
 

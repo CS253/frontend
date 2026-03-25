@@ -26,8 +26,8 @@ class DashboardRepository {
   /// participants, and recent activities.
   ///
   /// Throws on unrecoverable errors (the provider must handle these).
-  Future<DashboardResponseModel> getDashboard() async {
-    final response = await _service.fetchDashboard();
+  Future<DashboardResponseModel> getDashboard(String tripId) async {
+    final response = await _service.fetchDashboard(tripId);
     return DashboardResponseModel.fromJson(response);
   }
 
@@ -61,6 +61,6 @@ class DashboardRepository {
     );
 
     // Re-fetch full dashboard to get consistent state
-    return getDashboard();
+    return getDashboard(tripId);
   }
 }
