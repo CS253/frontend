@@ -46,7 +46,7 @@ class _SummaryCardsState extends State<SummaryCards> {
         final summary = snapshot.data;
 
         // Per-currency maps for dialogs
-        final totalExpensesByCurrency = summary?.totalExpensesByPaymentCurrency ?? {};
+        final totalExpensesByCurrency = summary?.individual?.totalExpensesByPaymentCurrency ?? {};
         final youPaidByCurrency = summary?.individual?.paid ?? {};
 
         return IntrinsicHeight(

@@ -62,7 +62,7 @@ class _FriendBalancesState extends State<FriendBalances> {
           );
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.settlements.isEmpty) {
+        } else if (!snapshot.hasData) {
           return const Center(child: Text('All settled up! 🎉'));
         }
 
@@ -70,14 +70,22 @@ class _FriendBalancesState extends State<FriendBalances> {
         final currentUserId = snapshot.data!.currentUserId;
         final members = snapshot.data!.members;
 
+        final userSettlements = currentUserId.isNotEmpty
+            ? settlements.where((s) => s.fromUserId == currentUserId || s.toUserId == currentUserId).toList()
+            : <SettlementModel>[];
+
+        if (userSettlements.isEmpty) {
+          return const Center(child: Text('All settled up! 🎉'));
+        }
+
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           clipBehavior: Clip.none,
           child: Row(
-            children: settlements.asMap().entries.map((entry) {
+            children: userSettlements.asMap().entries.map((entry) {
               final index = entry.key;
               final settlement = entry.value;
-              final isLast = index == settlements.length - 1;
+              final isLast = index == userSettlements.length - 1;
 
               final currencySymbol = _getCurrencySymbol(settlement.currency);
 
