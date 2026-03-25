@@ -27,13 +27,11 @@ class TripsRepository {
   /// Replace mockTrips() inside TripsService with API response mapping
   /// when connecting real backend. The repository code remains unchanged.
   Future<List<TripModel>> getTrips({
-    required String userId,
     int page = 1,
     int limit = 10,
   }) async {
     try {
       final rawData = await service.getTrips(
-        userId: userId,
         page: page,
         limit: limit,
       );
@@ -71,7 +69,6 @@ class TripsRepository {
     required DateTime startDate,
     required DateTime endDate,
     required String tripType,
-    required String createdBy,
   }) async {
     try {
       final rawData = await service.createTrip(
@@ -80,7 +77,6 @@ class TripsRepository {
         startDate: startDate.toIso8601String(),
         endDate: endDate.toIso8601String(),
         tripType: tripType,
-        createdBy: createdBy,
       );
       return TripModel.fromJson(rawData['trip'] as Map<String, dynamic>);
     } catch (e) {

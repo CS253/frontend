@@ -9,11 +9,11 @@
 //   • Trip list caching (avoids redundant API calls)
 //
 // BACKEND TRIGGER POINTS (UI Action → Provider Method → API Endpoint):
-//   • MyTripsScreen loads     → loadTrips()      → GET /trips
-//   • Trip card tap           → loadTripDetail() → GET /trips/{id}
-//   • Create Trip button      → createTrip()     → POST /trips (multipart/form-data)
+//   • MyTripsScreen loads     → loadTrips()      → GET /groups
+//   • Trip card tap           → loadTripDetail() → GET /groups/{id}
+//   • Create Trip button      → createTrip()     → POST /groups
 //   • Add Member button       → addMemberToNewTrip() → (local state)
-//   • Members loaded          → loadMembers()    → GET /trips/{id}/members
+//   • Members loaded          → loadMembers()    → GET /groups/{id}/members
 //
 // Data Flow: Screen → TripsProvider → TripsRepository → TripsService → API
 //
@@ -109,10 +109,10 @@ class TripsProvider with ChangeNotifier {
   ///
   /// BACKEND CALL: MyTripsScreen loads → TripsProvider.loadTrips()
   ///   → TripsRepository.getTrips() → TripsService.getTrips()
-  ///   → GET /trips?page=1&limit=10
+  ///   → GET /groups?page=1&limit=10
   ///
   /// TODO: Replace mock data once backend API is connected
-  Future<void> loadTrips({required String userId, bool refresh = false}) async {
+  Future<void> loadTrips({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
@@ -128,7 +128,6 @@ class TripsProvider with ChangeNotifier {
 
     try {
       final newTrips = await repository.getTrips(
-        userId: userId,
         page: _currentPage,
         limit: 10,
       );
@@ -155,7 +154,7 @@ class TripsProvider with ChangeNotifier {
   ///
   /// BACKEND CALL: Trip card tap → TripsProvider.loadTripDetail()
   ///   → TripsRepository.getTripById() → TripsService.getTripById()
-  ///   → GET /trips/{tripId}
+  ///   → GET /groups/{tripId}
   ///
   /// TODO: Replace mock data once backend API is connected
   Future<void> loadTripDetail(String tripId) async {
@@ -209,13 +208,13 @@ class TripsProvider with ChangeNotifier {
   ///
   /// BACKEND CALL: Create Trip button → TripsProvider.createTrip()
   ///   → TripsRepository.createTrip() → TripsService.createTrip()
-  ///   → POST /trips (multipart/form-data with coverImage file)
+  ///   → POST /groups
   ///
   /// After this succeeds, the trip is added to the local list and
   /// the creation state is reset.
   ///
   /// TODO: Replace mock data once backend API is connected
-  Future<void> createTrip({required String createdBy}) async {
+  Future<void> createTrip() async {
     if (_newTripName == null || _newTripDestination == null ||
         _newTripStartDate == null || _newTripEndDate == null) {
       _errorMessage = 'Please fill in all trip details';
@@ -234,7 +233,6 @@ class TripsProvider with ChangeNotifier {
         startDate: _newTripStartDate!,
         endDate: _newTripEndDate!,
         tripType: _newTripType,
-        createdBy: createdBy,
       );
 
       // Add members if any were added during creation

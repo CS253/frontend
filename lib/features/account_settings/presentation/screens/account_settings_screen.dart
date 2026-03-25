@@ -99,7 +99,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                             children: [
                               SettingItem(
                                 title: 'Personal Information',
-                                subtitle: 'Name, phone, address',
+                                subtitle: 'Name, phone, UPI',
                                 icon: Icons.person_outline,
                                 iconBgColor: const Color(0xFFD9F0FC),
                                 iconColor: const Color(0xFF333136),

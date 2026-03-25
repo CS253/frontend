@@ -18,7 +18,7 @@
 //   Step 1 (Trip Details): Trip Name, Destination, Dates, Type
 //
 // BACKEND CALL: TripsProvider.createTrip() → TripsRepository → TripsService
-//   • Triggers POST /trips (multipart/form-data with coverImage file)
+//   • Triggers POST /groups
 //   • TODO: Replace mock data once backend API is connected
 //
 // Data Flow:
@@ -154,7 +154,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   /// Handles the final trip creation via TripsProvider.
   ///
   /// BACKEND CALL: Sends trip creation request to server
-  /// POST /trips with multipart/form-data (name, destination, dates, type, coverImage file)
+  /// POST /groups with trip details in JSON
   /// TODO: Replace mock data once backend API is connected
   Future<void> _handleCreateTrip() async {
     final userId = context.read<AuthProvider>().user?.id;
@@ -164,7 +164,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     }
 
     final tripsProvider = context.read<TripsProvider>();
-    await tripsProvider.createTrip(createdBy: userId);
+    await tripsProvider.createTrip();
 
     if (!mounted) return;
 
@@ -846,7 +846,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               const SizedBox(height: 32),
 
               // Create Trip button with loading state
-              // BACKEND CALL: Sends POST /trips with multipart/form-data
+                // BACKEND CALL: Sends POST /groups
               tripsProvider.isLoading
                   ? const Center(
                       child: CircularProgressIndicator(

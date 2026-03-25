@@ -2,153 +2,55 @@ import 'package:travelly/core/api/api_client.dart';
 import 'package:travelly/core/api/api_endpoints.dart';
 import 'package:travelly/core/constants/currency.dart';
 
-/// Service layer responsible for fetching dashboard data from the backend.
-///
-/// Architecture role:
-///   DashboardScreen → Provider → Repository → **Service** → ApiClient
-///
-/// This service attempts a real HTTP request first. If the backend is
-/// unavailable or returns an error, it falls back to mock data so the
-/// app remains functional during development.
-///
-/// The mock fallback strategy mirrors the Documents feature pattern.
 class DashboardService {
   final ApiClient _apiClient;
 
   DashboardService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+      : _apiClient = apiClient ?? ApiClient();
 
-  /// Fetches the full dashboard payload from GET /dashboard.
-  ///
-  /// Returns a JSON map matching the [DashboardResponseModel.fromJson]
-  /// contract. On backend failure, returns mock data instead.
+  static const Map<String, String> _currencySymbols = {
+    'INR': 'Rs.',
+    'USD': '\$',
+    'EUR': 'EUR ',
+    'GBP': 'GBP ',
+    'JPY': 'JPY ',
+  };
+
   Future<Map<String, dynamic>> fetchDashboard(String tripId) async {
-    try {
-      // ── Real API call ──────────────────────────────────────────────
-      final response = await _apiClient.get('${ApiEndpoints.dashboard}?tripId=$tripId');
+    final responses = await Future.wait<dynamic>([
+      _apiClient.get(ApiEndpoints.groupDetails(tripId)),
+      _apiClient.get(ApiEndpoints.groupMembers(tripId)),
+    ]);
 
-      // If the response contains valid trip data, return it directly.
-      if (response.containsKey('currentTrip') &&
-          response['currentTrip'] != null) {
-        return response;
-      }
-    } catch (e) {
-      // Backend unavailable — fall through to mock data below.
-      // This is expected during development before the backend exists.
+    final groupResponse = responses[0] as Map<String, dynamic>;
+    final membersResponse = responses[1] as Map<String, dynamic>;
+
+    final group = groupResponse['data'] as Map<String, dynamic>? ?? {};
+    final membersRaw = membersResponse['members'] as List<dynamic>? ?? const [];
+    final participants = membersRaw
+        .map((member) => _mapParticipant(member as Map<String, dynamic>))
+        .toList();
+
+    List<Map<String, dynamic>> recentActivities = [];
+    try {
+      final historyResponse =
+          await _apiClient.get(ApiEndpoints.groupHistory(tripId)) as Map<String, dynamic>;
+      final history = historyResponse['data'] as List<dynamic>? ?? const [];
+      recentActivities = history
+          .map((item) => _mapActivity(item as Map<String, dynamic>))
+          .take(5)
+          .toList();
+    } catch (_) {
+      recentActivities = [];
     }
 
-    // ── MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED ────────────
-    // The mock data below replicates the Figma design content exactly.
-    // Once the backend GET /dashboard endpoint is live and tested,
-    // delete everything from this comment to the closing brace and
-    // simply `return response;` from the try block above.
-    return _getMockDashboardData(tripId);
-    // ── END MOCK DATA ──────────────────────────────────────────────
-  }
-
-  /// Returns hardcoded mock dashboard data matching the API contract.
-  ///
-  /// MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED
-  ///
-  /// Includes all trip fields used in the Trip Details dialog:
-  ///   • name, destination, startDate, endDate, tripType, coverImage
-  Map<String, dynamic> _getMockDashboardData(String tripId) {
     return {
-      'currentTrip': {
-        'id': tripId,
-        'name': 'Maldives Trip',
-        'location': 'Maldives',
-        'destination': 'Maldives',
-        'startDate': '2026-04-10',
-        'endDate': '2026-04-20',
-        'daysRemaining': 5,
-        'emoji': '♠️',
-        'tripType': 'Island',
-        'coverImage': null, // No cover photo — will use trip-type default
-        'participants': [
-          {
-            'id': 'user_mock_1',
-            'name': 'Ronit',
-            'avatarUrl': '',
-            'emoji': '😊',
-          },
-          {
-            'id': 'user_mock_2',
-            'name': 'Sarim',
-            'avatarUrl': '',
-            'emoji': '😎',
-          },
-          {
-            'id': 'user_mock_3',
-            'name': 'Rigved',
-            'avatarUrl': '',
-            'emoji': '🤗',
-          },
-          {'id': 'user_mock_4', 'name': 'Amit', 'avatarUrl': '', 'emoji': '😄'},
-          {
-            'id': 'user_mock_5',
-            'name': 'Priya',
-            'avatarUrl': '',
-            'emoji': '🙂',
-          },
-          {
-            'id': 'user_mock_6',
-            'name': 'Rahul',
-            'avatarUrl': '',
-            'emoji': '😃',
-          },
-        ],
-      },
-      'recentActivities': [
-        {
-          'id': 'activity_mock_1',
-          'type': 'payment_added',
-          'actor': 'Ronit',
-          'description': 'added ${AppCurrency.symbol}10000 for Hotel',
-          'timestamp': DateTime.now()
-              .subtract(const Duration(hours: 2))
-              .toIso8601String(),
-          'iconType': 'payment',
-        },
-        {
-          'id': 'activity_mock_2',
-          'type': 'photo_shared',
-          'actor': 'Sarim',
-          'description': 'shared 12 photos',
-          'timestamp': DateTime.now()
-              .subtract(const Duration(hours: 5))
-              .toIso8601String(),
-          'iconType': 'photo',
-        },
-        {
-          'id': 'activity_mock_3',
-          'type': 'document_uploaded',
-          'actor': 'Rigved',
-          'description': 'uploaded Flight Tickets',
-          'timestamp': DateTime.now()
-              .subtract(const Duration(days: 1))
-              .toIso8601String(),
-          'iconType': 'document',
-        },
-      ],
+      'currentTrip': _mapTrip(group, participants.length),
+      'participants': participants,
+      'recentActivities': recentActivities,
     };
   }
-  // ── END MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED ──────────
 
-  /// Updates trip details via PUT /trips/:tripId.
-  ///
-  /// Sends all editable trip fields to the backend:
-  ///   • name, destination, startDate, endDate, tripType, emoji
-  ///   • coverImagePath (optional) — for multipart/form-data upload
-  ///
-  /// Falls back to a mock success response if the backend is unavailable.
-  ///
-  /// Architecture note: This method is called by DashboardRepository,
-  /// which is called by DashboardProvider.updateTrip().
-  ///
-  /// BACKEND CALL: PUT /trips/:tripId
-  /// TODO: When coverImagePath is provided, switch to multipart/form-data
-  ///       upload instead of JSON body.
   Future<Map<String, dynamic>> updateTrip({
     required String tripId,
     required String name,
@@ -159,42 +61,126 @@ class DashboardService {
     required String emoji,
     String? coverImagePath,
   }) async {
-    try {
-      // ── Real API call ──────────────────────────────────────────────
-      // TODO: If coverImagePath is not null, use multipart/form-data
-      //       to upload the cover image file along with trip data.
-      final response = await _apiClient.put(
-        ApiEndpoints.tripById(tripId),
-        body: {
-          'name': name,
-          'destination': destination,
-          'startDate': startDate,
-          'endDate': endDate,
-          'tripType': tripType,
-          'emoji': emoji,
-        },
-      );
-      return response;
-    } catch (e) {
-      // Backend unavailable — fall through to mock response below.
-    }
-
-    // ── MOCK DATA — DELETE AFTER BACKEND IS IMPLEMENTED ────────────
-    // Simulates a successful update response.
-    // Once PUT /trips/:id is implemented, delete this block.
-    return {
-      'status': 'success',
-      'trip': {
-        'id': tripId,
-        'name': name,
+    final response = await _apiClient.put(
+      ApiEndpoints.tripById(tripId),
+      body: {
+        'title': name,
         'destination': destination,
         'startDate': startDate,
         'endDate': endDate,
         'tripType': tripType,
         'emoji': emoji,
-        'coverImage': coverImagePath,
       },
+    );
+    return response;
+  }
+
+  Map<String, dynamic> _mapTrip(
+    Map<String, dynamic> group,
+    int memberCount,
+  ) {
+    final destination = (group['destination'] as String? ?? '').trim();
+    final tripType = (group['tripType'] as String? ?? 'Other').trim();
+
+    return {
+      'id': group['id'] as String? ?? '',
+      'name': group['title'] as String? ?? 'Untitled Trip',
+      'location': _locationLabel(destination),
+      'destination': destination,
+      'startDate': group['startDate'] as String? ?? '',
+      'endDate': group['endDate'] as String? ?? '',
+      'daysRemaining': _calculateDaysRemaining(group['startDate'] as String?),
+      'emoji': _tripEmojiForType(tripType),
+      'tripType': tripType.isEmpty ? 'Other' : tripType,
+      'coverImage': group['coverImage'] as String?,
+      'membersCount': memberCount,
     };
-    // ── END MOCK DATA ──────────────────────────────────────────────
+  }
+
+  Map<String, dynamic> _mapParticipant(Map<String, dynamic> member) {
+    final name = (member['name'] as String? ?? 'Traveller').trim();
+
+    return {
+      'id': member['id'] as String? ?? '',
+      'name': name.isEmpty ? 'Traveller' : name,
+      'avatarUrl': member['avatarUrl'] as String? ?? '',
+      'emoji': _memberEmoji(name),
+    };
+  }
+
+  Map<String, dynamic> _mapActivity(Map<String, dynamic> item) {
+    final payer = item['payer'] as Map<String, dynamic>? ?? const {};
+    final actor = (payer['name'] as String? ?? 'Someone').trim();
+    final amountLabel =
+        '${_currencyPrefix(item['currency'] as String?)}${_formatAmount(item['amount'])}';
+    final title = (item['title'] as String? ?? 'expense').trim();
+    final isReimbursement =
+        (item['type'] as String? ?? '').toUpperCase() == 'REIMBURSEMENT';
+
+    return {
+      'id': item['id'] as String? ?? '',
+      'type': 'payment_added',
+      'actor': actor.isEmpty ? 'Someone' : actor,
+      'description': isReimbursement
+          ? 'recorded reimbursement of $amountLabel for $title'
+          : 'added $amountLabel for $title',
+      'timestamp': item['createdAt'] as String? ?? item['date'] as String? ?? '',
+      'iconType': 'payment',
+    };
+  }
+
+  String _tripEmojiForType(String tripType) {
+    switch (tripType) {
+      case 'Beach':
+        return 'Beach';
+      case 'Mountain':
+        return 'Mountain';
+      case 'City':
+        return 'City';
+      case 'Nature':
+        return 'Nature';
+      case 'Island':
+        return 'Island';
+      default:
+        return 'Trip';
+    }
+  }
+
+  String _memberEmoji(String name) {
+    const emojis = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    if (name.isEmpty) return emojis.first;
+    final index = name.codeUnits.fold<int>(0, (sum, code) => sum + code) % emojis.length;
+    return emojis[index];
+  }
+
+  int _calculateDaysRemaining(String? startDate) {
+    if (startDate == null || startDate.isEmpty) return 0;
+
+    final parsed = DateTime.tryParse(startDate);
+    if (parsed == null) return 0;
+
+    final today = DateTime.now();
+    final tripStart = DateTime(parsed.year, parsed.month, parsed.day);
+    final currentDate = DateTime(today.year, today.month, today.day);
+    final difference = tripStart.difference(currentDate).inDays;
+
+    return difference < 0 ? 0 : difference;
+  }
+
+  String _locationLabel(String destination) {
+    if (destination.trim().isEmpty) return 'Unknown';
+    return destination.split(',').first.trim();
+  }
+
+  String _formatAmount(dynamic amount) {
+    if (amount is num) {
+      return amount % 1 == 0 ? amount.toInt().toString() : amount.toStringAsFixed(2);
+    }
+    return amount?.toString() ?? '0';
+  }
+
+  String _currencyPrefix(String? currency) {
+    if (currency == null || currency.isEmpty) return AppCurrency.symbol;
+    return _currencySymbols[currency] ?? '$currency ';
   }
 }

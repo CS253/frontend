@@ -1,4 +1,5 @@
 import '../../../../../core/api/api_client.dart';
+import '../../../../../core/api/api_endpoints.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AccountSettingsService {
@@ -7,27 +8,19 @@ class AccountSettingsService {
   AccountSettingsService(this.apiClient);
 
   Future<Map<String, dynamic>> fetchUserProfile() async {
-    // try {
-    //   final response = await apiClient.get(ApiEndpoints.userProfile);
-    //   return response.data;
-    // } catch (e) {
-    //   rethrow;
-    // }
+    final response =
+        await apiClient.get(ApiEndpoints.userProfile) as Map<String, dynamic>;
+    final raw = response['data'] as Map<String, dynamic>? ?? {};
 
-    // MOCK RESPONSE
-    await Future.delayed(
-      const Duration(seconds: 1),
-    ); // Simulate network latency
     return {
-      "data": {
-        "id": "u_12345",
-        "name": "Aditya Sharma",
-        "email": "aditya.sharma@email.com",
-        "phone": "+91 9876543210",
-        "address": "123 Travelly Street, Mumbai, India",
-        "upi_id": "aditya.sharma@okicici",
-        "image_url": "https://randomuser.me/api/portraits/men/32.jpg",
-        "preferences": {"notifications_enabled": true},
+      'data': {
+        'id': raw['id'],
+        'name': raw['name'] ?? '',
+        'email': raw['email'] ?? '',
+        'phone': raw['phoneNumber'] ?? '',
+        'upi_id': raw['upiId'] ?? '',
+        'image_url': null,
+        'preferences': {'notifications_enabled': true},
       },
     };
   }
@@ -38,8 +31,14 @@ class AccountSettingsService {
   }
 
   Future<void> updateProfile(Map<String, dynamic> data) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(seconds: 1));
+    await apiClient.put(
+      ApiEndpoints.updateUserProfile,
+      body: {
+        if (data['name'] != null) 'name': data['name'],
+        if (data['phone'] != null) 'phoneNumber': data['phone'],
+        'upiId': data['upi_id'] ?? '',
+      },
+    );
   }
 
   Future<void> changePassword(

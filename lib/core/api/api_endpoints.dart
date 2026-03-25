@@ -38,7 +38,7 @@ class ApiEndpoints {
     } else {
       try {
         if (Platform.isAndroid) {
-          return 'http://172.23.35.9:5000/api';
+          return 'http://172.23.36.189:5000/api';
         }
       } catch (_) {}
       return 'http://localhost:5001/api';
@@ -88,6 +88,8 @@ class ApiEndpoints {
   /// Headers: `Authorization: Bearer <token>`
   /// Response: { "user": { "id", "name", "email", "phone" } }
   static const String profile = '/auth/profile';
+  static const String userProfile = '/users/me';
+  static const String updateUserProfile = '/users/me';
 
   /// POST — Logout and invalidate token.
   /// Headers: `Authorization: Bearer <token>`
@@ -108,38 +110,38 @@ class ApiEndpoints {
   /// Fields: name, destination, startDate, endDate, tripType
   /// File: coverImage
   /// Response: { "trip": { ... } }
-  static const String trips = '/trips';
+  static const String trips = '/groups';
 
   /// GET — Fetch details of a specific trip.
   /// Response: { "trip": { "id", "name", "destination", ... } }
-  static String tripDetail(String tripId) => '/trips/$tripId';
+  static String tripDetail(String tripId) => '/groups/$tripId';
 
   /// PUT — Update a specific trip.
-  static String updateTrip(String tripId) => '/trips/$tripId';
+  static String updateTrip(String tripId) => '/groups/$tripId';
 
   /// DELETE — Delete a specific trip.
-  static String deleteTrip(String tripId) => '/trips/$tripId';
+  static String deleteTrip(String tripId) => '/groups/$tripId';
 
   /// Alias used by DashboardService.updateTrip()
-  static String tripById(String id) => '/trips/$id';
+  static String tripById(String id) => '/groups/$id';
 
   /// GET — Get members of a trip.
-  static String tripMembers(String tripId) => '/trips/$tripId/members';
+  static String tripMembers(String tripId) => '/groups/$tripId/members';
 
   /// POST — Add members to a trip.
   /// Request: { "members": [{ "name": "...", "phone": "..." }] }
   /// Response: { "members": [...] }
-  static String addMembers(String tripId) => '/trips/$tripId/members';
+  static String addMembers(String tripId) => '/groups/$tripId/members';
 
   /// GET — Get members of a trip.
-  static String getMembers(String tripId) => '/trips/$tripId/members';
+  static String getMembers(String tripId) => '/groups/$tripId/members';
 
   /// DELETE — Remove a member from a trip.
   static String removeMember(String tripId, String memberId) =>
-      '/trips/$tripId/members/$memberId';
+      '/groups/$tripId/members/$memberId';
 
   /// POST — Leave a trip as the current user.
-  static String leaveTrip(String tripId) => '/trips/$tripId/leave';
+  static String leaveTrip(String tripId) => '/groups/$tripId/leave';
 
   // ---------------------------------------------------------------------------
   // Groups & Payments Endpoints

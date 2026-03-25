@@ -75,6 +75,26 @@ class _ParticipantRowState extends State<ParticipantRow> {
   }
 
   @override
+  void didUpdateWidget(covariant ParticipantRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final previousDestination = oldWidget.trip.destination.isNotEmpty
+        ? oldWidget.trip.destination
+        : oldWidget.trip.location;
+    final nextDestination = widget.trip.destination.isNotEmpty
+        ? widget.trip.destination
+        : widget.trip.location;
+
+    if (previousDestination != nextDestination) {
+      setState(() {
+        _isLoadingWeather = true;
+        _weatherData = null;
+      });
+      _loadWeather();
+    }
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();

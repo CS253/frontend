@@ -46,10 +46,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       return;
     }
 
-    await context.read<TripsProvider>().loadTrips(
-      userId: userId,
-      refresh: true,
-    );
+    await context.read<TripsProvider>().loadTrips(refresh: true);
   }
 
   @override
@@ -326,10 +323,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                                       return;
                                     }
 
-                                    tripsProvider.loadTrips(
-                                      userId: userId,
-                                      refresh: true,
-                                    );
+                                    tripsProvider.loadTrips(refresh: true);
                                   },
                                   child: const Text('Retry'),
                                 ),
