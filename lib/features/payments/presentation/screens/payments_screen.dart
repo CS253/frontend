@@ -69,7 +69,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                AllExpensesList(groupId: widget.groupId),
+                AllExpensesList(groupId: widget.groupId, onExpenseDeleted: _reload),
               ],
             ),
           ),

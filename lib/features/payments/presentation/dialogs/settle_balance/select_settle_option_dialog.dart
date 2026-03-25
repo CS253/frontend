@@ -46,7 +46,6 @@ class SelectSettleOptionDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text('💰', style: TextStyle(fontSize: 36)),
             const SizedBox(height: 12),
             Text(
               'Settle Up',

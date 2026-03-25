@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/settlement_model.dart';
+import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/core/services/user_identity_service.dart';
@@ -30,11 +31,23 @@ class _FriendBalancesState extends State<FriendBalances> {
     final results = await Future.wait([
       _repository.getSettlements(widget.groupId, simplifyDebts: false),
       UserIdentityService.instance.getBackendUserId(widget.groupId),
+      _repository.getGroupMembers(widget.groupId),
     ]);
     return _SettlementsData(
       settlements: results[0] as List<SettlementModel>,
       currentUserId: results[1] as String,
+      members: results[2] as List<MemberModel>,
     );
+  }
+
+  /// Resolve a user's display name: use settlement name if available,
+  /// otherwise look up from group members by userId.
+  String _resolveName(String nameFromApi, String userId, List<MemberModel> members) {
+    if (nameFromApi.isNotEmpty) return nameFromApi;
+    for (final m in members) {
+      if (m.userId == userId) return m.name;
+    }
+    return 'Unknown';
   }
 
   @override
@@ -55,6 +68,7 @@ class _FriendBalancesState extends State<FriendBalances> {
 
         final settlements = snapshot.data!.settlements;
         final currentUserId = snapshot.data!.currentUserId;
+        final members = snapshot.data!.members;
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -67,6 +81,10 @@ class _FriendBalancesState extends State<FriendBalances> {
 
               final currencySymbol = _getCurrencySymbol(settlement.currency);
 
+              // Resolve names with member fallback
+              final fromName = _resolveName(settlement.fromUserName, settlement.fromUserId, members);
+              final toName = _resolveName(settlement.toUserName, settlement.toUserId, members);
+
               // Determine direction relative to current user
               final bool iOwe = settlement.fromUserId == currentUserId;
               final bool owesMe = settlement.toUserId == currentUserId;
@@ -77,18 +95,17 @@ class _FriendBalancesState extends State<FriendBalances> {
               Color statusTextColor;
 
               if (iOwe) {
-                displayName = settlement.toUserName;
+                displayName = toName;
                 statusText = 'I owe $currencySymbol${settlement.amount.toStringAsFixed(0)}';
                 statusColor = const Color(0xFFFDE8E8);
                 statusTextColor = const Color(0xFFD1475E);
               } else if (owesMe) {
-                displayName = settlement.fromUserName;
+                displayName = fromName;
                 statusText = 'Owes you $currencySymbol${settlement.amount.toStringAsFixed(0)}';
                 statusColor = const Color(0xFFE0F5EE);
                 statusTextColor = const Color(0xFF339977);
               } else {
-                // Neither direction involves current user – show as neutral
-                displayName = '${settlement.fromUserName} → ${settlement.toUserName}';
+                displayName = '$fromName → $toName';
                 statusText = '$currencySymbol${settlement.amount.toStringAsFixed(0)}';
                 statusColor = const Color(0xFFF0ECE8);
                 statusTextColor = const Color(0xFF8A8075);
@@ -214,6 +231,7 @@ class _FriendBalancesState extends State<FriendBalances> {
 class _SettlementsData {
   final List<SettlementModel> settlements;
   final String currentUserId;
+  final List<MemberModel> members;
 
-  _SettlementsData({required this.settlements, required this.currentUserId});
+  _SettlementsData({required this.settlements, required this.currentUserId, required this.members});
 }
