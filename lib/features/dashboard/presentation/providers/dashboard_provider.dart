@@ -139,4 +139,14 @@ class DashboardProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  /// Clears all dashboard data (e.g., on logout).
+  void clear() {
+    _currentTrip = null;
+    _participants = [];
+    _activities = [];
+    _errorMessage = '';
+    _isLoading = false;
+    notifyListeners();
+  }
 }

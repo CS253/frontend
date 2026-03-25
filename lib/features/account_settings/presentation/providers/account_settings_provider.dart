@@ -117,4 +117,12 @@ class AccountSettingsProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  /// Clears all profile data (e.g., on logout).
+  void clear() {
+    _userProfile = null;
+    _isLoading = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
 }

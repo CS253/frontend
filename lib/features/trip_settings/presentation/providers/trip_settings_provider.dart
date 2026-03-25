@@ -205,4 +205,18 @@ class TripSettingsProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  /// Clears all settings data (e.g. on logout).
+  void clear() {
+    _members = [];
+    _tripSettings = null;
+    _notificationSettings = null;
+    _isLoadingMembers = false;
+    _isLoadingTripSettings = false;
+    _isLoadingNotifications = false;
+    _membersError = null;
+    _tripSettingsError = null;
+    _notificationError = null;
+    notifyListeners();
+  }
 }
