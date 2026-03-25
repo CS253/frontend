@@ -34,17 +34,20 @@ class Location {
 
 class RouteRequest {
   final String departureTime;
+  final bool optimized;
   final Location start;
   final List<Location> destinations;
 
   RouteRequest({
     required this.departureTime,
+    required this.optimized,
     required this.start,
     required this.destinations,
   });
 
   Map<String, dynamic> toJson() => {
         'departureTime': departureTime,
+        'optimized': optimized,
         'start': start.toJson(),
         'destinations': destinations.map((d) => d.toJson()).toList(),
       };

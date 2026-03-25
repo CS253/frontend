@@ -4,6 +4,7 @@ import '../widgets/route_planner_widgets.dart';
 import '../providers/plan_provider.dart';
 import '../../data/models/route_model.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/services/geocoding_service.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
@@ -86,19 +87,29 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final name = controller.text;
+               // Close dialog first to show loading if needed, or just proceed
+              Navigator.pop(context);
+              
+              // Fetch coordinates
+              final coords = await GeocodingService.getCoordinates(name);
+              
               setState(() {
                 if (isStart) {
                   _startLocation = _startLocation.copyWith(
-                    name: controller.text,
+                    name: name,
+                    lat: coords?['lat'] ?? 0.0,
+                    lng: coords?['lng'] ?? 0.0,
                   );
                 } else {
                   _destinations[index] = _destinations[index].copyWith(
-                    name: controller.text,
+                    name: name,
+                    lat: coords?['lat'] ?? 0.0,
+                    lng: coords?['lng'] ?? 0.0,
                   );
                 }
               });
-              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6BB5E5),
@@ -119,6 +130,7 @@ class _PlanScreenState extends State<PlanScreen> {
     final provider = Provider.of<PlanProvider>(context, listen: false);
     final request = RouteRequest(
       departureTime: _departureTime,
+      optimized: _isOptimized,
       start: _startLocation,
       destinations: _destinations,
     );
