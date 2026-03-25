@@ -223,7 +223,7 @@ class AuthService {
 
       final googleUser = await _googleSignIn.authenticate();
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
@@ -233,24 +233,11 @@ class AuthService {
       final token = await user?.getIdToken();
 
       if (token != null) {
-        final backendData = await syncWithBackend(
+        await syncWithBackend(
           token: token,
           name: user?.displayName,
           phone: user?.phoneNumber,
         );
-
-        if (backendData != null) {
-          return {
-            'token': token,
-            'user': {
-              'id': backendData['id'],
-              'name': backendData['name'] ?? user?.displayName,
-              'email': backendData['email'] ?? user?.email,
-              'phone': backendData['phoneNumber'] ?? user?.phoneNumber,
-              'avatarUrl': user?.photoURL,
-            },
-          };
-        }
       }
 
       return {
@@ -283,8 +270,7 @@ class AuthService {
   // ---------------------------------------------------------------------------
 
   /// Syncs the Firebase user with the backend Neon DB.
-  /// Returns the user data from the backend if successful.
-  Future<Map<String, dynamic>?> syncWithBackend({
+  Future<void> syncWithBackend({
     required String token,
     String? name,
     String? phone,
@@ -306,13 +292,11 @@ class AuthService {
       if (response != null && response['success'] == true) {
         debugPrint('DEBUG: Sync successful, setting auth token');
         _apiClient.setAuthToken(token);
-        return response['data'] as Map<String, dynamic>?;
       } else {
         debugPrint('DEBUG: Sync failed: ${response?['error']}');
       }
     } catch (e) {
       debugPrint('DEBUG: Backend sync error: $e');
     }
-    return null;
   }
 }

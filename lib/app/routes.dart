@@ -16,7 +16,6 @@ import '../features/intro/presentation/screens/register_screen.dart';
 import '../features/intro/presentation/screens/otp_screen.dart';
 import '../features/intro/presentation/screens/google_sign_in_screen.dart';
 import '../features/intro/presentation/screens/forgot_password_screen.dart';
-import '../features/intro/presentation/screens/complete_profile_screen.dart';
 
 // Trip screens
 import '../features/trips/presentation/screens/my_trips_screen.dart';
@@ -71,9 +70,6 @@ class AppRoutes {
       case RouteConstants.forgotPassword:
         return _buildRoute(const ForgotPasswordScreen(), settings);
 
-      case RouteConstants.completeProfile:
-        return _buildRoute(const CompleteProfileScreen(), settings);
-
       // Trips
       case RouteConstants.trips:
         return _buildRoute(const MyTripsScreen(), settings);
@@ -103,9 +99,7 @@ class AppRoutes {
 
       // Features
       case RouteConstants.payments:
-        final args = settings.arguments as Map<String, dynamic>? ?? {};
-        final groupId = args['groupId'] as String? ?? '';
-        return _buildCupertinoRoute(PaymentsScreen(groupId: groupId), settings);
+        return _buildCupertinoRoute(const PaymentsScreen(), settings);
 
       case RouteConstants.gallery:
         return _buildCupertinoRoute(const GalleryScreen(), settings);
