@@ -4,16 +4,10 @@
 // This service communicates with the backend via ApiClient.
 // It does NOT transform data — that's the repository's job.
 //
-// IMAGE UPLOAD:
-//   When creating a trip with a cover photo, the service sends a
-//   multipart/form-data request using MultipartFile.fromFile.
 //   Fields: tripName, destination, startDate, endDate, tripType
-//   File: coverImage
-//
 // TODO: Replace mock implementations with real API calls when backend is ready.
 // =============================================================================
 
-// NOTE: Uncomment when real multipart API calls are enabled.
 import '../../../../core/api/api_client.dart';
 
 class TripsService {
@@ -136,9 +130,6 @@ class TripsService {
   ///
   /// BACKEND CALL: POST /trips
   ///
-  /// When coverImagePath is provided, sends multipart/form-data request:
-  ///   Fields: name, destination, startDate, endDate, tripType
-  ///   File: coverImage (MultipartFile.fromFile)
   ///
   /// When no cover image, sends regular JSON POST request.
   ///
@@ -149,7 +140,6 @@ class TripsService {
     required String startDate,
     required String endDate,
     required String tripType,
-    String? coverImagePath,
   }) async {
     // -------------------------------------------------------------------------
     // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
@@ -161,7 +151,7 @@ class TripsService {
         'id': 'trip-new-${DateTime.now().millisecondsSinceEpoch}',
         'name': name,
         'destination': destination,
-        'coverImage': coverImagePath,
+        'coverImage': null,
         'startDate': startDate,
         'endDate': endDate,
         'tripType': tripType,
@@ -169,55 +159,6 @@ class TripsService {
         'createdBy': 'user-001',
       },
     };
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
-    // BACKEND CALL: POST /trips — Creates trip with multipart/form-data
-    //
-    // if (coverImagePath != null) {
-    //   // Multipart upload with cover image using MultipartFile.fromFile
-    //   final uri = Uri.parse('${ApiEndpoints.baseUrl}${ApiEndpoints.trips}');
-    //   final request = http.MultipartRequest('POST', uri);
-    //
-    //   // Add auth header
-    //   final token = apiClient.authToken;
-    //   if (token != null) {
-    //     request.headers['Authorization'] = 'Bearer $token';
-    //   }
-    //
-    //   // Add text fields
-    //   request.fields['name'] = name;
-    //   request.fields['destination'] = destination;
-    //   request.fields['startDate'] = startDate;
-    //   request.fields['endDate'] = endDate;
-    //   request.fields['tripType'] = tripType;
-    //
-    //   // Add cover image file
-    //   request.files.add(
-    //     await http.MultipartFile.fromPath('coverImage', coverImagePath),
-    //   );
-    //
-    //   final streamedResponse = await request.send();
-    //   final response = await http.Response.fromStream(streamedResponse);
-    //
-    //   if (response.statusCode == 200 || response.statusCode == 201) {
-    //     return jsonDecode(response.body);
-    //   } else {
-    //     throw Exception('Failed to create trip: ${response.statusCode}');
-    //   }
-    // } else {
-    //   // JSON POST without cover image
-    //   return await apiClient.post(
-    //     ApiEndpoints.trips,
-    //     body: {
-    //       'name': name,
-    //       'destination': destination,
-    //       'startDate': startDate,
-    //       'endDate': endDate,
-    //       'tripType': tripType,
-    //     },
-    //   );
-    // }
     // -------------------------------------------------------------------------
   }
 

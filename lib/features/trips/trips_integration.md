@@ -19,7 +19,6 @@ All validation is performed client-side before any backend call is made.
 | Start Date * | Custom date validator | Required |
 | End Date * | Custom date validator | Required, **must be after start date** |
 | Trip Type * | Pre-selected | Required (default: Beach) |
-| Cover Photo * | Optional | Image file from laptop (via file_picker) |
 
 If end date is before or equal to start date, the error shown is:
 **"End date must be after start date"**
@@ -47,57 +46,6 @@ To prevent the user from selecting an invalid date range:
 
 ---
 
-## Image Upload Flow
-
-### Step 1: File Selection
-1. User taps the "Cover Photo" upload area
-2. `file_picker` package opens a native file dialog
-3. **Type Validation**: Only `jpg`, `jpeg`, and `png` files are allowed.
-4. **Size Validation**: Files must be **≤ 5 MB**.
-5. Selected file path is stored in `_coverImagePath` (local state)
-6. File path is also saved to `TripsProvider.newTripCoverImagePath`
-
-### Step 2: Image Preview
-1. Selected image is displayed using `Image.file()`
-2. A "swap" button allows replacing the image
-3. The review step (Step 3) also shows the selected image
-
-### Step 3: Multipart Upload (Backend)
-When "Create Trip" is pressed:
-
-1. `TripsProvider.createTrip()` is called
-2. `TripsRepository.createTrip()` passes the file path to the service
-3. `TripsService.createTrip()` constructs a `multipart/form-data` request:
-
-```dart
-// Fields sent as form-data:
-request.fields['name'] = name;
-request.fields['destination'] = destination;
-request.fields['startDate'] = startDate;
-request.fields['endDate'] = endDate;
-request.fields['tripType'] = tripType;
-
-// Cover image sent as file:
-request.files.add(
-  await http.MultipartFile.fromPath('coverImage', coverImagePath),
-);
-```
-
-### Backend Endpoint
-```
-POST /trips
-Content-Type: multipart/form-data
-
-Fields:
-  - name: "Trip Name"
-  - destination: "Destination"
-  - startDate: "2024-05-01"
-  - endDate: "2024-05-15"
-  - tripType: "Beach"
-
-File:
-  - coverImage: <binary image data>
-```
 
 ---
 
@@ -123,7 +71,7 @@ Which UI action triggers which API call:
 |-----------|---------------|-------------|
 | MyTripsScreen loads | `TripsProvider.loadTrips()` | `GET /trips?page=1&limit=10` |
 | Trip card tap | `TripsProvider.loadTripDetail()` | `GET /trips/{tripId}` |
-| Create Trip → Create button | `TripsProvider.createTrip()` | `POST /trips` (multipart) |
+| Create Trip → Create button | `TripsProvider.createTrip()` | `POST /trips` (JSON) |
 | Add Member button | `TripsProvider.addMemberToNewTrip()` | Local state (added to POST /trips/{id}/members on create) |
 | Members loaded | `TripsProvider.loadMembers()` | `GET /trips/{tripId}/members` |
 
@@ -191,17 +139,6 @@ Screen (UI)
 
 ### POST /trips
 
-**Content-Type:** `multipart/form-data`
-
-**Fields:**
-| Field | Type | Required |
-|-------|------|----------|
-| name | String | Yes |
-| destination | String | Yes |
-| startDate | String (ISO date) | Yes |
-| endDate | String (ISO date) | Yes |
-| tripType | String | Yes |
-| coverImage | File | No |
 
 **Response (201):**
 ```json
@@ -210,7 +147,7 @@ Screen (UI)
     "id": "trip-new-123",
     "name": "Mountain Trek",
     "destination": "Swiss Alps",
-    "coverImage": "https://storage.example.com/trips/trip-new-123/cover.jpg",
+    "coverImage": null,
     "startDate": "2024-06-01",
     "endDate": "2024-06-10",
     "tripType": "Mountain",
