@@ -93,6 +93,13 @@ class TripsProvider with ChangeNotifier {
   /// Members of the currently selected trip.
   List<MemberModel> _members = [];
   List<MemberModel> get members => _members;
+  String? _membersTripId;
+
+  bool _isUpdatingMembers = false;
+  bool get isUpdatingMembers => _isUpdatingMembers;
+
+  bool _isLeavingTrip = false;
+  bool get isLeavingTrip => _isLeavingTrip;
 
   // ---------------------------------------------------------------------------
   // Load Trips
@@ -105,7 +112,7 @@ class TripsProvider with ChangeNotifier {
   ///   → GET /trips?page=1&limit=10
   ///
   /// TODO: Replace mock data once backend API is connected
-  Future<void> loadTrips({bool refresh = false}) async {
+  Future<void> loadTrips({required String userId, bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
@@ -121,6 +128,7 @@ class TripsProvider with ChangeNotifier {
 
     try {
       final newTrips = await repository.getTrips(
+        userId: userId,
         page: _currentPage,
         limit: 10,
       );
@@ -207,7 +215,7 @@ class TripsProvider with ChangeNotifier {
   /// the creation state is reset.
   ///
   /// TODO: Replace mock data once backend API is connected
-  Future<void> createTrip() async {
+  Future<void> createTrip({required String createdBy}) async {
     if (_newTripName == null || _newTripDestination == null ||
         _newTripStartDate == null || _newTripEndDate == null) {
       _errorMessage = 'Please fill in all trip details';
@@ -226,18 +234,26 @@ class TripsProvider with ChangeNotifier {
         startDate: _newTripStartDate!,
         endDate: _newTripEndDate!,
         tripType: _newTripType,
+        createdBy: createdBy,
       );
 
       // Add members if any were added during creation
+      var tripWithMembers = trip;
       if (_newTripMembers.isNotEmpty) {
         final memberData = _newTripMembers
             .map((m) => {'name': m.name, 'phone': m.phone ?? ''})
             .toList();
-        await repository.addMembers(tripId: trip.id, members: memberData);
+        final addedMembers = await repository.addMembers(
+          tripId: trip.id,
+          members: memberData,
+        );
+        tripWithMembers = trip.copyWith(
+          membersCount: trip.membersCount + addedMembers.length,
+        );
       }
 
       // Add the new trip to the local cache
-      _trips.insert(0, trip.copyWith(membersCount: _newTripMembers.length));
+      _trips.insert(0, tripWithMembers);
 
       // Reset creation state
       _resetCreationState();
@@ -271,6 +287,11 @@ class TripsProvider with ChangeNotifier {
 
   /// Loads members for a specific trip.
   Future<void> loadMembers(String tripId) async {
+    if (_membersTripId != tripId) {
+      _members = [];
+      _membersTripId = tripId;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -283,6 +304,95 @@ class TripsProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> addMember({
+    required String tripId,
+    required String phone,
+    String? name,
+  }) async {
+    _isUpdatingMembers = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final members = await repository.addMembers(
+        tripId: tripId,
+        members: [
+          {
+            if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+            'phone': phone.trim(),
+          },
+        ],
+      );
+
+      _members = [..._members, ...members];
+      _syncTripMemberCount(tripId, _members.length);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isUpdatingMembers = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeMember({
+    required String tripId,
+    required String memberId,
+  }) async {
+    _isUpdatingMembers = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await repository.removeMember(
+        tripId: tripId,
+        memberId: memberId,
+      );
+
+      _members = _members.where((member) => member.id != memberId).toList();
+      _syncTripMemberCount(tripId, _members.length);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isUpdatingMembers = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> leaveTrip({
+    required String tripId,
+    required String userId,
+  }) async {
+    _isLeavingTrip = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await repository.leaveTrip(
+        tripId: tripId,
+        userId: userId,
+      );
+
+      _trips = _trips.where((trip) => trip.id != tripId).toList();
+      if (_selectedTrip?.id == tripId) {
+        _selectedTrip = null;
+      }
+      if (_membersTripId == tripId) {
+        _membersTripId = null;
+        _members = [];
+      }
+
+      return result;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLeavingTrip = false;
+      notifyListeners();
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -299,10 +409,22 @@ class TripsProvider with ChangeNotifier {
   void clearCache() {
     _trips = [];
     _members = [];
+    _membersTripId = null;
     _selectedTrip = null;
     _currentPage = 1;
     _hasMore = true;
     _resetCreationState();
     notifyListeners();
+  }
+
+  void _syncTripMemberCount(String tripId, int membersCount) {
+    final tripIndex = _trips.indexWhere((trip) => trip.id == tripId);
+    if (tripIndex >= 0) {
+      _trips[tripIndex] = _trips[tripIndex].copyWith(membersCount: membersCount);
+    }
+
+    if (_selectedTrip?.id == tripId) {
+      _selectedTrip = _selectedTrip!.copyWith(membersCount: membersCount);
+    }
   }
 }

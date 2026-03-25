@@ -33,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travelly/core/utils/helpers.dart';
 import 'package:travelly/core/utils/validators.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import 'package:travelly/features/trips/presentation/providers/trips_provider.dart';
 import 'package:travelly/features/trips/data/services/destination_service.dart';
 import '../../../trips/data/models/member_model.dart';
@@ -156,9 +157,14 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   /// POST /trips with multipart/form-data (name, destination, dates, type, coverImage file)
   /// TODO: Replace mock data once backend API is connected
   Future<void> _handleCreateTrip() async {
-    // BACKEND CALL: TripsProvider.createTrip() → TripsRepository → TripsService → POST /trips
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null || userId.isEmpty) {
+      Helpers.showErrorSnackbar(context, 'Please log in again to create a trip.');
+      return;
+    }
+
     final tripsProvider = context.read<TripsProvider>();
-    await tripsProvider.createTrip();
+    await tripsProvider.createTrip(createdBy: userId);
 
     if (!mounted) return;
 

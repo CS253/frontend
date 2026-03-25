@@ -30,12 +30,26 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   @override
   void initState() {
     super.initState();
-    // Load trips when screen initializes — this calls the provider
-    // which calls the repository → service → API (or mock).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthProvider>().initialize();
-      context.read<TripsProvider>().loadTrips(refresh: true);
+      _initializeTrips();
     });
+  }
+
+  Future<void> _initializeTrips() async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.initialize();
+
+    if (!mounted) return;
+
+    final userId = authProvider.user?.id;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+
+    await context.read<TripsProvider>().loadTrips(
+      userId: userId,
+      refresh: true,
+    );
   }
 
   @override
@@ -306,8 +320,17 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 ElevatedButton(
-                                  onPressed: () =>
-                                      tripsProvider.loadTrips(refresh: true),
+                                  onPressed: () {
+                                    final userId = context.read<AuthProvider>().user?.id;
+                                    if (userId == null || userId.isEmpty) {
+                                      return;
+                                    }
+
+                                    tripsProvider.loadTrips(
+                                      userId: userId,
+                                      refresh: true,
+                                    );
+                                  },
                                   child: const Text('Retry'),
                                 ),
                               ],
@@ -385,6 +408,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
 
                                   return TripCard(
                                     parentContext: context,
+                                    tripId: trip.id,
                                     title: trip.name,
                                     location: trip.destination,
                                     date: trip.formattedDateRange,

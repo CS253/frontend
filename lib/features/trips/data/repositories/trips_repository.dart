@@ -26,9 +26,17 @@ class TripsRepository {
   ///
   /// Replace mockTrips() inside TripsService with API response mapping
   /// when connecting real backend. The repository code remains unchanged.
-  Future<List<TripModel>> getTrips({int page = 1, int limit = 10}) async {
+  Future<List<TripModel>> getTrips({
+    required String userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final rawData = await service.getTrips(page: page, limit: limit);
+      final rawData = await service.getTrips(
+        userId: userId,
+        page: page,
+        limit: limit,
+      );
       final tripsJson = rawData['trips'] as List<dynamic>;
       return tripsJson
           .map((json) => TripModel.fromJson(json as Map<String, dynamic>))
@@ -63,6 +71,7 @@ class TripsRepository {
     required DateTime startDate,
     required DateTime endDate,
     required String tripType,
+    required String createdBy,
   }) async {
     try {
       final rawData = await service.createTrip(
@@ -71,6 +80,7 @@ class TripsRepository {
         startDate: startDate.toIso8601String(),
         endDate: endDate.toIso8601String(),
         tripType: tripType,
+        createdBy: createdBy,
       );
       return TripModel.fromJson(rawData['trip'] as Map<String, dynamic>);
     } catch (e) {
@@ -98,6 +108,36 @@ class TripsRepository {
           .toList();
     } catch (e) {
       throw Exception('Failed to add members: $e');
+    }
+  }
+
+  Future<MemberModel> removeMember({
+    required String tripId,
+    required String memberId,
+  }) async {
+    try {
+      final rawData = await service.removeMember(
+        tripId: tripId,
+        memberId: memberId,
+      );
+      return MemberModel.fromJson(rawData['member'] as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to remove member: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> leaveTrip({
+    required String tripId,
+    required String userId,
+  }) async {
+    try {
+      final rawData = await service.leaveTrip(
+        tripId: tripId,
+        userId: userId,
+      );
+      return rawData['data'] as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to leave trip: $e');
     }
   }
 

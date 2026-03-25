@@ -4,6 +4,7 @@ import '../../../../core/constants/route_constants.dart';
 
 class TripCard extends StatelessWidget {
   final BuildContext parentContext;
+  final String tripId;
   final String title;
   final String location;
   final String date;
@@ -16,6 +17,7 @@ class TripCard extends StatelessWidget {
   const TripCard({
     super.key,
     required this.parentContext,
+    required this.tripId,
     required this.title,
     required this.location,
     required this.date,
@@ -38,6 +40,7 @@ class TripCard extends StatelessWidget {
           Navigator.pushNamed(
             parentContext,
             RouteConstants.dashboard,
+            arguments: {'tripId': tripId},
           );
         },
         child: Row(

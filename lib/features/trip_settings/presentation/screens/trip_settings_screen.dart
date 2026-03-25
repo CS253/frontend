@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:travelly/core/constants/route_constants.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
+import 'package:travelly/features/trips/presentation/providers/trips_provider.dart';
 
 import 'package:travelly/features/account_settings/presentation/widgets/setting_item.dart';
 import 'package:travelly/features/account_settings/presentation/widgets/settings_group.dart';
@@ -14,7 +17,12 @@ import 'manage_members_screen.dart';
 
 
 class TripSettingsScreen extends StatefulWidget {
-  const TripSettingsScreen({super.key});
+  final String? tripId;
+
+  const TripSettingsScreen({
+    super.key,
+    this.tripId,
+  });
 
   @override
   State<TripSettingsScreen> createState() => _TripSettingsScreenState();
@@ -27,8 +35,10 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Initialize with random trip ID. Change to actual tripId from arguments later
-      context.read<TripSettingsProvider>().init('trip_123');
+      final tripId = widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
+      if (tripId != null && tripId.isNotEmpty) {
+        context.read<TripSettingsProvider>().init(tripId);
+      }
     });
   }
 
@@ -41,7 +51,6 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
         children: [
           Consumer<TripSettingsProvider>(
             builder: (context, provider, child) {
-              
               // Build the switch state optimistically based on provider values
               final simplifyExpenses = provider.tripSettings?.simplifyExpenses ?? true;
 
@@ -58,108 +67,118 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                       const SizedBox(height: 12),
                       _buildTripCard(context, provider),
                       const SizedBox(height: 32),
-                          _buildSectionHeader('TRIP OPTIONS'),
-                          const SizedBox(height: 12),
-                          SettingsGroup(
-                            children: [
-                              SettingItem(
-                                title: 'Manage Members',
-                                subtitle: 'Add/Remove Members',
-                                icon: Icons.person_outline,
-                                iconBgColor: const Color(0xFFD9F0FC),
-                                iconColor: const Color(0xFF5AB6EE),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ManageMembersScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFEDEDED),
-                                indent: 16,
-                                endIndent: 16,
-                              ),
-                              SettingItem(
-                                title: 'Notifications',
-                                subtitle: 'Enable or disable alerts',
-                                icon: Icons.notifications_none,
-                                iconBgColor: const Color(0xFFE3D9F2),
-                                iconColor: const Color(0xFF8757C3),
-                                trailing: _buildSwitch(
-                                  _notificationsEnabled,
-                                  (value) {
-                                    setState(() {
-                                      _notificationsEnabled = value;
-                                    });
-                                  },
+                      _buildSectionHeader('TRIP OPTIONS'),
+                      const SizedBox(height: 12),
+                      SettingsGroup(
+                        children: [
+                          SettingItem(
+                            title: 'Manage Members',
+                            subtitle: 'Add/Remove Members',
+                            icon: Icons.person_outline,
+                            iconBgColor: const Color(0xFFD9F0FC),
+                            iconColor: const Color(0xFF5AB6EE),
+                            onTap: () {
+                              final tripId =
+                                  widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
+                              if (tripId == null || tripId.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No trip selected right now.'),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ManageMembersScreen(tripId: tripId),
                                 ),
-                                showChevron: false,
-                              ),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFEDEDED),
-                                indent: 16,
-                                endIndent: 16,
-                              ),
-                              SettingItem(
-                                title: 'Simplify Expenses',
-                                subtitle: 'Reduce the number of transactions',
-                                icon: Icons.account_tree_outlined, // close enough to the simplify graph
-                                iconBgColor: const Color(0xFFD9F2EA),
-                                iconColor: const Color(0xFF57C2A1),
-                                trailing: _buildSwitch(
-                                  simplifyExpenses,
-                                  (value) => provider.updateTripSetting('simplify_expenses', value),
-                                ),
-                                showChevron: false,
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_rounded,
-                                color: Color(0xFFD74242),
-                                size: 14,
-                              ),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'DANGER ZONE',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Nunito',
-                                  color: Color(0xFFD74242),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
+                          const Divider(
+                            height: 1,
+                            color: Color(0xFFEDEDED),
+                            indent: 16,
+                            endIndent: 16,
                           ),
-                          const SizedBox(height: 12),
-                          SettingsGroup(
-                            children: [
-                              SettingItem(
-                                title: 'Leave Trip',
-                                titleColor: const Color(0xFFD74242),
-                                subtitle: 'Leave this trip and its shared data',
-                                icon: Icons.delete_outline,
-                                iconBgColor: const Color(0xFFFDE8E8),
-                                iconColor: const Color(0xFFD74242),
-                                onTap: () {},
-                              ),
-                            ],
+                          SettingItem(
+                            title: 'Notifications',
+                            subtitle: 'Enable or disable alerts',
+                            icon: Icons.notifications_none,
+                            iconBgColor: const Color(0xFFE3D9F2),
+                            iconColor: const Color(0xFF8757C3),
+                            trailing: _buildSwitch(
+                              _notificationsEnabled,
+                              (value) {
+                                setState(() {
+                                  _notificationsEnabled = value;
+                                });
+                              },
+                            ),
+                            showChevron: false,
                           ),
-                          const SizedBox(height: 48),
+                          const Divider(
+                            height: 1,
+                            color: Color(0xFFEDEDED),
+                            indent: 16,
+                            endIndent: 16,
+                          ),
+                          SettingItem(
+                            title: 'Simplify Expenses',
+                            subtitle: 'Reduce the number of transactions',
+                            icon: Icons.account_tree_outlined,
+                            iconBgColor: const Color(0xFFD9F2EA),
+                            iconColor: const Color(0xFF57C2A1),
+                            trailing: _buildSwitch(
+                              simplifyExpenses,
+                              (value) => provider.updateTripSetting('simplify_expenses', value),
+                            ),
+                            showChevron: false,
+                          ),
                         ],
                       ),
-                    ),
-                  );
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Color(0xFFD74242),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'DANGER ZONE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Nunito',
+                              color: Color(0xFFD74242),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SettingsGroup(
+                        children: [
+                          SettingItem(
+                            title: 'Leave Trip',
+                            titleColor: const Color(0xFFD74242),
+                            subtitle: 'Leave this trip and its shared data',
+                            icon: Icons.delete_outline,
+                            iconBgColor: const Color(0xFFFDE8E8),
+                            iconColor: const Color(0xFFD74242),
+                            onTap: _handleLeaveTrip,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+                    ],
+                  ),
+                ),
+              );
             },
           ),
           Positioned(
@@ -356,6 +375,114 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
         onChanged: onChanged,
       ),
     );
+  }
+
+  Future<void> _handleLeaveTrip() async {
+    final tripId = widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
+    final userId = context.read<AuthProvider>().user?.id;
+
+    if (tripId == null || tripId.isEmpty || userId == null || userId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to leave this trip right now.'),
+        ),
+      );
+      return;
+    }
+
+    final shouldLeave = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text(
+              'Leave Trip?',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            content: const Text(
+              'If you are the trip creator, this will delete the trip for every member. Otherwise, only you will be removed.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD74242),
+                ),
+                child: const Text('Leave'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!shouldLeave || !mounted) {
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6BB5E5)),
+        ),
+      ),
+    );
+
+    try {
+      final result = await context.read<TripsProvider>().leaveTrip(
+            tripId: tripId,
+            userId: userId,
+          );
+
+      if (!mounted) return;
+
+      Navigator.of(context, rootNavigator: true).pop();
+
+      final deletedTrip = result['deletedTrip'] == true;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            deletedTrip
+                ? 'Trip deleted for all members.'
+                : 'You left the trip successfully.',
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF2EB867),
+        ),
+      );
+
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+        RouteConstants.trips,
+        (route) => false,
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      Navigator.of(context, rootNavigator: true).pop();
+
+      var message = error.toString();
+      if (message.startsWith('Exception: ')) {
+        message = message.substring('Exception: '.length);
+      }
+      message = message.replaceFirst('Failed to leave trip: ', '');
+      final apiExceptionMatch = RegExp(r'ApiException\(\d+\):\s*(.*)').firstMatch(message);
+      if (apiExceptionMatch != null) {
+        message = apiExceptionMatch.group(1) ?? message;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFD74242),
+        ),
+      );
+    }
   }
 }
 

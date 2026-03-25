@@ -76,7 +76,13 @@ class AppRoutes {
 
       // Dashboard (main screen with bottom navigation)
       case RouteConstants.dashboard:
-        return _buildRoute(const MainScreen(), settings);
+        final dashboardArgs = settings.arguments;
+        final dashboardTripId = dashboardArgs is String
+            ? dashboardArgs
+            : dashboardArgs is Map<String, dynamic>
+                ? dashboardArgs['tripId'] as String?
+                : null;
+        return _buildRoute(MainScreen(tripId: dashboardTripId), settings);
 
       // Settings
       case RouteConstants.accountSettings:
@@ -89,13 +95,37 @@ class AppRoutes {
         return _buildRoute(const ChangePasswordScreen(), settings);
 
       case RouteConstants.tripSettings:
-        return _buildRoute(const TripSettingsScreen(), settings);
+        final tripSettingsArgs = settings.arguments;
+        final tripSettingsTripId = tripSettingsArgs is String
+            ? tripSettingsArgs
+            : tripSettingsArgs is Map<String, dynamic>
+                ? tripSettingsArgs['tripId'] as String?
+                : null;
+        return _buildRoute(TripSettingsScreen(tripId: tripSettingsTripId), settings);
 
       case RouteConstants.tripNotifications:
         return _buildRoute(const NotificationSettingsScreen(), settings);
 
       case RouteConstants.manageMembers:
-        return _buildRoute(const ManageMembersScreen(), settings);
+        final args = settings.arguments;
+        final tripId = args is String
+            ? args
+            : args is Map<String, dynamic>
+                ? args['tripId'] as String?
+                : null;
+
+        if (tripId == null || tripId.isEmpty) {
+          return _buildRoute(
+            const Scaffold(
+              body: Center(
+                child: Text('Manage Members requires a tripId.'),
+              ),
+            ),
+            settings,
+          );
+        }
+
+        return _buildRoute(ManageMembersScreen(tripId: tripId), settings);
 
       // Features
       case RouteConstants.payments:

@@ -1,72 +1,28 @@
 import 'package:flutter/material.dart';
-
-enum MemberStatusType { settled, owes, gets }
-
-class Member {
-  final String name;
-  final String imageUrl;
-  final String? statusText;
-  final MemberStatusType statusType;
-  final bool isSettled;
-  final bool isAdmin;
-
-  Member({
-    required this.name,
-    required this.imageUrl,
-    this.statusText,
-    required this.statusType,
-    this.isSettled = false,
-    this.isAdmin = false,
-  });
-}
+import 'package:provider/provider.dart';
+import 'package:travelly/features/trips/data/models/member_model.dart';
+import 'package:travelly/features/trips/presentation/providers/trips_provider.dart';
 
 class ManageMembersScreen extends StatefulWidget {
-  const ManageMembersScreen({super.key});
+  final String tripId;
+
+  const ManageMembersScreen({
+    super.key,
+    required this.tripId,
+  });
 
   @override
   State<ManageMembersScreen> createState() => _ManageMembersScreenState();
 }
 
 class _ManageMembersScreenState extends State<ManageMembersScreen> {
-  List<Member> members = [
-    Member(
-      name: 'Sarah Chen',
-      imageUrl: 'https://ui-avatars.com/api/?name=Sarah+Chen&background=8E1C2E&color=fff',
-      isSettled: true,
-      statusType: MemberStatusType.settled,
-      isAdmin: true,
-    ),
-    Member(
-      name: 'Marcus Johnson',
-      imageUrl: 'https://ui-avatars.com/api/?name=Marcus+Johnson&background=8E8E8E&color=fff',
-      statusText: 'Owes ₹600',
-      statusType: MemberStatusType.owes,
-    ),
-    Member(
-      name: 'Sanket',
-      imageUrl: 'https://ui-avatars.com/api/?name=Sanket&background=4A6670&color=fff',
-      statusText: 'Gets ₹1,200',
-      statusType: MemberStatusType.gets,
-    ),
-    Member(
-      name: 'David Park',
-      imageUrl: 'https://ui-avatars.com/api/?name=David+Park&background=516A79&color=fff',
-      isSettled: true,
-      statusType: MemberStatusType.settled,
-    ),
-    Member(
-      name: 'Priya Sharma',
-      imageUrl: 'https://ui-avatars.com/api/?name=Priya+Sharma&background=3F51B5&color=fff',
-      statusText: 'Owes ₹200',
-      statusType: MemberStatusType.owes,
-    ),
-    Member(
-      name: 'Ronit Kumar',
-      imageUrl: 'https://ui-avatars.com/api/?name=Ronit+Kumar&background=3F51B5&color=fff',
-      statusText: 'Owes ₹400',
-      statusType: MemberStatusType.owes,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TripsProvider>().loadMembers(widget.tripId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,42 +68,129 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMembersHeader(context),
-              const SizedBox(height: 12),
-              ...members.map((m) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: m.isAdmin
-                    ? _buildAdminCard(
-                        context: context,
-                        name: m.name,
-                        imageUrl: m.imageUrl,
-                        isSettled: m.isSettled,
-                        member: m,
-                      )
-                    : _buildMemberCard(
-                        context: context,
-                        name: m.name,
-                        imageUrl: m.imageUrl,
-                        statusText: m.statusText,
-                        statusType: m.statusType,
-                        isSettled: m.isSettled,
-                        member: m,
+        child: Consumer<TripsProvider>(
+          builder: (context, tripsProvider, _) {
+            final members = tripsProvider.members;
+            final showLoadingState = tripsProvider.isLoading && members.isEmpty;
+            final hasError = tripsProvider.errorMessage != null && members.isEmpty;
+
+            if (showLoadingState) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6CB4E6)),
+                ),
+              );
+            }
+
+            if (hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Color(0xFFD1475E),
+                        size: 42,
                       ),
-              )),
-              const SizedBox(height: 80),
-            ],
-          ),
+                      const SizedBox(height: 12),
+                      Text(
+                        tripsProvider.errorMessage ?? 'Failed to load members',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'Nunito',
+                          color: Color(0xFF737B8C),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => tripsProvider.loadMembers(widget.tripId),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6CB4E6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Retry',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => tripsProvider.loadMembers(widget.tripId),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                children: [
+                  _buildMembersHeader(context, members.length),
+                  const SizedBox(height: 12),
+                  if (members.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE2E4E9).withValues(alpha: 0.7),
+                        ),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(
+                            Icons.group_outlined,
+                            size: 42,
+                            color: Color(0xFF8B8893),
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No members added yet',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Nunito',
+                              color: Color(0xFF1F242E),
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Add a traveller by phone number to bring them into this trip.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontFamily: 'Nunito',
+                              color: Color(0xFF737B8C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ...members.map(
+                      (member) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _buildMemberCard(context, member),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildMembersHeader(BuildContext context) {
+  Widget _buildMembersHeader(BuildContext context, int membersCount) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -160,7 +203,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
             ),
             const SizedBox(width: 6),
             Text(
-              'MEMBERS (${members.length})',
+              'MEMBERS ($membersCount)',
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -195,61 +238,13 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     );
   }
 
-  Widget _buildAdminCard({
-    required Member member,
-    required BuildContext context,
-    required String name,
-    required String imageUrl,
-    required bool isSettled,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE2E4E9).withValues(alpha: 0.5),
-          width: 0.8,
-        ),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(radius: 18, backgroundImage: NetworkImage(imageUrl)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1F242E),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.more_vert,
-              color: Color(0xFF8B8893),
-              size: 18,
-            ),
-            onPressed: () => _showMemberOptions(context, member),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildMemberCard(BuildContext context, MemberModel member) {
+    final subtitle = member.pending
+        ? 'Pending invite${member.phone != null && member.phone!.isNotEmpty ? ' - ${member.phone}' : ''}'
+        : member.role == 'admin'
+            ? 'Trip admin'
+            : (member.phone ?? 'Trip member');
 
-  Widget _buildMemberCard({
-    required Member member,
-    required BuildContext context,
-    required String name,
-    required String imageUrl,
-    String? statusText,
-    bool isSettled = false,
-    required MemberStatusType statusType,
-  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -262,16 +257,43 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(radius: 18, backgroundImage: NetworkImage(imageUrl)),
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: _avatarColorFor(member.id),
+            child: Text(
+              _initialsFor(member.name),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Nunito',
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1F242E),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F242E),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: member.pending
+                        ? const Color(0xFFCC8B2F)
+                        : const Color(0xFF8B8893),
+                  ),
+                ),
+              ],
             ),
           ),
           IconButton(
@@ -297,10 +319,10 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
           child: Container(
             decoration: const BoxDecoration(
@@ -347,7 +369,6 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                   TextField(
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
-                    maxLength: 10,
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 14,
@@ -355,19 +376,11 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                     ),
                     onChanged: (value) {
                       setSheetState(() {
-                        if (value.isNotEmpty &&
-                            !RegExp(r'^\d+$').hasMatch(value)) {
-                          errorText = 'Invalid number';
-                        } else if (value.length > 10) {
-                          errorText = 'Invalid number';
-                        } else {
-                          errorText = null;
-                        }
+                        errorText = _validatePhone(value);
                       });
                     },
                     decoration: InputDecoration(
                       hintText: 'Phone Number',
-                      counterText: '',
                       errorText: errorText,
                       errorStyle: const TextStyle(
                         fontFamily: 'Nunito',
@@ -413,45 +426,68 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      final phone = phoneController.text.trim();
-                      if (phone.isEmpty ||
-                          !RegExp(r'^\d{10}$').hasMatch(phone)) {
-                        setSheetState(() {
-                          errorText = 'Invalid number';
-                        });
-                        return;
-                      }
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Member added successfully',
-                            style: TextStyle(fontFamily: 'Nunito'),
+                  Consumer<TripsProvider>(
+                    builder: (context, tripsProvider, _) {
+                      return ElevatedButton(
+                        onPressed: tripsProvider.isUpdatingMembers
+                            ? null
+                            : () async {
+                                final phone = phoneController.text.trim();
+                                final validation = _validatePhone(phone);
+                                if (validation != null) {
+                                  setSheetState(() {
+                                    errorText = validation;
+                                  });
+                                  return;
+                                }
+
+                                try {
+                                  await context.read<TripsProvider>().addMember(
+                                        tripId: widget.tripId,
+                                        phone: phone,
+                                      );
+
+                                  if (!mounted) return;
+                                  Navigator.pop(sheetContext);
+                                  _showSnackBar(
+                                    'Member added successfully',
+                                    isError: false,
+                                  );
+                                } catch (error) {
+                                  setSheetState(() {
+                                    errorText = _formatError(error);
+                                  });
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6CB4E6),
+                          disabledBackgroundColor: const Color(0xFFB8D9EF),
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: Color(0xFF2EB867),
+                          elevation: 0,
                         ),
+                        child: tripsProvider.isUpdatingMembers
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Add Member',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Nunito',
+                                  color: Colors.white,
+                                ),
+                              ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6CB4E6),
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Add Member',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Nunito',
-                        color: Colors.white,
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -463,11 +499,11 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     );
   }
 
-  void _showMemberOptions(BuildContext context, Member member) {
+  void _showMemberOptions(BuildContext context, MemberModel member) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -486,39 +522,54 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 40),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleRemoveMember(member);
-                  },
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Color(0xFFD1475E),
-                    size: 20,
-                  ),
-                  label: const Text(
-                    'Remove from Trip',
+              const SizedBox(height: 28),
+              if (member.role == 'admin' && !member.pending)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Trip admins cannot be removed from here.',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       fontFamily: 'Nunito',
-                      color: Color(0xFFD1475E),
+                      color: Color(0xFF1F242E),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFDE8E8),
-                    minimumSize: const Size(double.infinity, 64),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(sheetContext);
+                      await _handleRemoveMember(member);
+                    },
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFD1475E),
+                      size: 20,
                     ),
-                    elevation: 0,
+                    label: Text(
+                      member.pending ? 'Remove Invite' : 'Remove from Trip',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Nunito',
+                        color: Color(0xFFD1475E),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFDE8E8),
+                      minimumSize: const Size(double.infinity, 64),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 64),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -526,37 +577,99 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     );
   }
 
-  Future<void> _handleRemoveMember(Member member) async {
+  Future<void> _handleRemoveMember(MemberModel member) async {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6CB4E6)),
+        ),
+      ),
     );
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    Navigator.pop(context); // close loading indicator
 
-    if (member.statusType == MemberStatusType.settled) {
-      setState(() {
-        members.removeWhere((m) => m.name == member.name);
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Member removed successfully', style: TextStyle(fontFamily: 'Nunito')),
-          backgroundColor: Color(0xFF2EB867),
-          behavior: SnackBarBehavior.floating,
-        ),
+    try {
+      await context.read<TripsProvider>().removeMember(
+            tripId: widget.tripId,
+            memberId: member.id,
+          );
+      if (!mounted) return;
+      Navigator.pop(context);
+      _showSnackBar(
+        member.pending ? 'Invite removed successfully' : 'Member removed successfully',
+        isError: false,
       );
-    } else {
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot remove. Total owes must be 0.', style: TextStyle(fontFamily: 'Nunito')),
-          backgroundColor: Color(0xFFD1475E),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    } catch (error) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      _showSnackBar(_formatError(error), isError: true);
     }
+  }
+
+  String? _validatePhone(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) {
+      return 'Phone number is required';
+    }
+    if (digits.length < 10 || digits.length > 13) {
+      return 'Enter a valid phone number';
+    }
+    return null;
+  }
+
+  String _formatError(Object error) {
+    var message = error.toString();
+    if (message.startsWith('Exception: ')) {
+      message = message.substring('Exception: '.length);
+    }
+
+    message = message.replaceFirst('Failed to add members: ', '');
+    message = message.replaceFirst('Failed to add member: ', '');
+    message = message.replaceFirst('Failed to remove member: ', '');
+
+    final apiExceptionMatch = RegExp(r'ApiException\(\d+\):\s*(.*)').firstMatch(message);
+    if (apiExceptionMatch != null) {
+      return apiExceptionMatch.group(1) ?? message;
+    }
+
+    return message;
+  }
+
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontFamily: 'Nunito'),
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: isError ? const Color(0xFFD1475E) : const Color(0xFF2EB867),
+      ),
+    );
+  }
+
+  String _initialsFor(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) {
+      return '?';
+    }
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+  }
+
+  Color _avatarColorFor(String seed) {
+    const palette = [
+      Color(0xFF8E1C2E),
+      Color(0xFF4A6670),
+      Color(0xFF516A79),
+      Color(0xFF3F51B5),
+      Color(0xFF2E7D6B),
+      Color(0xFF6D4C41),
+    ];
+
+    final hash = seed.codeUnits.fold<int>(0, (value, unit) => value + unit);
+    return palette[hash % palette.length];
   }
 }
