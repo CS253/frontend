@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 // =============================================================================
 // API Endpoints — Single source of truth for all backend route paths.
 //
@@ -18,8 +21,24 @@ class ApiEndpoints {
   // ---------------------------------------------------------------------------
 
   /// Base URL for the API server.
-  /// TODO: Replace with real backend URL before production deployment.
-  static const String baseUrl = 'https://api.travelly.dev/v1';
+  /// Dynamically switches based on the platform.
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:5000/api';
+    } else {
+      // Use 10.0.2.2 for Android emulators to access localhost.
+      // For iOS simulators and physical devices on the same network, 
+      // replace with your computer's local IP (e.g., 192.168.x.x).
+      try {
+        if (Platform.isAndroid) {
+          return 'http://10.0.2.2:5000/api';
+        }
+      } catch (_) {
+        // Fallback or non-mobile platforms
+      }
+      return 'http://localhost:5000/api';
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Auth Endpoints
@@ -29,6 +48,11 @@ class ApiEndpoints {
   /// Request: { "email": "...", "password": "..." }
   /// Response: { "token": "jwt", "user": { "id", "name", "email" } }
   static const String login = '/auth/login';
+
+  /// POST — Sync Firebase user with backend.
+  /// Request: { "idToken": "..." }
+  /// Response: { "success": true, "data": { "id", "firebaseUid", "email", "name" } }
+  static const String userSync = '/users/sync';
 
   /// POST — Register a new user.
   /// Request: { "email": "...", "phone": "..." }
@@ -141,4 +165,11 @@ class ApiEndpoints {
   static const String photos = '/photos';
   static const String uploadPhoto = '/photos/upload';
   static const String deletePhotos = '/photos/delete';
+
+  // ---------------------------------------------------------------------------
+  // Plan/Route Endpoints
+  // ---------------------------------------------------------------------------
+
+  /// POST — Get optimized route and place timings.
+  static const String planRoute = '/plan/route';
 }

@@ -10,7 +10,7 @@ class PaymentService {
   final ApiClient _apiClient;
 
   PaymentService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   /// Fetch all expenses for the current trip.
   Future<Map<String, dynamic>> fetchExpenses() async {
@@ -21,7 +21,7 @@ class PaymentService {
       // API Error (Expenses)
     }
 
-    // MOCK DATA: Injecting mock entries for testing. 
+    // MOCK DATA: Injecting mock entries for testing.
     // REMOVE THIS BLOCK once backend is fully populated.
     final List<dynamic> mockExpenses = [
       {
@@ -33,7 +33,7 @@ class PaymentService {
         "payer_color": 0xFF9FDFCA,
         "date": "Jan 12",
         "your_share": "150",
-        "status": "Pending"
+        "status": "Pending",
       },
       {
         "id": "mock_2",
@@ -44,7 +44,7 @@ class PaymentService {
         "payer_color": 0xFFCCB3E6,
         "date": "Jan 13",
         "your_share": "400",
-        "status": "Settled"
+        "status": "Settled",
       },
       {
         "id": "mock_3",
@@ -55,12 +55,15 @@ class PaymentService {
         "payer_color": 0xFF87D4F8,
         "date": "Jan 14",
         "your_share": "1000",
-        "status": "Pending"
-      }
+        "status": "Pending",
+      },
     ];
 
     if (response['expenses'] != null && response['expenses'] is List) {
-      response['expenses'] = [...mockExpenses, ...(response['expenses'] as List)];
+      response['expenses'] = [
+        ...mockExpenses,
+        ...(response['expenses'] as List),
+      ];
     } else {
       response['expenses'] = mockExpenses;
     }
@@ -78,7 +81,9 @@ class PaymentService {
   /// MOCK DATA: Simulating a backend call.
   /// TODO: Replace with real API call when backend is ready
   Future<Map<String, dynamic>> fetchExpenseDetails(String id) async {
-    await Future.delayed(const Duration(milliseconds: 600)); // Simulate network delay
+    await Future.delayed(
+      const Duration(milliseconds: 600),
+    ); // Simulate network delay
     // In a real scenario, we'll do: return _apiClient.get(ApiEndpoints.paymentById(id));
     return {
       'title': 'Dinner at Cafe',
@@ -89,26 +94,29 @@ class PaymentService {
         {'name': 'Kashish', 'amount': '500'},
         {'name': 'Rushabh', 'amount': '500'},
         {'name': 'You', 'amount': '500'},
-      ]
+      ],
     };
   }
 
   /// Create a new expense.
   Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) async {
-    // Inject currency symbol dynamically
-    body['currency'] = AppCurrency.code;
-    return await _apiClient.post(ApiEndpoints.expenses, body: body) as Map<String, dynamic>;
+    // Inject currency symbol dynamically if not provided
+    body['currency'] ??= AppCurrency.code;
+    return await _apiClient.post(ApiEndpoints.expenses, body: body)
+        as Map<String, dynamic>;
   }
 
   /// Settle a balance.
   Future<Map<String, dynamic>> settleBalance(Map<String, dynamic> body) async {
-    return await _apiClient.post(ApiEndpoints.settle, body: body) as Map<String, dynamic>;
+    return await _apiClient.post(ApiEndpoints.settle, body: body)
+        as Map<String, dynamic>;
   }
 
   /// Mark a payment as paid for approval.
   Future<Map<String, dynamic>> markAsPaid(Map<String, dynamic> body) async {
     // TODO: Add proper endpoint in ApiEndpoints if different from settle
-    return await _apiClient.post(ApiEndpoints.settle, body: body) as Map<String, dynamic>;
+    return await _apiClient.post(ApiEndpoints.settle, body: body)
+        as Map<String, dynamic>;
   }
 
   /// Fetch trip members. Returns mock data for now.
@@ -116,23 +124,79 @@ class PaymentService {
     // TODO: Replace with real API call
     return {
       'members': [
-        {'id': '1', 'initials': 'K', 'name': 'Kashish', 'avatar_color': 0xFF9FDFCA},
-        {'id': '2', 'initials': 'HP', 'name': 'Hipalantya', 'avatar_color': 0xFFFABD9E},
-        {'id': '3', 'initials': 'RU', 'name': 'Rushabh', 'avatar_color': 0xFFCCB3E6},
-        {'id': '4', 'initials': 'AS', 'name': 'Ashish', 'avatar_color': 0xFF87D4F8},
-        {'id': '5', 'initials': 'ME', 'name': 'You', 'avatar_color': 0xFF87D4F8},
-        {'id': '6', 'initials': 'AM', 'name': 'Aman', 'avatar_color': 0xFFFFB3B3},
-        {'id': '7', 'initials': 'SK', 'name': 'Suresh', 'avatar_color': 0xFFB3FFB3},
-        {'id': '8', 'initials': 'RK', 'name': 'Rahul', 'avatar_color': 0xFFB3B3FF},
-        {'id': '9', 'initials': 'PD', 'name': 'Priya', 'avatar_color': 0xFFFFFFB3},
-        {'id': '10', 'initials': 'NJ', 'name': 'Neha', 'avatar_color': 0xFFFFB3FF},
-        {'id': '11', 'initials': 'VJ', 'name': 'Vijay', 'avatar_color': 0xFFB3FFFF},
-      ]
+        {
+          'id': '1',
+          'initials': 'K',
+          'name': 'Kashish',
+          'avatar_color': 0xFF9FDFCA,
+        },
+        {
+          'id': '2',
+          'initials': 'HP',
+          'name': 'Hipalantya',
+          'avatar_color': 0xFFFABD9E,
+        },
+        {
+          'id': '3',
+          'initials': 'RU',
+          'name': 'Rushabh',
+          'avatar_color': 0xFFCCB3E6,
+        },
+        {
+          'id': '4',
+          'initials': 'AS',
+          'name': 'Ashish',
+          'avatar_color': 0xFF87D4F8,
+        },
+        {
+          'id': '5',
+          'initials': 'ME',
+          'name': 'You',
+          'avatar_color': 0xFF87D4F8,
+        },
+        {
+          'id': '6',
+          'initials': 'AM',
+          'name': 'Aman',
+          'avatar_color': 0xFFFFB3B3,
+        },
+        {
+          'id': '7',
+          'initials': 'SK',
+          'name': 'Suresh',
+          'avatar_color': 0xFFB3FFB3,
+        },
+        {
+          'id': '8',
+          'initials': 'RK',
+          'name': 'Rahul',
+          'avatar_color': 0xFFB3B3FF,
+        },
+        {
+          'id': '9',
+          'initials': 'PD',
+          'name': 'Priya',
+          'avatar_color': 0xFFFFFFB3,
+        },
+        {
+          'id': '10',
+          'initials': 'NJ',
+          'name': 'Neha',
+          'avatar_color': 0xFFFFB3FF,
+        },
+        {
+          'id': '11',
+          'initials': 'VJ',
+          'name': 'Vijay',
+          'avatar_color': 0xFFB3FFFF,
+        },
+      ],
     };
   }
 
   /// Delete an expense.
   Future<Map<String, dynamic>> deleteExpense(String id) async {
-    return await _apiClient.delete(ApiEndpoints.paymentById(id)) as Map<String, dynamic>;
+    return await _apiClient.delete(ApiEndpoints.paymentById(id))
+        as Map<String, dynamic>;
   }
 }

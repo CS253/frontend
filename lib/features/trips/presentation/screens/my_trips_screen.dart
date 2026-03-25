@@ -46,284 +46,369 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
         child: Container(
           color: Colors.white,
           child: Stack(
-          children: [
-            // Background Design — subtle dots pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: BackgroundPatternPainter(),
+            children: [
+              // Background Design — subtle dots pattern
+              Positioned.fill(
+                child: CustomPaint(painter: BackgroundPatternPainter()),
               ),
-            ),
-            
-            Column(
-              children: [
-                // Custom App Bar — now uses TripsProvider for trip count
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              'assets/images/app_logo.png',
-                              height: 50,
-                              width: 50,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'My Trips',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF282828),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Trip count badge — dynamically reflects provider state
-                      Consumer<TripsProvider>(
-                        builder: (context, tripsProvider, _) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.5),
-                                      width: 1.5,
+
+              Column(
+                children: [
+                  // Custom App Bar — now uses TripsProvider for trip count
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 16.0,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/images/app_logo.png',
+                                height: 50,
+                                width: 50,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.location_on,
+                                      color: Color(0xFF6BB5E5),
                                     ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                '',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF282828),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Trip count badge — dynamically reflects provider state
+                        Consumer<TripsProvider>(
+                          builder: (context, tripsProvider, _) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.star_border, size: 14, color: Color(0xFF4A4A4A)),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${tripsProvider.tripCount} Trips',
-                                        style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 12,
+                                    sigmaY: 12,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.star_border,
+                                          size: 14,
                                           color: Color(0xFF4A4A4A),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${tripsProvider.tripCount} Trips',
+                                          style: const TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF4A4A4A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
+                              ),
+                            );
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: Color(0xFF212022),
+                              size: 22,
+                            ),
+                            elevation: 6, // Slightly softer shadow
+                            offset: const Offset(0, 45), // Position slightly lower
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16), // Slightly smaller radius
+                            ),
+                            color: const Color(0xFFF8F9FA),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 160, // Controlled width
+                              maxWidth: 180,
+                            ),
+                            onSelected: (value) async {
+                              if (value == 'account_settings') {
+                                Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).pushNamed(RouteConstants.accountSettings);
+                              } else if (value == 'logout') {
+                                await context.read<AuthProvider>().logout();
+                                if (context.mounted) {
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).pushNamedAndRemoveUntil(
+                                    RouteConstants.login,
+                                    (route) => false,
+                                  );
+                                }
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'account_settings',
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE3F2FD),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.settings_outlined,
+                                        color: Color(0xFF6BB5E5),
+                                        size: 14, // Smaller icon
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Account Settings',
+                                      style: TextStyle(
+                                        color: Color(0xFF212022),
+                                        fontSize: 13, // Smaller text
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(height: 1),
+                              PopupMenuItem(
+                                value: 'logout',
+                                height: 38, // More compact height
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFEBEE),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.logout_rounded,
+                                        color: Color(0xFFE57373),
+                                        size: 14, // Smaller icon
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Logout',
+                                      style: TextStyle(
+                                        color: Color(0xFFD32F2F),
+                                        fontSize: 13, // Smaller text
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Content — Provider-driven trip list
+                  Expanded(
+                    child: Consumer<TripsProvider>(
+                      builder: (context, tripsProvider, _) {
+                        // Loading state
+                        if (tripsProvider.isLoading &&
+                            tripsProvider.trips.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF6BB5E5),
                               ),
                             ),
                           );
-                        },
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert, color: Color(0xFF282828), size: 22),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onSelected: (value) async {
-                            if (value == 'account_settings') {
-                              Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.accountSettings);
-                            } else if (value == 'logout') {
-                              await context.read<AuthProvider>().logout();
-                              if (context.mounted) {
-                                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                                  RouteConstants.login,
-                                  (route) => false,
-                                );
-                              }
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'account_settings',
-                              height: 40,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.settings_outlined, color: Color(0xFF4A4A4A), size: 18),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Account Settings', 
-                                    style: TextStyle(
-                                      color: Color(0xFF4A4A4A),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'logout',
-                              height: 40,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.logout_rounded, color: Colors.red.shade400, size: 18),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Logout', 
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Content — Provider-driven trip list
-                Expanded(
-                  child: Consumer<TripsProvider>(
-                    builder: (context, tripsProvider, _) {
-                      // Loading state
-                      if (tripsProvider.isLoading && tripsProvider.trips.isEmpty) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6BB5E5)),
-                          ),
-                        );
-                      }
+                        }
 
-                      // Error state
-                      if (tripsProvider.errorMessage != null && tripsProvider.trips.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.error_outline, size: 48, color: Color(0xFFB0B0B0)),
-                              const SizedBox(height: 16),
-                              Text(
-                                tripsProvider.errorMessage ?? 'Failed to load trips',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  color: Color(0xFF828282),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ElevatedButton(
-                                onPressed: () => tripsProvider.loadTrips(refresh: true),
-                                child: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      // Empty state
-                      if (tripsProvider.trips.isEmpty) {
-                        return const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.flight_takeoff, size: 64, color: Color(0xFFB0B0B0)),
-                              SizedBox(height: 16),
-                              Text(
-                                'No trips yet',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF828282),
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Tap + to create your first trip!',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
+                        // Error state
+                        if (tripsProvider.errorMessage != null &&
+                            tripsProvider.trips.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 48,
                                   color: Color(0xFFB0B0B0),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 16),
+                                Text(
+                                  tripsProvider.errorMessage ??
+                                      'Failed to load trips',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    color: Color(0xFF828282),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      tripsProvider.loadTrips(refresh: true),
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Empty state
+                        if (tripsProvider.trips.isEmpty) {
+                          return const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.flight_takeoff,
+                                  size: 64,
+                                  color: Color(0xFFB0B0B0),
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No trips yet',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF828282),
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Tap + to create your first trip!',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 12,
+                                    color: Color(0xFFB0B0B0),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Trip cards — dynamically generated from provider data
+                        final trips = tripsProvider.trips;
+                        final cardPositions = _calculateCardPositions(
+                          trips.length,
+                        );
+
+                        return SingleChildScrollView(
+                          child: SizedBox(
+                            height: (trips.length * 170.0).clamp(
+                              400,
+                              double.infinity,
+                            ),
+                            child: Stack(
+                              children: [
+                                // Abstract background curve
+                                Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: CustomPaint(
+                                    painter: TripTimelinePainter(
+                                      tripCount: trips.length,
+                                    ),
+                                  ),
+                                ),
+
+                                // Trip cards from provider data
+                                ...List.generate(trips.length, (index) {
+                                  final trip = trips[index];
+                                  final position = cardPositions[index];
+                                  final isRight = index % 2 != 0;
+
+                                  return TripCard(
+                                    parentContext: context,
+                                    title: trip.name,
+                                    location: trip.destination,
+                                    date: trip.formattedDateRange,
+                                    imageUrl: trip.coverImage ?? '',
+                                    top: position,
+                                    left: isRight ? null : 20,
+                                    right: isRight ? 20 : null,
+                                    isRightAligned: isRight,
+                                  );
+                                }),
+                              ],
+                            ),
                           ),
                         );
-                      }
-
-                      // Trip cards — dynamically generated from provider data
-                      final trips = tripsProvider.trips;
-                      final cardPositions = _calculateCardPositions(trips.length);
-
-                      return SingleChildScrollView(
-                        child: SizedBox(
-                          height: (trips.length * 170.0).clamp(400, double.infinity),
-                          child: Stack(
-                            children: [
-                              // Abstract background curve
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                child: CustomPaint(
-                                  painter: TripTimelinePainter(tripCount: trips.length),
-                                ),
-                              ),
-                              
-                              // Trip cards from provider data
-                              ...List.generate(trips.length, (index) {
-                                final trip = trips[index];
-                                final position = cardPositions[index];
-                                final isRight = index % 2 != 0;
-
-                                return TripCard(
-                                  parentContext: context,
-                                  title: trip.name,
-                                  location: trip.destination,
-                                  date: trip.formattedDateRange,
-                                  imageUrl: trip.coverImage ?? '',
-                                  top: position,
-                                  left: isRight ? null : 20,
-                                  right: isRight ? 20 : null,
-                                  isRightAligned: isRight,
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-    floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
             context: context,
@@ -333,9 +418,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
         },
         backgroundColor: const Color(0xFF9DD4F9),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
     );
@@ -366,12 +449,12 @@ class TripTimelinePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
-    
+
     const double verticalSpacing = 170.0;
     const double startTop = 30.0;
-    const double nodeRadius = 45.0; 
+    const double nodeRadius = 45.0;
     const double horizontalMargin = 20.0;
-    
+
     final double leftX = horizontalMargin + nodeRadius;
     final double rightX = size.width - horizontalMargin - nodeRadius;
 
@@ -381,7 +464,7 @@ class TripTimelinePainter extends CustomPainter {
 
       final double currentX = isCurrentRight ? rightX : leftX;
       final double currentY = startTop + (i * verticalSpacing) + nodeRadius;
-      
+
       final double nextX = isNextRight ? rightX : leftX;
       final double nextY = startTop + ((i + 1) * verticalSpacing) + nodeRadius;
 
@@ -390,12 +473,8 @@ class TripTimelinePainter extends CustomPainter {
       }
 
       final double midY = (currentY + nextY) / 2;
-      
-      path.cubicTo(
-        currentX, midY,
-        nextX, midY,
-        nextX, nextY,
-      );
+
+      path.cubicTo(currentX, midY, nextX, midY, nextX, nextY);
     }
 
     canvas.drawPath(path, paint);

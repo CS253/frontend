@@ -1,4 +1,5 @@
 import '../../../../../core/api/api_client.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AccountSettingsService {
   final ApiClient apiClient;
@@ -45,10 +46,27 @@ class AccountSettingsService {
     String currentPassword,
     String newPassword,
   ) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(seconds: 1));
-    if (currentPassword == 'wrongpassword') {
-      throw Exception('Incorrect current password');
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null || user.email == null) {
+        throw Exception('User not signed in');
+      }
+
+      // Re-authenticate
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        throw Exception('Incorrect current password');
+      }
+      throw Exception(e.message ?? 'Failed to change password');
+    } catch (e) {
+      throw Exception('Failed to change password: $e');
     }
   }
 }

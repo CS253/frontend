@@ -42,6 +42,10 @@ import '../features/trip_settings/data/services/trip_settings_api_service.dart';
 import '../features/trip_settings/data/repositories/trip_settings_repository.dart';
 import '../features/trip_settings/presentation/providers/trip_settings_provider.dart';
 
+// Plan feature
+import '../features/plan/data/services/plan_service.dart';
+import '../features/plan/presentation/providers/plan_provider.dart';
+
 /// Creates the shared ApiClient instance.
 ///
 /// TODO: Update ApiEndpoints.baseUrl with real backend URL before deployment.
@@ -131,6 +135,15 @@ class AppProviders {
             TripSettingsRepository(
               TripSettingsApiService(),
             ),
+          ),
+        ),
+
+        // -----------------------------------------------------------------------
+        // Plan Feature Providers
+        // -----------------------------------------------------------------------
+        ChangeNotifierProvider<PlanProvider>(
+          create: (_) => PlanProvider(
+            service: PlanService(apiClient: apiClient),
           ),
         ),
       ],

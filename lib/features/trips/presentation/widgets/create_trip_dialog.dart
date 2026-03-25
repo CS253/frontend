@@ -15,10 +15,7 @@
 //   • Phone Number *    — Required, valid phone
 //   • Add Member button BLOCKED if fields empty
 //
-// IMAGE UPLOAD:
-//   • Uses file_picker package to select image from laptop
-//   • Selected image stored in TripsProvider.newTripCoverImagePath
-//   • On create, sent as multipart/form-data to POST /trips
+//   Step 1 (Trip Details): Trip Name, Destination, Dates, Type
 //
 // BACKEND CALL: TripsProvider.createTrip() → TripsRepository → TripsService
 //   • Triggers POST /trips (multipart/form-data with coverImage file)
@@ -30,15 +27,15 @@
 //   Step 3: createTrip() → TripsProvider → TripsRepository → TripsService → API
 // =============================================================================
 
-import 'dart:io';
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
-import '../../../trips/presentation/providers/trips_provider.dart';
+import 'package:travelly/core/utils/helpers.dart';
+import 'package:travelly/core/utils/validators.dart';
+import 'package:travelly/features/trips/presentation/providers/trips_provider.dart';
+import 'package:travelly/features/trips/data/services/destination_service.dart';
 import '../../../trips/data/models/member_model.dart';
-import '../../../../core/utils/helpers.dart';
-import '../../../../core/utils/validators.dart';
 
 class CreateTripDialog extends StatefulWidget {
   const CreateTripDialog({super.key});
@@ -63,11 +60,12 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   DateTime? _fromDate;
   DateTime? _toDate;
 
-  // Step 1 — selected cover image file path (from file_picker)
-  String? _coverImagePath;
 
   // Step 1 — date validation error displayed inline
   String? _dateError;
+  bool _isSearching = false;
+  Timer? _debounce;
+
 
   // Step 2 controllers
   final _memberNameController = TextEditingController();
@@ -80,6 +78,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     _destinationController.dispose();
     _memberNameController.dispose();
     _memberPhoneController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -119,7 +118,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
         startDate: _fromDate,
         endDate: _toDate,
         tripType: _selectedTripType,
-        coverImagePath: _coverImagePath,
       );
     }
 
@@ -199,57 +197,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     _step2FormKey.currentState?.reset();
   }
 
-  /// Opens file picker to select a cover image from the user's laptop.
-  ///
-  /// Rules:
-  ///   • Allowed types: jpg, jpeg, png
-  ///   • Max size: 5 MB
-  ///
-  /// Selected image is previewed and stored in TripsProvider via updateTripDetails().
-  Future<void> _pickCoverImage() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-
-      if (result != null && result.files.single.path != null) {
-        final platformFile = result.files.first;
-        final extension = platformFile.extension?.toLowerCase();
-        final sizeInBytes = platformFile.size;
-
-        // 1. Validate File Type
-        final allowedExtensions = ['jpg', 'jpeg', 'png'];
-        if (extension == null || !allowedExtensions.contains(extension)) {
-          if (!mounted) return;
-          Helpers.showErrorSnackbar(context, 'Invalid file type. Allowed: jpg, jpeg, png');
-          return;
-        }
-
-        // 2. Validate File Size (5 MB limit)
-        const int maxBytes = 5 * 1024 * 1024; // 5 MB
-        if (sizeInBytes > maxBytes) {
-          if (!mounted) return;
-          Helpers.showErrorSnackbar(context, 'File too large. Max size: 5 MB');
-          return;
-        }
-
-        setState(() {
-          _coverImagePath = platformFile.path!;
-        });
-
-        // Store selected file path in TripsProvider state
-        if (!mounted) return;
-        context.read<TripsProvider>().updateTripDetails(
-          coverImagePath: _coverImagePath,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Helpers.showErrorSnackbar(context, 'Error picking image: $e');
-      }
-    }
-  }
 
   /// Builds a required field label with a red asterisk (*) using RichText + TextSpan.
   Widget _buildRequiredLabel(String label, {IconData? icon}) {
@@ -299,7 +246,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
       clipBehavior: Clip.hardEdge,
       child: SizedBox(
         width: MediaQuery.of(context).size.width,
-        height: 650,
+        height: 520,
         child: Column(
           children: [
             // Header
@@ -399,15 +346,118 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               decoration: _inputDecoration('Enter trip name'),
             ),
             const SizedBox(height: 16),
-
+            
             // Destination * — Required
             _buildRequiredLabel('Destination', icon: Icons.location_on_outlined),
-            TextFormField(
-              controller: _destinationController,
-              validator: Validators.validateDestination,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-              decoration: _inputDecoration('Enter destination'),
+
+            Autocomplete<String>(
+              optionsBuilder: (TextEditingValue textEditingValue) async {
+                if (textEditingValue.text.length < 2) {
+                  return const Iterable<String>.empty();
+                }
+
+                // Debouncing to avoid excessive API calls
+                final completer = Completer<Iterable<String>>();
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 500), () async {
+                  if (mounted) setState(() => _isSearching = true);
+                  try {
+                    final results = await DestinationService.searchCities(textEditingValue.text);
+                    completer.complete(results);
+                  } finally {
+                    if (mounted) setState(() => _isSearching = false);
+                  }
+                });
+
+                return completer.future;
+              },
+              onSelected: (String selection) {
+                _destinationController.text = selection;
+              },
+              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                // Sync main controller with autocomplete internal controller
+                if (_destinationController.text.isNotEmpty && controller.text.isEmpty) {
+                  controller.text = _destinationController.text;
+                }
+                
+                controller.addListener(() {
+                  _destinationController.text = controller.text;
+                });
+
+                return TextFormField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  onFieldSubmitted: (value) => onFieldSubmitted(),
+                  validator: Validators.validateDestination,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                  decoration: _inputDecoration('Enter destination').copyWith(
+                    suffixIcon: _isSearching 
+                      ? const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF6BB5E5)),
+                          ),
+                        )
+                      : const Icon(Icons.search, size: 20, color: Color(0xFF5A7184)),
+                  ),
+                );
+              },
+              optionsViewBuilder: (context, onSelected, options) {
+                if (options.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 8.0,
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width - 64, 
+                      constraints: const BoxConstraints(maxHeight: 250),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFF3F3F3)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListView.separated(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF3F3F3)),
+                        itemBuilder: (BuildContext context, int index) {
+                          final String option = options.elementAt(index);
+                          return InkWell(
+                            onTap: () => onSelected(option),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF5A7184)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      option,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        color: Color(0xFF333333),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 16),
 
@@ -469,82 +519,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
             ),
             const SizedBox(height: 16),
 
-            // Cover Photo * — Image upload from laptop using file_picker
-            _buildRequiredLabel('Cover Photo', icon: Icons.camera_alt_outlined),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: _pickCoverImage,
-              child: Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFCFCFC),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: _coverImagePath != null
-                    // Preview selected image with option to replace
-                    ? Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              File(_coverImagePath!),
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          // Replace image button
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: GestureDetector(
-                              onTap: _pickCoverImage,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.swap_horiz,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    // Upload placeholder with dashed border
-                    : Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: DashedRectPainter(color: const Color(0xFFE0E0E0)),
-                            ),
-                          ),
-                          const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.upload_outlined, color: Color(0xFF828282)),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Tap to upload',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 12,
-                                    color: Color(0xFF828282),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
             const SizedBox(height: 32),
             _buildPrimaryButton('Continue', _nextStep),
           ],
@@ -778,17 +752,12 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                       height: 120,
                       width: double.infinity,
                       color: const Color(0xFFFAF1ED),
-                      child: _coverImagePath != null
-                          ? Image.file(
-                              File(_coverImagePath!),
-                              fit: BoxFit.cover,
-                            )
-                          : Center(
-                              child: Text(
-                                _getEmojiForTripType(tripsProvider.newTripType),
-                                style: const TextStyle(fontSize: 32),
-                              ),
-                            ),
+                      child: Center(
+                        child: Text(
+                          _getEmojiForTripType(tripsProvider.newTripType),
+                          style: const TextStyle(fontSize: 32),
+                        ),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -865,8 +834,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               _buildChecklistItem('Dates set', tripsProvider.newTripStartDate != null),
               const SizedBox(height: 8),
               _buildChecklistItem('Trip type selected', true),
-              const SizedBox(height: 8),
-              _buildChecklistItem('Cover photo uploaded', _coverImagePath != null),
               const SizedBox(height: 8),
               _buildChecklistItem('Members invited', tripsProvider.newTripMembers.isNotEmpty),
 

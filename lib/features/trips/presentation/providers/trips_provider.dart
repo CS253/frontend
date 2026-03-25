@@ -76,7 +76,6 @@ class TripsProvider with ChangeNotifier {
   DateTime? _newTripStartDate;
   DateTime? _newTripEndDate;
   String _newTripType = 'Beach';
-  String? _newTripCoverImagePath;
   List<MemberModel> _newTripMembers = [];
 
   // Getters for creation flow
@@ -85,7 +84,6 @@ class TripsProvider with ChangeNotifier {
   DateTime? get newTripStartDate => _newTripStartDate;
   DateTime? get newTripEndDate => _newTripEndDate;
   String get newTripType => _newTripType;
-  String? get newTripCoverImagePath => _newTripCoverImagePath;
   List<MemberModel> get newTripMembers => _newTripMembers;
 
   // ---------------------------------------------------------------------------
@@ -178,14 +176,12 @@ class TripsProvider with ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
     String? tripType,
-    String? coverImagePath,
   }) {
     if (name != null) _newTripName = name;
     if (destination != null) _newTripDestination = destination;
     if (startDate != null) _newTripStartDate = startDate;
     if (endDate != null) _newTripEndDate = endDate;
     if (tripType != null) _newTripType = tripType;
-    if (coverImagePath != null) _newTripCoverImagePath = coverImagePath;
     notifyListeners();
   }
 
@@ -230,7 +226,6 @@ class TripsProvider with ChangeNotifier {
         startDate: _newTripStartDate!,
         endDate: _newTripEndDate!,
         tripType: _newTripType,
-        coverImagePath: _newTripCoverImagePath,
       );
 
       // Add members if any were added during creation
@@ -261,7 +256,6 @@ class TripsProvider with ChangeNotifier {
     _newTripStartDate = null;
     _newTripEndDate = null;
     _newTripType = 'Beach';
-    _newTripCoverImagePath = null;
     _newTripMembers = [];
   }
 
