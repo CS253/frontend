@@ -222,6 +222,34 @@ class AuthProvider with ChangeNotifier {
     _setLoading(false);
   }
 
+  /// Updates the current user's profile information.
+  Future<void> updateProfile({String? name, String? phone}) async {
+    if (_token == null) return;
+
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final backendData = await repository.service.syncWithBackend(
+        token: _token!,
+        name: name,
+        phone: phone,
+      );
+
+      if (backendData != null && _user != null) {
+        _user = _user!.copyWith(
+          name: backendData['name'] ?? name,
+          phone: backendData['phoneNumber'] ?? phone,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+    }
+
+    _setLoading(false);
+  }
+
   /// Logs out the current user and resets all auth state.
   Future<void> logout() async {
     _setLoading(true);

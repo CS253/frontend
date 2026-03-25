@@ -27,12 +27,27 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
     if (!mounted) return;
 
     if (authProvider.isAuthenticated) {
-      // Success: Navigate to Trips screen
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        RouteConstants.trips,
-        (route) => false,
-      );
+      final user = authProvider.user;
+      final bool isProfileIncomplete = user?.phone == null || 
+                                       user?.phone?.isEmpty == true || 
+                                       user?.name == null || 
+                                       user?.name == 'Traveller';
+      
+      if (isProfileIncomplete) {
+        // Missing name or phone: Navigate to Complete Profile screen
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RouteConstants.completeProfile,
+          (route) => false,
+        );
+      } else {
+        // Profile complete: Navigate to Trips screen
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RouteConstants.trips,
+          (route) => false,
+        );
+      }
     } else {
       // Failure: Show error and go back
       if (authProvider.errorMessage != null) {
