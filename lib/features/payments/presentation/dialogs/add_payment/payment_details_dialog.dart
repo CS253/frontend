@@ -8,11 +8,13 @@ import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_p
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_amount_field.dart';
 
 class PaymentDetailsDialog extends StatefulWidget {
+  final String groupId;
   final Map<String, String>? initialDetails;
   final Function(Map<String, String>) onContinue;
 
   const PaymentDetailsDialog({
     super.key,
+    required this.groupId,
     this.initialDetails,
     required this.onContinue,
   });
@@ -22,12 +24,13 @@ class PaymentDetailsDialog extends StatefulWidget {
 }
 
 class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
-  String? selectedPayer;
+  String? selectedPayerId;
   String _selectedEmoji = '✈️';
   late String selectedCurrency;
   late TextEditingController amountController;
   late TextEditingController descriptionController;
   late TextEditingController dateController;
+  DateTime? _selectedDate;
 
   List<MemberModel> _members = [];
   bool _isLoadingMembers = true;
@@ -35,7 +38,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
   @override
   void initState() {
     super.initState();
-    selectedPayer = widget.initialDetails?['payer'];
+    selectedPayerId = widget.initialDetails?['payerId'];
     _selectedEmoji = widget.initialDetails?['emoji'] ?? '✈️';
     selectedCurrency = widget.initialDetails?['currency'] ?? AppCurrency.code;
     amountController = TextEditingController(
@@ -60,7 +63,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
 
   Future<void> _fetchMembers() async {
     try {
-      final members = await PaymentRepository().getTripMembers();
+      final members = await PaymentRepository().getGroupMembers(widget.groupId);
       if (mounted) {
         setState(() {
           _members = members;
@@ -237,10 +240,10 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                     ),
                   )
                 : _buildDropdown(
-                    value: selectedPayer,
-                    items: _members.map((e) => e.name).toList(),
+                    value: selectedPayerId,
+                    items: _members,
                     onChanged: (val) {
-                      if (val != null) setState(() => selectedPayer = val);
+                      if (val != null) setState(() => selectedPayerId = val);
                     },
                   ),
             const SizedBox(height: 16),
@@ -260,6 +263,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                         lastDate: DateTime(2100),
                       );
                       if (picked != null) {
+                        _selectedDate = picked;
                         setState(() {
                           dateController.text =
                               "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
@@ -286,7 +290,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   );
                   return;
                 }
-                if (selectedPayer == null) {
+                if (selectedPayerId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please select who paid for this'),
@@ -298,8 +302,8 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   'amount': amountController.text,
                   'description': descriptionController.text,
                   'emoji': _selectedEmoji,
-                  'payer': selectedPayer!,
-                  'date': dateController.text,
+                  'payerId': selectedPayerId!,
+                  'date': _selectedDate?.toIso8601String() ?? '',
                   'currency': selectedCurrency,
                 });
               },
@@ -323,7 +327,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
 
   Widget _buildDropdown({
     required String? value,
-    required List<String> items,
+    required List<MemberModel> items,
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
@@ -342,7 +346,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-            value: items.contains(value) ? value : null,
+            value: items.any((m) => m.userId == value) ? value : null,
             hint: Text(
               'Select Person',
               style: GoogleFonts.plusJakartaSans(
@@ -362,8 +366,8 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               color: const Color(0xFF38332E),
             ),
             onChanged: onChanged,
-            items: items.map<DropdownMenuItem<String>>((String val) {
-              return DropdownMenuItem<String>(value: val, child: Text(val));
+            items: items.map<DropdownMenuItem<String>>((MemberModel member) {
+              return DropdownMenuItem<String>(value: member.userId, child: Text(member.name));
             }).toList(),
           ),
         ),

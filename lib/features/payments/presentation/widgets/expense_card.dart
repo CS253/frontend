@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/features/payments/data/services/payment_service.dart';
+import 'package:travelly/features/payments/data/models/expense_model.dart';
+import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
 import 'package:travelly/core/constants/currency.dart';
+import 'package:travelly/core/services/user_identity_service.dart';
 
 /// List of all expense cards with dynamic data fetching.
 class AllExpensesList extends StatefulWidget {
-  const AllExpensesList({super.key});
+  final String groupId;
+
+  const AllExpensesList({super.key, required this.groupId});
 
   @override
   State<AllExpensesList> createState() => _AllExpensesListState();
 }
 
 class _AllExpensesListState extends State<AllExpensesList> {
-  late Future<Map<String, dynamic>> _expensesFuture;
-  final PaymentService _paymentService = PaymentService();
+  late Future<_ExpensesData> _dataFuture;
+  final PaymentRepository _repository = PaymentRepository();
 
   @override
   void initState() {
@@ -24,13 +28,24 @@ class _AllExpensesListState extends State<AllExpensesList> {
 
   void _refreshExpenses() {
     setState(() {
-      _expensesFuture = _paymentService.fetchExpenses();
+      _dataFuture = _fetchData();
     });
+  }
+
+  Future<_ExpensesData> _fetchData() async {
+    final results = await Future.wait([
+      _repository.getExpenses(widget.groupId),
+      UserIdentityService.instance.getBackendUserId(widget.groupId),
+    ]);
+    return _ExpensesData(
+      expenses: results[0] as List<ExpenseModel>,
+      currentUserId: results[1] as String,
+    );
   }
 
   Future<void> _deleteExpense(String id) async {
     try {
-      await _paymentService.deleteExpense(id);
+      await _repository.deleteExpense(widget.groupId, id);
       _refreshExpenses();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,36 +63,37 @@ class _AllExpensesListState extends State<AllExpensesList> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _expensesFuture,
+    return FutureBuilder<_ExpensesData>(
+      future: _dataFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData ||
-            (snapshot.data!['expenses'] as List).isEmpty) {
+        } else if (!snapshot.hasData || snapshot.data!.expenses.isEmpty) {
           return const Center(child: Text('No expenses found.'));
         }
 
-        final expenses = snapshot.data!['expenses'] as List;
+        final expenses = snapshot.data!.expenses;
+        final currentUserId = snapshot.data!.currentUserId;
 
         return Column(
           children: expenses.map((expense) {
             return Column(
               children: [
                 ExpenseCard(
-                  id: expense['id'],
-                  title: expense['title'],
-                  amount: expense['amount'],
-                  payerName: expense['payer_name'],
-                  payerInitials: expense['payer_initials'],
-                  payerColor: Color(expense['payer_color']),
-                  date: expense['date'],
-                  yourShare: expense['your_share'],
-                  status: expense['status'],
-                  currency: expense['currency'] ?? AppCurrency.code,
-                  onDelete: () => _deleteExpense(expense['id']),
+                  id: expense.id,
+                  title: expense.title,
+                  amount: expense.amount.toStringAsFixed(2),
+                  payerName: expense.payerName ?? 'Unknown',
+                  payerInitials: expense.payerInitials,
+                  payerColor: const Color(0xFF87D4F8),
+                  date: expense.formattedDate,
+                  yourShare: _calculateYourShare(expense, currentUserId),
+                  status: 'pending',
+                  currency: expense.currency,
+                  groupId: widget.groupId,
+                  onDelete: () => _deleteExpense(expense.id),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -87,6 +103,27 @@ class _AllExpensesListState extends State<AllExpensesList> {
       },
     );
   }
+
+  String _calculateYourShare(ExpenseModel expense, String currentUserId) {
+    if (expense.splits.isNotEmpty && currentUserId.isNotEmpty) {
+      // Find the current user's actual split
+      for (final split in expense.splits) {
+        if (split.userId == currentUserId) {
+          return split.amount.toStringAsFixed(2);
+        }
+      }
+      // Current user not in this expense
+      return '0.00';
+    }
+    return expense.amount.toStringAsFixed(2);
+  }
+}
+
+class _ExpensesData {
+  final List<ExpenseModel> expenses;
+  final String currentUserId;
+
+  _ExpensesData({required this.expenses, required this.currentUserId});
 }
 
 /// Individual expense card widget.
@@ -99,7 +136,8 @@ class ExpenseCard extends StatelessWidget {
       date,
       yourShare,
       status,
-      currency;
+      currency,
+      groupId;
   final String shareTextPrefix;
   final Color payerColor;
   final VoidCallback? onDelete;
@@ -117,6 +155,7 @@ class ExpenseCard extends StatelessWidget {
     this.shareTextPrefix = 'Your share: ',
     required this.status,
     required this.currency,
+    required this.groupId,
     this.onDelete,
   });
 
@@ -136,7 +175,10 @@ class ExpenseCard extends StatelessWidget {
       onTap: () {
         showDialog(
           context: context,
-          builder: (context) => PaymentDetailsDialog(expenseId: id),
+          builder: (context) => PaymentDetailsDialog(
+            expenseId: id,
+            groupId: groupId,
+          ),
         );
       },
       child: Container(

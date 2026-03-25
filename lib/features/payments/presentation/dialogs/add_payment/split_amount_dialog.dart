@@ -8,15 +8,19 @@ import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_
 import 'package:travelly/core/constants/currency.dart';
 
 class SplitAmountDialog extends StatefulWidget {
+  final String groupId;
   final Map<String, String> paymentDetails;
-  final List<String> selectedPeopleNames;
+  final List<String> selectedPeopleIds;
   final VoidCallback onBack;
+  final VoidCallback? onComplete;
 
   const SplitAmountDialog({
     super.key,
+    required this.groupId,
     required this.paymentDetails,
-    required this.selectedPeopleNames,
+    required this.selectedPeopleIds,
     required this.onBack,
+    this.onComplete,
   });
 
   @override
@@ -25,7 +29,7 @@ class SplitAmountDialog extends StatefulWidget {
 
 class _SplitAmountDialogState extends State<SplitAmountDialog> {
   bool splitEqually = true;
-  late Map<String, TextEditingController> controllers;
+  late Map<String, TextEditingController> controllers; // keyed by userId
   bool _isLoading = true;
   bool _isSubmitting = false;
   List<MemberModel> _members = [];
@@ -34,8 +38,8 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   void initState() {
     super.initState();
     controllers = {};
-    for (var name in widget.selectedPeopleNames) {
-      controllers[name] = TextEditingController();
+    for (var id in widget.selectedPeopleIds) {
+      controllers[id] = TextEditingController();
     }
     _recalculateSplits();
     _fetchMembers();
@@ -43,7 +47,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
   Future<void> _fetchMembers() async {
     try {
-      final members = await PaymentRepository().getTripMembers();
+      final members = await PaymentRepository().getGroupMembers(widget.groupId);
       if (mounted) {
         setState(() {
           _members = members;
@@ -64,7 +68,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
     double total =
         double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
-    int divisor = widget.selectedPeopleNames.length;
+    int divisor = widget.selectedPeopleIds.length;
     if (divisor == 0) return;
 
     int totalCents = (total * 100).round();
@@ -77,16 +81,16 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
     double f = fCents / 100.0;
     double c = (fCents + 1) / 100.0;
 
-    List<String> names = List.from(widget.selectedPeopleNames);
-    names.shuffle();
+    List<String> ids = List.from(widget.selectedPeopleIds);
+    ids.shuffle();
 
-    for (int i = 0; i < names.length; i++) {
-      String name = names[i];
-      if (controllers.containsKey(name)) {
+    for (int i = 0; i < ids.length; i++) {
+      String id = ids[i];
+      if (controllers.containsKey(id)) {
         if (i < x) {
-          controllers[name]!.text = f.toStringAsFixed(2);
+          controllers[id]!.text = f.toStringAsFixed(2);
         } else {
-          controllers[name]!.text = c.toStringAsFixed(2);
+          controllers[id]!.text = c.toStringAsFixed(2);
         }
       }
     }
@@ -113,25 +117,45 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
     setState(() => _isSubmitting = true);
 
-    final body = {
-      'amount': widget.paymentDetails['amount'],
-      'description': widget.paymentDetails['description'],
-      'emoji': widget.paymentDetails['emoji'],
-      'payer': widget.paymentDetails['payer'],
-      'date': widget.paymentDetails['date'],
+    // Build the API-compliant payload
+    final Map<String, dynamic> body = {
+      'title': widget.paymentDetails['description'] ?? '',
+      'amount': double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0,
+      'paidBy': widget.paymentDetails['payerId'] ?? '',
       'currency': widget.paymentDetails['currency'] ?? AppCurrency.code,
-      'transaction_id': widget.paymentDetails['transaction_id'],
-      'splits': controllers.entries
-          .map((e) => {'name': e.key, 'amount': e.value.text})
-          .toList(),
     };
 
+    // Add date if provided
+    final dateStr = widget.paymentDetails['date'] ?? '';
+    if (dateStr.isNotEmpty) {
+      body['date'] = dateStr;
+    }
+
+    // Build split payload
+    if (splitEqually) {
+      body['split'] = {
+        'type': 'EQUAL',
+        'participants': widget.selectedPeopleIds,
+      };
+    } else {
+      body['split'] = {
+        'type': 'CUSTOM',
+        'splits': controllers.entries
+            .map((e) => {
+                  'userId': e.key,
+                  'amount': double.tryParse(e.value.text) ?? 0.0,
+                })
+            .toList(),
+      };
+    }
+
     try {
-      await PaymentService().createExpense(body);
+      await PaymentService().createExpense(widget.groupId, body);
       if (mounted) {
-        Navigator.of(
-          context,
-        ).popUntil((route) => route.isFirst); // Close all dialogs
+        Navigator.of(context).pop();
+        if (widget.onComplete != null) {
+          widget.onComplete!();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Expense added successfully')),
         );
@@ -149,7 +173,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   @override
   Widget build(BuildContext context) {
     final activeMembers = _members
-        .where((m) => widget.selectedPeopleNames.contains(m.name))
+        .where((m) => widget.selectedPeopleIds.contains(m.userId))
         .toList();
 
     final currencyCode = widget.paymentDetails['currency'] ?? AppCurrency.code;
@@ -302,7 +326,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
                       itemCount: activeMembers.length,
                       itemBuilder: (context, index) {
                         final member = activeMembers[index];
-                        final controller = controllers[member.name]!;
+                        final controller = controllers[member.userId]!;
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: PaymentSplitRow(

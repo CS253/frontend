@@ -1,202 +1,219 @@
 import 'package:travelly/core/api/api_client.dart';
 import 'package:travelly/core/api/api_endpoints.dart';
-import 'package:travelly/core/constants/currency.dart';
 
 /// Service layer for payment-related API calls.
 ///
 /// This class is responsible *only* for HTTP communication.
 /// Data transformation happens in the repository layer.
+/// All methods require a [groupId] since the API is group-scoped.
 class PaymentService {
   final ApiClient _apiClient;
 
   PaymentService({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
-  /// Fetch all expenses for the current trip.
-  Future<Map<String, dynamic>> fetchExpenses() async {
-    Map<String, dynamic> response = {'expenses': []};
-    try {
-      response = await _apiClient.get(ApiEndpoints.expenses);
-    } catch (e) {
-      // API Error (Expenses)
-    }
+  // ---------------------------------------------------------------------------
+  // Expenses
+  // ---------------------------------------------------------------------------
 
-    // MOCK DATA: Injecting mock entries for testing.
-    // REMOVE THIS BLOCK once backend is fully populated.
-    final List<dynamic> mockExpenses = [
-      {
-        "id": "mock_1",
-        "title": "Breakfast at Cafe",
-        "amount": "450",
-        "payer_name": "Kashish",
-        "payer_initials": "K",
-        "payer_color": 0xFF9FDFCA,
-        "date": "Jan 12",
-        "your_share": "150",
-        "status": "Pending",
-      },
-      {
-        "id": "mock_2",
-        "title": "Taxi to Airport",
-        "amount": "1200",
-        "payer_name": "Rushabh",
-        "payer_initials": "RU",
-        "payer_color": 0xFFCCB3E6,
-        "date": "Jan 13",
-        "your_share": "400",
-        "status": "Settled",
-      },
-      {
-        "id": "mock_3",
-        "title": "Museum Tickets",
-        "amount": "3000",
-        "payer_name": "You",
-        "payer_initials": "ME",
-        "payer_color": 0xFF87D4F8,
-        "date": "Jan 14",
-        "your_share": "1000",
-        "status": "Pending",
-      },
-    ];
+  /// Fetch all expenses for a group.
+  /// GET /groups/:groupId/expenses
+  Future<Map<String, dynamic>> fetchExpenses(
+    String groupId, {
+    String? currency,
+    String? paidBy,
+    String? fromDate,
+    String? toDate,
+  }) async {
+    final queryParams = <String, String>{};
+    if (currency != null) queryParams['currency'] = currency;
+    if (paidBy != null) queryParams['paidBy'] = paidBy;
+    if (fromDate != null) queryParams['fromDate'] = fromDate;
+    if (toDate != null) queryParams['toDate'] = toDate;
 
-    if (response['expenses'] != null && response['expenses'] is List) {
-      response['expenses'] = [
-        ...mockExpenses,
-        ...(response['expenses'] as List),
-      ];
-    } else {
-      response['expenses'] = mockExpenses;
-    }
-    // END MOCK DATA
-
-    return response;
-  }
-
-  /// Fetch balances with friends.
-  Future<Map<String, dynamic>> fetchBalances() async {
-    return await _apiClient.get(ApiEndpoints.balances) as Map<String, dynamic>;
+    return await _apiClient.get(
+      ApiEndpoints.groupExpenses(groupId),
+      queryParams: queryParams.isNotEmpty ? queryParams : null,
+    ) as Map<String, dynamic>;
   }
 
   /// Fetch full details for a specific expense.
-  /// MOCK DATA: Simulating a backend call.
-  /// TODO: Replace with real API call when backend is ready
-  Future<Map<String, dynamic>> fetchExpenseDetails(String id) async {
-    await Future.delayed(
-      const Duration(milliseconds: 600),
-    ); // Simulate network delay
-    // In a real scenario, we'll do: return _apiClient.get(ApiEndpoints.paymentById(id));
-    return {
-      'title': 'Dinner at Cafe',
-      'amount': '1500',
-      'payer_name': 'Kashish',
-      'date': 'Jan 12',
-      'splits': [
-        {'name': 'Kashish', 'amount': '500'},
-        {'name': 'Rushabh', 'amount': '500'},
-        {'name': 'You', 'amount': '500'},
-      ],
-    };
+  /// GET /groups/:groupId/expenses/:expenseId
+  Future<Map<String, dynamic>> fetchExpenseDetails(
+    String groupId,
+    String expenseId,
+  ) async {
+    return await _apiClient.get(
+      ApiEndpoints.groupExpense(groupId, expenseId),
+    ) as Map<String, dynamic>;
   }
 
   /// Create a new expense.
-  Future<Map<String, dynamic>> createExpense(Map<String, dynamic> body) async {
-    // Inject currency symbol dynamically if not provided
-    body['currency'] ??= AppCurrency.code;
-    return await _apiClient.post(ApiEndpoints.expenses, body: body)
-        as Map<String, dynamic>;
+  /// POST /groups/:groupId/expenses
+  Future<Map<String, dynamic>> createExpense(
+    String groupId,
+    Map<String, dynamic> body,
+  ) async {
+    return await _apiClient.post(
+      ApiEndpoints.groupExpenses(groupId),
+      body: body,
+    ) as Map<String, dynamic>;
   }
 
-  /// Settle a balance.
-  Future<Map<String, dynamic>> settleBalance(Map<String, dynamic> body) async {
-    return await _apiClient.post(ApiEndpoints.settle, body: body)
-        as Map<String, dynamic>;
-  }
-
-  /// Mark a payment as paid for approval.
-  Future<Map<String, dynamic>> markAsPaid(Map<String, dynamic> body) async {
-    // TODO: Add proper endpoint in ApiEndpoints if different from settle
-    return await _apiClient.post(ApiEndpoints.settle, body: body)
-        as Map<String, dynamic>;
-  }
-
-  /// Fetch trip members. Returns mock data for now.
-  Future<Map<String, dynamic>> fetchTripMembers() async {
-    // TODO: Replace with real API call
-    return {
-      'members': [
-        {
-          'id': '1',
-          'initials': 'K',
-          'name': 'Kashish',
-          'avatar_color': 0xFF9FDFCA,
-        },
-        {
-          'id': '2',
-          'initials': 'HP',
-          'name': 'Hipalantya',
-          'avatar_color': 0xFFFABD9E,
-        },
-        {
-          'id': '3',
-          'initials': 'RU',
-          'name': 'Rushabh',
-          'avatar_color': 0xFFCCB3E6,
-        },
-        {
-          'id': '4',
-          'initials': 'AS',
-          'name': 'Ashish',
-          'avatar_color': 0xFF87D4F8,
-        },
-        {
-          'id': '5',
-          'initials': 'ME',
-          'name': 'You',
-          'avatar_color': 0xFF87D4F8,
-        },
-        {
-          'id': '6',
-          'initials': 'AM',
-          'name': 'Aman',
-          'avatar_color': 0xFFFFB3B3,
-        },
-        {
-          'id': '7',
-          'initials': 'SK',
-          'name': 'Suresh',
-          'avatar_color': 0xFFB3FFB3,
-        },
-        {
-          'id': '8',
-          'initials': 'RK',
-          'name': 'Rahul',
-          'avatar_color': 0xFFB3B3FF,
-        },
-        {
-          'id': '9',
-          'initials': 'PD',
-          'name': 'Priya',
-          'avatar_color': 0xFFFFFFB3,
-        },
-        {
-          'id': '10',
-          'initials': 'NJ',
-          'name': 'Neha',
-          'avatar_color': 0xFFFFB3FF,
-        },
-        {
-          'id': '11',
-          'initials': 'VJ',
-          'name': 'Vijay',
-          'avatar_color': 0xFFB3FFFF,
-        },
-      ],
-    };
+  /// Update an expense.
+  /// PUT /groups/:groupId/expenses/:expenseId
+  Future<Map<String, dynamic>> updateExpense(
+    String groupId,
+    String expenseId,
+    Map<String, dynamic> body,
+  ) async {
+    return await _apiClient.put(
+      ApiEndpoints.groupExpense(groupId, expenseId),
+      body: body,
+    ) as Map<String, dynamic>;
   }
 
   /// Delete an expense.
-  Future<Map<String, dynamic>> deleteExpense(String id) async {
-    return await _apiClient.delete(ApiEndpoints.paymentById(id))
-        as Map<String, dynamic>;
+  /// DELETE /groups/:groupId/expenses/:expenseId
+  Future<Map<String, dynamic>> deleteExpense(
+    String groupId,
+    String expenseId,
+  ) async {
+    return await _apiClient.delete(
+      ApiEndpoints.groupExpense(groupId, expenseId),
+    ) as Map<String, dynamic>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Balances & Settlements
+  // ---------------------------------------------------------------------------
+
+  /// Fetch balances for all members (per currency).
+  /// GET /groups/:groupId/balances
+  Future<Map<String, dynamic>> fetchBalances(String groupId) async {
+    return await _apiClient.get(
+      ApiEndpoints.groupBalances(groupId),
+    ) as Map<String, dynamic>;
+  }
+
+  /// Fetch settlements (optionally simplified).
+  /// GET /groups/:groupId/settlements?simplifyDebts=true/false
+  Future<Map<String, dynamic>> fetchSettlements(
+    String groupId, {
+    bool? simplifyDebts,
+  }) async {
+    final queryParams = <String, String>{};
+    if (simplifyDebts != null) {
+      queryParams['simplifyDebts'] = simplifyDebts.toString();
+    }
+
+    return await _apiClient.get(
+      ApiEndpoints.groupSettlements(groupId),
+      queryParams: queryParams.isNotEmpty ? queryParams : null,
+    ) as Map<String, dynamic>;
+  }
+
+  /// Mark a settlement as paid (creates a reimbursement transaction).
+  /// POST /groups/:groupId/settlements/mark-paid
+  Future<Map<String, dynamic>> markSettlementPaid(
+    String groupId,
+    Map<String, dynamic> body,
+  ) async {
+    return await _apiClient.post(
+      ApiEndpoints.markSettlementPaid(groupId),
+      body: body,
+    ) as Map<String, dynamic>;
+  }
+
+  /// Request payment from a debtor.
+  /// POST /groups/:groupId/settlements/request-payment
+  Future<Map<String, dynamic>> requestPayment(
+    String groupId,
+    Map<String, dynamic> body,
+  ) async {
+    return await _apiClient.post(
+      ApiEndpoints.requestPayment(groupId),
+      body: body,
+    ) as Map<String, dynamic>;
+  }
+
+  /// Initiate UPI payment (get deep link).
+  /// POST /groups/:groupId/settlements/initiate-payment
+  Future<Map<String, dynamic>> initiatePayment(
+    String groupId,
+    Map<String, dynamic> body,
+  ) async {
+    return await _apiClient.post(
+      ApiEndpoints.initiatePayment(groupId),
+      body: body,
+    ) as Map<String, dynamic>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // History & Summary
+  // ---------------------------------------------------------------------------
+
+  /// Fetch payment/reimbursement history.
+  /// GET /groups/:groupId/payment-history
+  Future<Map<String, dynamic>> fetchPaymentHistory(
+    String groupId, {
+    String? currency,
+    String? userId,
+    String? fromDate,
+    String? toDate,
+  }) async {
+    final queryParams = <String, String>{};
+    if (currency != null) queryParams['currency'] = currency;
+    if (userId != null) queryParams['userId'] = userId;
+    if (fromDate != null) queryParams['fromDate'] = fromDate;
+    if (toDate != null) queryParams['toDate'] = toDate;
+
+    return await _apiClient.get(
+      ApiEndpoints.paymentHistory(groupId),
+      queryParams: queryParams.isNotEmpty ? queryParams : null,
+    ) as Map<String, dynamic>;
+  }
+
+  /// Fetch group summary with optional individual stats.
+  /// GET /groups/:groupId/summary?userId=...
+  Future<Map<String, dynamic>> fetchGroupSummary(
+    String groupId, {
+    String? userId,
+  }) async {
+    final queryParams = <String, String>{};
+    if (userId != null) queryParams['userId'] = userId;
+
+    return await _apiClient.get(
+      ApiEndpoints.groupSummary(groupId),
+      queryParams: queryParams.isNotEmpty ? queryParams : null,
+    ) as Map<String, dynamic>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Group Members
+  // ---------------------------------------------------------------------------
+
+  /// Fetch group details (includes members).
+  /// GET /groups/:groupId
+  Future<Map<String, dynamic>> fetchGroupDetails(String groupId) async {
+    return await _apiClient.get(
+      ApiEndpoints.groupDetails(groupId),
+    ) as Map<String, dynamic>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Settings
+  // ---------------------------------------------------------------------------
+
+  /// Toggle simplify-debts setting.
+  /// PUT /groups/:groupId/settings/simplify-debts
+  Future<Map<String, dynamic>> updateSimplifyDebts(
+    String groupId,
+    bool simplifyDebts,
+  ) async {
+    return await _apiClient.put(
+      ApiEndpoints.simplifyDebts(groupId),
+      body: {'simplifyDebts': simplifyDebts},
+    ) as Map<String, dynamic>;
   }
 }

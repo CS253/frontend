@@ -33,21 +33,23 @@ class TripsService {
     return {
       'trips': [
         {
-          'id': 'trip-001',
-          'name': 'Santorini Dreams',
-          'destination': 'Santorini, Greece',
-          'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'id': '1983ef7e-c05d-48da-8dd5-132157e29317',
+          'name': 'Maldives Trip',
+          'destination': 'Maldives',
+          'coverImage':
+              'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
           'startDate': '2024-05-01',
           'endDate': '2024-05-15',
           'tripType': 'Beach',
           'membersCount': 5,
-          'createdBy': 'user-001',
+          'createdBy': 'c7c95318-9322-43dc-9396-37e7ad2ef248',
         },
         {
           'id': 'trip-002',
           'name': 'Paris Escape',
           'destination': 'Paris, France',
-          'coverImage': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'coverImage':
+              'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
           'startDate': '2024-07-01',
           'endDate': '2024-07-10',
           'tripType': 'City',
@@ -58,7 +60,8 @@ class TripsService {
           'id': 'trip-003',
           'name': 'Mountain Trek',
           'destination': 'Swiss Alps',
-          'coverImage': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
+          'coverImage':
+              'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
           'startDate': '2024-06-01',
           'endDate': '2024-06-10',
           'tripType': 'Mountain',
@@ -106,7 +109,8 @@ class TripsService {
         'id': tripId,
         'name': 'Santorini Dreams',
         'destination': 'Santorini, Greece',
-        'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1',
+        'coverImage':
+            'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1',
         'startDate': '2024-05-01',
         'endDate': '2024-05-15',
         'tripType': 'Beach',
@@ -182,11 +186,15 @@ class TripsService {
     // -------------------------------------------------------------------------
     await Future.delayed(const Duration(milliseconds: 500));
     return {
-      'members': members.map((m) => {
-        ...m,
-        'id': 'member-${DateTime.now().millisecondsSinceEpoch}',
-        'role': 'member',
-      }).toList(),
+      'members': members
+          .map(
+            (m) => {
+              ...m,
+              'id': 'member-${DateTime.now().millisecondsSinceEpoch}',
+              'role': 'member',
+            },
+          )
+          .toList(),
     };
     // -------------------------------------------------------------------------
     // REAL API CALL — Uncomment when backend is ready:
@@ -216,8 +224,18 @@ class TripsService {
     await Future.delayed(const Duration(milliseconds: 500));
     return {
       'members': [
-        {'id': 'member-001', 'name': 'Alice', 'phone': '+1234567890', 'role': 'admin'},
-        {'id': 'member-002', 'name': 'Bob', 'phone': '+0987654321', 'role': 'member'},
+        {
+          'id': 'member-001',
+          'name': 'Alice',
+          'phone': '+1234567890',
+          'role': 'admin',
+        },
+        {
+          'id': 'member-002',
+          'name': 'Bob',
+          'phone': '+0987654321',
+          'role': 'member',
+        },
       ],
     };
     // -------------------------------------------------------------------------
