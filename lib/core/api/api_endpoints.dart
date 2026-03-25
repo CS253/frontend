@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 // =============================================================================
 // API Endpoints — Single source of truth for all backend route paths.
 //
@@ -23,19 +25,30 @@ class ApiEndpoints {
   /// Base URL for the API server.
   /// Dynamically switches based on the platform.
   static String get baseUrl {
+    // Get from .env file
+    String? envBaseUrl = dotenv.env['BASE_URL'];
+    
+    if (envBaseUrl != null && envBaseUrl.isNotEmpty) {
+      // If we are on Android emulator, we might need to swap localhost with 10.0.2.2
+      if (!kIsWeb) {
+        try {
+          if (Platform.isAndroid && envBaseUrl.contains('localhost')) {
+            return envBaseUrl.replaceFirst('localhost', '10.0.2.2');
+          }
+        } catch (_) {}
+      }
+      return envBaseUrl;
+    }
+
+    // Fallback logic if .env is missing or key is empty
     if (kIsWeb) {
-      return 'http://localhost:5001/api';
+      return 'http://localhost:5000/api';
     } else {
-      // Use 10.0.2.2 for Android emulators to access localhost.
-      // For iOS simulators and physical devices on the same network,
-      // replace with your computer's local IP (e.g., 192.168.x.x).
       try {
         if (Platform.isAndroid) {
           return 'http://10.0.2.2:5000/api';
         }
-      } catch (_) {
-        // Fallback or non-mobile platforms
-      }
+      } catch (_) {}
       return 'http://localhost:5000/api';
     }
   }

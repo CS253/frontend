@@ -9,8 +9,9 @@ import 'package:travelly/core/services/user_identity_service.dart';
 /// List of all expense cards with dynamic data fetching.
 class AllExpensesList extends StatefulWidget {
   final String groupId;
+  final VoidCallback? onExpenseDeleted;
 
-  const AllExpensesList({super.key, required this.groupId});
+  const AllExpensesList({super.key, required this.groupId, this.onExpenseDeleted});
 
   @override
   State<AllExpensesList> createState() => _AllExpensesListState();
@@ -47,6 +48,7 @@ class _AllExpensesListState extends State<AllExpensesList> {
     try {
       await _repository.deleteExpense(widget.groupId, id);
       _refreshExpenses();
+      widget.onExpenseDeleted?.call();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Expense deleted successfully')),

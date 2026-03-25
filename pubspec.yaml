@@ -33,6 +33,7 @@ dependencies:
 
   google_fonts: ^8.0.2
   provider: ^6.1.5+1
+  flutter_dotenv: ^5.1.0
   file_picker: ^10.3.10
   google_sign_in: ^7.2.0
 
@@ -79,6 +80,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/images/
     - assets/images/gallery/
     - assets/fonts/

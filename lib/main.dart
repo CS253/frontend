@@ -11,6 +11,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app/app.dart';
 
 // Set this to true to bypass auth flow and start directly on the My Trips screen
@@ -18,6 +19,9 @@ const bool kStartFromTrips = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
 
   // Initialize Firebase for all platforms
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
