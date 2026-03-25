@@ -118,4 +118,13 @@ class GalleryProvider with ChangeNotifier {
       rethrow;
     }
   }
+
+  /// Clears all gallery data (e.g., on logout).
+  void clear() {
+    _photos = [];
+    _selectedPhotoIds.clear();
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
+  }
 }

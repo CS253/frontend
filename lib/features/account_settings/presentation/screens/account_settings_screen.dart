@@ -13,6 +13,11 @@ import '../widgets/setting_item.dart';
 import '../widgets/settings_group.dart';
 import 'personal_info_screen.dart';
 import 'change_password_screen.dart';
+import '../../../trips/presentation/providers/trips_provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../gallery/presentation/providers/gallery_provider.dart';
+import '../../../trip_settings/presentation/providers/trip_settings_provider.dart';
+import '../../../plan/presentation/providers/plan_provider.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -159,6 +164,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                 iconColor: const Color(0xFFAE9079),
                                 showChevron: false,
                                  onTap: () async {
+                                  // Clear all provider caches before logging out
+                                  context.read<TripsProvider>().clearCache();
+                                  context.read<DashboardProvider>().clear();
+                                  context.read<GalleryProvider>().clear();
+                                  context.read<AccountSettingsProvider>().clear();
+                                  context.read<TripSettingsProvider>().clear();
+                                  context.read<PlanProvider>().clearRoute();
+
                                   await authProvider.logout();
                                   if (context.mounted) {
                                     Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(

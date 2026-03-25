@@ -11,6 +11,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../../../core/services/user_identity_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/auth_response.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -259,6 +260,10 @@ class AuthProvider with ChangeNotifier {
     } catch (_) {
       // Proceed with local logout even if API fails
     }
+
+    // Clear service and client state
+    repository.apiClient.clearAuthToken();
+    UserIdentityService.instance.clearCache();
 
     _user = null;
     _token = null;
