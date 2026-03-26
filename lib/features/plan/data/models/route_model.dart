@@ -109,15 +109,16 @@ class RouteResponse {
   });
 
   factory RouteResponse.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>;
+    // Support both { data: { ... } } wrapper and flat response
+    final data = json['data'] as Map<String, dynamic>? ?? json;
     return RouteResponse(
-      success: json['success'],
-      mode: json['mode'],
-      departureTime: data['departureTime'],
-      start: Location.fromJson(data['start']),
-      stops: (data['stops'] as List).map((s) => Stop.fromJson(s)).toList(),
-      totalDistanceKm: data['totalDistanceKm'],
-      totalDurationMinutes: data['totalDurationMinutes'],
+      success: json['success'] as bool? ?? true,
+      mode: json['mode'] as String? ?? data['mode'] as String? ?? 'optimized',
+      departureTime: data['departureTime'] as String? ?? '',
+      start: Location.fromJson(data['start'] as Map<String, dynamic>),
+      stops: (data['stops'] as List?)?.map((s) => Stop.fromJson(s as Map<String, dynamic>)).toList() ?? [],
+      totalDistanceKm: (data['totalDistanceKm'] ?? data['totalDistance'] ?? '0') .toString(),
+      totalDurationMinutes: (data['totalDurationMinutes'] ?? data['totalDuration'] ?? '0').toString(),
     );
   }
 }

@@ -89,12 +89,12 @@ class _PlanScreenState extends State<PlanScreen> {
           ElevatedButton(
             onPressed: () async {
               final name = controller.text;
-               // Close dialog first to show loading if needed, or just proceed
+              // Close dialog first to show loading if needed, or just proceed
               Navigator.pop(context);
-              
+
               // Fetch coordinates
               final coords = await GeocodingService.getCoordinates(name);
-              
+
               setState(() {
                 if (isStart) {
                   _startLocation = _startLocation.copyWith(
@@ -338,14 +338,14 @@ class _PlanScreenState extends State<PlanScreen> {
                       children: [
                         SummaryCard(
                           label: 'Total Distance',
-                          value: routeResponse.totalDistanceKm,
+                          value: '${routeResponse.totalDistanceKm} km',
                           icon: Icons.directions_car_outlined,
                           iconColor: const Color(0xFF6BB5E5),
                         ),
                         const SizedBox(width: 16),
                         SummaryCard(
                           label: 'Travel Time',
-                          value: routeResponse.totalDurationMinutes,
+                          value: '${routeResponse.totalDurationMinutes} mins',
                           icon: Icons.timer_outlined,
                           iconColor: const Color(0xFF4CAF50),
                         ),
