@@ -27,12 +27,20 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
     if (!mounted) return;
 
     if (authProvider.isAuthenticated) {
-      // Success: Navigate to Trips screen
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        RouteConstants.trips,
-        (route) => false,
-      );
+      if (authProvider.user?.phone == null || authProvider.user!.phone!.isEmpty) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RouteConstants.providePhone,
+          (route) => false,
+        );
+      } else {
+        // Success: Navigate to Trips screen
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RouteConstants.trips,
+          (route) => false,
+        );
+      }
     } else {
       // Failure: Show error and go back
       if (authProvider.errorMessage != null) {

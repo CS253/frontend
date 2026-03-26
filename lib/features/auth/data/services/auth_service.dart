@@ -25,6 +25,7 @@ class AuthService {
       clientId: kIsWeb
           ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com"
           : null,
+      serverClientId: "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com",
     );
     _isGoogleSignInInitialized = true;
   }
@@ -232,8 +233,9 @@ class AuthService {
       final user = userCredential.user;
       final token = await user?.getIdToken();
 
+      Map<String, dynamic>? neonUser;
       if (token != null) {
-        await syncWithBackend(
+        neonUser = await syncWithBackend(
           token: token,
           name: user?.displayName,
           phone: user?.phoneNumber,
@@ -243,9 +245,10 @@ class AuthService {
       return {
         'token': token,
         'user': {
-          'id': user?.uid,
-          'name': user?.displayName,
-          'email': user?.email,
+          'id': neonUser?['firebaseUid'] ?? user?.uid,
+          'name': neonUser?['name'] ?? user?.displayName,
+          'email': neonUser?['email'] ?? user?.email,
+          'phone': neonUser?['phoneNumber'] ?? user?.phoneNumber,
           'avatarUrl': user?.photoURL,
         },
       };
@@ -266,11 +269,30 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------------
+  // Update Profile
+  // ---------------------------------------------------------------------------
+
+  Future<void> updatePhone({required String phone}) async {
+    try {
+      final response = await _apiClient.put(
+        ApiEndpoints.updateUserProfile,
+        body: {'phoneNumber': phone},
+      );
+
+      if (response == null || response['success'] != true) {
+        throw Exception(response?['error'] ?? 'Failed to update phone number');
+      }
+    } catch (e) {
+      throw Exception('Phone update failed: $e');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Backend Synchronization
   // ---------------------------------------------------------------------------
 
-  /// Syncs the Firebase user with the backend Neon DB.
-  Future<void> syncWithBackend({
+  /// Syncs the Firebase user with the backend Neon DB and returns Neon user.
+  Future<Map<String, dynamic>?> syncWithBackend({
     required String token,
     String? name,
     String? phone,
@@ -292,11 +314,13 @@ class AuthService {
       if (response != null && response['success'] == true) {
         debugPrint('DEBUG: Sync successful, setting auth token');
         _apiClient.setAuthToken(token);
+        return response['data'] as Map<String, dynamic>?;
       } else {
         debugPrint('DEBUG: Sync failed: ${response?['error']}');
       }
     } catch (e) {
       debugPrint('DEBUG: Backend sync error: $e');
     }
+    return null;
   }
 }

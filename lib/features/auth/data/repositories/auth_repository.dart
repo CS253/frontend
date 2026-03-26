@@ -139,4 +139,17 @@ class AuthRepository {
       throw Exception('Logout failed: $e');
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Update Profile
+  // ---------------------------------------------------------------------------
+
+  /// Updates the user's phone number
+  Future<void> updatePhone(String phone) async {
+    try {
+      await service.updatePhone(phone: phone);
+    } catch (e) {
+      throw Exception('Failed to update phone: $e');
+    }
+  }
 }

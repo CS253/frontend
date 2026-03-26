@@ -243,6 +243,25 @@ class AuthProvider with ChangeNotifier {
     _setLoading(false);
   }
 
+  /// Updates the phone number for the current user.
+  Future<void> updatePhone(String phone) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      await repository.updatePhone(phone);
+      if (_user != null) {
+        _user = _user!.copyWith(phone: phone);
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
