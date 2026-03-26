@@ -80,8 +80,8 @@ class AppRoutes {
         final dashboardTripId = dashboardArgs is String
             ? dashboardArgs
             : dashboardArgs is Map<String, dynamic>
-                ? dashboardArgs['tripId'] as String?
-                : null;
+            ? dashboardArgs['tripId'] as String?
+            : null;
         return _buildRoute(MainScreen(tripId: dashboardTripId), settings);
 
       // Settings
@@ -99,9 +99,12 @@ class AppRoutes {
         final tripSettingsTripId = tripSettingsArgs is String
             ? tripSettingsArgs
             : tripSettingsArgs is Map<String, dynamic>
-                ? tripSettingsArgs['tripId'] as String?
-                : null;
-        return _buildRoute(TripSettingsScreen(tripId: tripSettingsTripId), settings);
+            ? tripSettingsArgs['tripId'] as String?
+            : null;
+        return _buildRoute(
+          TripSettingsScreen(tripId: tripSettingsTripId),
+          settings,
+        );
 
       case RouteConstants.tripNotifications:
         return _buildRoute(const NotificationSettingsScreen(), settings);
@@ -111,15 +114,13 @@ class AppRoutes {
         final tripId = args is String
             ? args
             : args is Map<String, dynamic>
-                ? args['tripId'] as String?
-                : null;
+            ? args['tripId'] as String?
+            : null;
 
         if (tripId == null || tripId.isEmpty) {
           return _buildRoute(
             const Scaffold(
-              body: Center(
-                child: Text('Manage Members requires a tripId.'),
-              ),
+              body: Center(child: Text('Manage Members requires a tripId.')),
             ),
             settings,
           );
@@ -134,10 +135,17 @@ class AppRoutes {
         return _buildCupertinoRoute(PaymentsScreen(groupId: groupId), settings);
 
       case RouteConstants.gallery:
-        return _buildCupertinoRoute(const GalleryScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        final groupId = args?['groupId'] as String? ?? '';
+        return _buildCupertinoRoute(GalleryScreen(groupId: groupId), settings);
 
       case RouteConstants.documents:
-        return _buildCupertinoRoute(const DocumentsScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        final groupId = args?['groupId'] as String? ?? '';
+        return _buildCupertinoRoute(
+          DocumentsScreen(groupId: groupId),
+          settings,
+        );
 
       case RouteConstants.plan:
         return _buildCupertinoRoute(const PlanScreen(), settings);

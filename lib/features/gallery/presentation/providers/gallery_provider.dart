@@ -21,7 +21,7 @@ class GalleryProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  Future<void> pickAndUploadMedia() async {
+  Future<void> pickAndUploadMedia(String groupId) async {
     try {
       final ImagePicker picker = ImagePicker();
       final List<XFile> pickedFiles = await picker.pickMultipleMedia();
@@ -32,7 +32,10 @@ class GalleryProvider with ChangeNotifier {
 
         for (var file in pickedFiles) {
           try {
-            await _photoRepository.uploadPhoto(File(file.path));
+            await _photoRepository.uploadPhoto(
+              groupId: groupId,
+              image: File(file.path),
+            );
           } catch (e) {
             // If an individual upload fails, continue with the rest
             debugPrint('Failed to upload ${file.name}: $e');
@@ -40,7 +43,7 @@ class GalleryProvider with ChangeNotifier {
         }
 
         // Refresh from server after uploads complete
-        await fetchPhotos();
+        await fetchPhotos(groupId);
       }
     } catch (e) {
       _error = 'Failed to pick media: $e';
@@ -89,13 +92,14 @@ class GalleryProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchPhotos() async {
+  Future<void> fetchPhotos(String groupId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final fetchedPhotos = await _photoRepository.fetchPhotos(
+        groupId: groupId,
         page: 1,
         limit: 20,
       );
@@ -108,10 +112,13 @@ class GalleryProvider with ChangeNotifier {
     }
   }
 
-  Future<void> uploadPhoto(File image) async {
+  Future<void> uploadPhoto({
+    required String groupId,
+    required File image,
+  }) async {
     try {
-      await _photoRepository.uploadPhoto(image);
-      await fetchPhotos();
+      await _photoRepository.uploadPhoto(groupId: groupId, image: image);
+      await fetchPhotos(groupId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();

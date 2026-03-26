@@ -204,6 +204,7 @@ class ApiEndpoints {
   // ---------------------------------------------------------------------------
 
   static const String documents = '/documents';
+  static const String uploadDocument = '/documents/upload';
   static String documentById(String id) => '/documents/$id';
 
   // ---------------------------------------------------------------------------

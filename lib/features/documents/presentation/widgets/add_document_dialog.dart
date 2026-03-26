@@ -1,12 +1,9 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:travelly/core/widgets/emoji_picker_dialog.dart';
 import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 
-/// Dialog shown when user taps "Add Document".
-/// Includes a name field, emoji selector, description field,
-/// upload area, and a Continue button.
 class AddDocumentDialog extends StatefulWidget {
   const AddDocumentDialog({super.key});
 
@@ -17,14 +14,56 @@ class AddDocumentDialog extends StatefulWidget {
 class _AddDocumentDialogState extends State<AddDocumentDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
   String _selectedEmoji = '📄';
   String? _selectedFileName;
+  String? _selectedFilePath;
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
+    );
+
+    if (result == null || result.files.single.path == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedFileName = result.files.single.name;
+      _selectedFilePath = result.files.single.path;
+    });
+  }
+
+  void _submit() {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a document name')),
+      );
+      return;
+    }
+
+    if (_selectedFileName == null || _selectedFilePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a file to upload')),
+      );
+      return;
+    }
+
+    Navigator.pop(context, {
+      'name': _nameController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'emoji': _selectedEmoji,
+      'fileName': _selectedFileName,
+      'filePath': _selectedFilePath,
+    });
   }
 
   @override
@@ -43,14 +82,17 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header ──────────────────────────────────────────────
               Row(
                 children: [
                   InkWell(
                     onTap: () => Navigator.pop(context),
                     child: const Padding(
-                      padding: EdgeInsets.all(4.0),
-                      child: Icon(Icons.arrow_back, size: 20, color: Color(0xFF38332E)),
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.arrow_back,
+                        size: 20,
+                        color: Color(0xFF38332E),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -65,10 +107,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 18),
-
-              // ── Name field ──────────────────────────────────────────
               Text(
                 'Name*',
                 style: GoogleFonts.plusJakartaSans(
@@ -82,25 +121,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                 height: 42,
                 child: TextField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFFCFAF8),
-                    hintText: 'Train to Lyari',
-                    hintStyle: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.normal,
-                      fontSize: 12,
-                      color: const Color(0xFF8A8075),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(9),
-                      borderSide: const BorderSide(color: Color(0xFFEBE7E0), width: 0.75),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(9),
-                      borderSide: const BorderSide(color: Color(0xFF6BB5E5), width: 1),
-                    ),
-                  ),
+                  decoration: _inputDecoration('Train to Lyari'),
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w500,
                     fontSize: 12,
@@ -108,14 +129,10 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // ── Emoji + Description row ─────────────────────────────
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Emoji selector box
                   GestureDetector(
                     onTap: () async {
                       final emoji = await showEmojiPicker(context);
@@ -129,7 +146,10 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFFCFAF8),
                         borderRadius: BorderRadius.circular(9),
-                        border: Border.all(color: const Color(0xFFEBE7E0), width: 0.75),
+                        border: Border.all(
+                          color: const Color(0xFFEBE7E0),
+                          width: 0.75,
+                        ),
                       ),
                       child: Center(
                         child: Text(
@@ -140,13 +160,12 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Description field
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Description *',
+                          'Description',
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w500,
                             fontSize: 11,
@@ -158,25 +177,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                           height: 42,
                           child: TextField(
                             controller: _descriptionController,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: const Color(0xFFFCFAF8),
-                              hintText: 'Train',
-                              hintStyle: GoogleFonts.plusJakartaSans(
-                                fontWeight: FontWeight.normal,
-                                fontSize: 12,
-                                color: const Color(0xFF8A8075),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(9),
-                                borderSide: const BorderSide(color: Color(0xFFEBE7E0), width: 0.75),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(9),
-                                borderSide: const BorderSide(color: Color(0xFF6BB5E5), width: 1),
-                              ),
-                            ),
+                            decoration: _inputDecoration('Train ticket'),
                             style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w500,
                               fontSize: 12,
@@ -189,20 +190,10 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 18),
-
-              // ── Dashed upload area ──────────────────────────────────
               Center(
                 child: GestureDetector(
-                  onTap: () async {
-                    FilePickerResult? result = await FilePicker.platform.pickFiles();
-                    if (result != null) {
-                      setState(() {
-                        _selectedFileName = result.files.single.name;
-                      });
-                    }
-                  },
+                  onTap: _pickFile,
                   child: CustomPaint(
                     painter: _DashedBorderPainter(
                       color: const Color(0xFFEDEDED),
@@ -237,7 +228,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            _selectedFileName ?? 'Tap the Add button to upload',
+                            _selectedFileName ?? 'Tap to choose a document',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w400,
@@ -254,34 +245,12 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 18),
-
-              // ── Continue button ─────────────────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 36,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_nameController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a document name')),
-                      );
-                      return;
-                    }
-                    if (_selectedFileName == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select a file to upload')),
-                      );
-                      return;
-                    }
-                    Navigator.pop(context, {
-                      'name': _nameController.text,
-                      'description': _descriptionController.text,
-                      'emoji': _selectedEmoji,
-                      'fileName': _selectedFileName,
-                    });
-                  },
+                  onPressed: _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF8DA78),
                     foregroundColor: const Color(0xFF1A1A1A),
@@ -307,11 +276,29 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
     );
   }
 
-
-
+  InputDecoration _inputDecoration(String hintText) {
+    return InputDecoration(
+      filled: true,
+      fillColor: const Color(0xFFFCFAF8),
+      hintText: hintText,
+      hintStyle: GoogleFonts.plusJakartaSans(
+        fontWeight: FontWeight.normal,
+        fontSize: 12,
+        color: const Color(0xFF8A8075),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: const BorderSide(color: Color(0xFFEBE7E0), width: 0.75),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: const BorderSide(color: Color(0xFF6BB5E5), width: 1),
+      ),
+    );
+  }
 }
 
-/// Custom painter for dashed rounded rectangle border.
 class _DashedBorderPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
@@ -335,25 +322,26 @@ class _DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(radius),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(radius),
+        ),
+      );
 
-    // Compute dashed path
     final dashPath = Path();
     for (final metric in path.computeMetrics()) {
-      double distance = 0.0;
+      double distance = 0;
       bool draw = true;
       while (distance < metric.length) {
-        final length = draw ? dashLength : gapLength;
+        final segmentLength = draw ? dashLength : gapLength;
         if (draw) {
           dashPath.addPath(
-            metric.extractPath(distance, distance + length),
+            metric.extractPath(distance, distance + segmentLength),
             Offset.zero,
           );
         }
-        distance += length;
+        distance += segmentLength;
         draw = !draw;
       }
     }

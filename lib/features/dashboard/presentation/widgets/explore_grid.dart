@@ -61,7 +61,10 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.image_outlined,
               iconBgColor: const Color(0xFFFFCA9B),
               cardBgColor: const Color(0xFFFFF0DD),
-              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.gallery),
+              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(
+                RouteConstants.gallery,
+                arguments: {'groupId': tripId},
+              ),
             ),
             ExploreCard(
               title: 'Plan',
@@ -69,7 +72,10 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.map_outlined,
               iconBgColor: const Color(0xFF7DD2ED),
               cardBgColor: const Color(0xFFE7F8FA),
-              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.plan),
+              onTap: () => Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushNamed(RouteConstants.plan),
             ),
             ExploreCard(
               title: 'Documents',
@@ -77,7 +83,10 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.description_outlined,
               iconBgColor: const Color(0xFFFFE591),
               cardBgColor: const Color(0xFFFEF9EA),
-              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(RouteConstants.documents),
+              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(
+                RouteConstants.documents,
+                arguments: {'groupId': tripId},
+              ),
             ),
           ],
         ),

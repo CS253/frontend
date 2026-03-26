@@ -76,6 +76,9 @@ class AppProviders {
 
     return MultiProvider(
       providers: [
+        // Shared ApiClient instance so every feature reuses the same auth token.
+        Provider<ApiClient>.value(value: apiClient),
+
         // -----------------------------------------------------------------------
         // Auth Feature Providers
         // -----------------------------------------------------------------------
@@ -125,9 +128,7 @@ class AppProviders {
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<AccountSettingsProvider>(
           create: (_) => AccountSettingsProvider(
-            AccountSettingsRepository(
-              AccountSettingsService(apiClient),
-            ),
+            AccountSettingsRepository(AccountSettingsService(apiClient)),
           ),
         ),
 
@@ -136,9 +137,7 @@ class AppProviders {
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<TripSettingsProvider>(
           create: (_) => TripSettingsProvider(
-            TripSettingsRepository(
-              TripSettingsApiService(),
-            ),
+            TripSettingsRepository(TripSettingsApiService()),
           ),
         ),
 
@@ -146,9 +145,8 @@ class AppProviders {
         // Plan Feature Providers
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<PlanProvider>(
-          create: (_) => PlanProvider(
-            service: PlanService(apiClient: apiClient),
-          ),
+          create: (_) =>
+              PlanProvider(service: PlanService(apiClient: apiClient)),
         ),
 
         // -----------------------------------------------------------------------
