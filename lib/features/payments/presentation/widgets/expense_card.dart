@@ -1,131 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/expense_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
 import 'package:travelly/core/constants/currency.dart';
-import 'package:travelly/core/services/user_identity_service.dart';
 
-/// List of all expense cards with dynamic data fetching.
-class AllExpensesList extends StatefulWidget {
+/// List of all expense cards — now a presentational widget.
+class AllExpensesList extends StatelessWidget {
   final String groupId;
-  final VoidCallback? onExpenseDeleted;
+  final List<ExpenseModel> expenses;
+  final String currentUserId;
+  final bool isLoading;
+  final void Function(String expenseId)? onDelete;
 
-  const AllExpensesList({super.key, required this.groupId, this.onExpenseDeleted});
-
-  @override
-  State<AllExpensesList> createState() => _AllExpensesListState();
-}
-
-class _AllExpensesListState extends State<AllExpensesList> {
-  late Future<_ExpensesData> _dataFuture;
-  final PaymentRepository _repository = PaymentRepository();
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshExpenses();
-  }
-
-  void _refreshExpenses() {
-    setState(() {
-      _dataFuture = _fetchData();
-    });
-  }
-
-  Future<_ExpensesData> _fetchData() async {
-    final results = await Future.wait([
-      _repository.getExpenses(widget.groupId),
-      UserIdentityService.instance.getBackendUserId(widget.groupId),
-    ]);
-    return _ExpensesData(
-      expenses: results[0] as List<ExpenseModel>,
-      currentUserId: results[1] as String,
-    );
-  }
-
-  Future<void> _deleteExpense(String id) async {
-    try {
-      await _repository.deleteExpense(widget.groupId, id);
-      _refreshExpenses();
-      widget.onExpenseDeleted?.call();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense deleted successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting expense: $e')));
-      }
-    }
-  }
+  const AllExpensesList({
+    super.key,
+    required this.groupId,
+    required this.expenses,
+    required this.currentUserId,
+    this.isLoading = false,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_ExpensesData>(
-      future: _dataFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.expenses.isEmpty) {
-          return const Center(child: Text('No expenses found.'));
-        }
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        final expenses = snapshot.data!.expenses;
-        final currentUserId = snapshot.data!.currentUserId;
+    if (expenses.isEmpty) {
+      return const Center(child: Text('No expenses found.'));
+    }
 
+    return Column(
+      children: expenses.map((expense) {
         return Column(
-          children: expenses.map((expense) {
-            return Column(
-              children: [
-                ExpenseCard(
-                  id: expense.id,
-                  title: expense.title,
-                  amount: expense.amount.toStringAsFixed(2),
-                  payerName: expense.payerName ?? 'Unknown',
-                  payerInitials: expense.payerInitials,
-                  payerColor: const Color(0xFF87D4F8),
-                  date: expense.formattedDate,
-                  yourShare: _calculateYourShare(expense, currentUserId),
-                  status: 'pending',
-                  currency: expense.currency,
-                  groupId: widget.groupId,
-                  onDelete: () => _deleteExpense(expense.id),
-                ),
-                const SizedBox(height: 10),
-              ],
-            );
-          }).toList(),
+          children: [
+            ExpenseCard(
+              id: expense.id,
+              title: expense.title,
+              amount: expense.amount.toStringAsFixed(2),
+              payerName: expense.payerName ?? 'Unknown',
+              payerInitials: expense.payerInitials,
+              payerColor: const Color(0xFF87D4F8),
+              date: expense.formattedDate,
+              yourShare: _calculateYourShare(expense),
+              status: 'pending',
+              currency: expense.currency,
+              groupId: groupId,
+              onDelete: onDelete != null ? () => onDelete!(expense.id) : null,
+            ),
+            const SizedBox(height: 10),
+          ],
         );
-      },
+      }).toList(),
     );
   }
 
-  String _calculateYourShare(ExpenseModel expense, String currentUserId) {
+  String _calculateYourShare(ExpenseModel expense) {
     if (expense.splits.isNotEmpty && currentUserId.isNotEmpty) {
-      // Find the current user's actual split
       for (final split in expense.splits) {
         if (split.userId == currentUserId) {
           return split.amount.toStringAsFixed(2);
         }
       }
-      // Current user not in this expense
       return '0.00';
     }
     return expense.amount.toStringAsFixed(2);
   }
-}
-
-class _ExpensesData {
-  final List<ExpenseModel> expenses;
-  final String currentUserId;
-
-  _ExpensesData({required this.expenses, required this.currentUserId});
 }
 
 /// Individual expense card widget.

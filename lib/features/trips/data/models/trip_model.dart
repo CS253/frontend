@@ -27,6 +27,7 @@ class TripModel {
   final String tripType;
   final int membersCount;
   final String? createdBy;
+  final bool simplifyDebts;
 
   TripModel({
     required this.id,
@@ -38,6 +39,7 @@ class TripModel {
     required this.tripType,
     this.membersCount = 0,
     this.createdBy,
+    this.simplifyDebts = false,
   });
 
   /// Creates a TripModel from API JSON response.
@@ -52,6 +54,7 @@ class TripModel {
       tripType: json['tripType'] as String? ?? 'Other',
       membersCount: json['membersCount'] as int? ?? 0,
       createdBy: json['createdBy'] as String?,
+      simplifyDebts: json['simplifyDebts'] as bool? ?? false,
     );
   }
 
@@ -67,6 +70,7 @@ class TripModel {
       'tripType': tripType,
       'membersCount': membersCount,
       'createdBy': createdBy,
+      'simplifyDebts': simplifyDebts,
     };
   }
 
@@ -81,6 +85,7 @@ class TripModel {
     String? tripType,
     int? membersCount,
     String? createdBy,
+    bool? simplifyDebts,
   }) {
     return TripModel(
       id: id ?? this.id,
@@ -92,6 +97,7 @@ class TripModel {
       tripType: tripType ?? this.tripType,
       membersCount: membersCount ?? this.membersCount,
       createdBy: createdBy ?? this.createdBy,
+      simplifyDebts: simplifyDebts ?? this.simplifyDebts,
     );
   }
 

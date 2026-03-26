@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_user_tile.dart';
 
@@ -25,7 +26,6 @@ class SelectPeopleDialog extends StatefulWidget {
 
 class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
   final Set<String> selectedIds = {};
-  bool _isLoading = true;
   List<MemberModel> _members = [];
 
   @override
@@ -34,25 +34,18 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
     if (widget.initialPeopleIds != null) {
       selectedIds.addAll(widget.initialPeopleIds!);
     }
-    _fetchMembers();
-  }
 
-  Future<void> _fetchMembers() async {
-    try {
-      final members = await PaymentRepository().getGroupMembers(widget.groupId);
-      if (mounted) {
-        setState(() {
-          _members = members;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    final participants = context.read<DashboardProvider>().participants;
+    _members = participants
+        .map(
+          (p) => MemberModel(
+            id: p.id,
+            userId: p.id,
+            name: p.name,
+            avatarColor: const Color(0xFFD9F0FC),
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -99,31 +92,26 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
             const SizedBox(height: 24),
             SizedBox(
               height: 350,
-              child: _isLoading 
-                ? ListView.builder(
-                    itemCount: 5,
-                    itemBuilder: (context, index) => PaymentUserTile.buildLoading(),
-                  )
-                : ListView.builder(
-                    itemCount: _members.length,
-                    itemBuilder: (context, index) {
-                      final member = _members[index];
-                      final isSelected = selectedIds.contains(member.userId);
-                      return PaymentUserTile(
-                        member: member,
-                        isSelected: isSelected,
-                        onTap: () {
-                          setState(() {
-                            if (isSelected) {
-                              selectedIds.remove(member.userId);
-                            } else {
-                              selectedIds.add(member.userId);
-                            }
-                          });
-                        },
-                      );
+              child: ListView.builder(
+                itemCount: _members.length,
+                itemBuilder: (context, index) {
+                  final member = _members[index];
+                  final isSelected = selectedIds.contains(member.userId);
+                  return PaymentUserTile(
+                    member: member,
+                    isSelected: isSelected,
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          selectedIds.remove(member.userId);
+                        } else {
+                          selectedIds.add(member.userId);
+                        }
+                      });
                     },
-                  ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
             DialogPrimaryButton(
@@ -131,7 +119,9 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
               onPressed: () {
                 if (selectedIds.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select at least one person')),
+                    const SnackBar(
+                      content: Text('Please select at least one person'),
+                    ),
                   );
                   return;
                 }

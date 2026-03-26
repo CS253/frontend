@@ -1,4 +1,3 @@
-/// Data model for a document.
 class DocumentModel {
   final String id;
   final String emoji;
@@ -16,10 +15,10 @@ class DocumentModel {
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
     return DocumentModel(
-      id: json['id'] as String? ?? '',
-      emoji: json['emoji'] as String? ?? '📄',
-      title: json['title'] as String? ?? '',
-      subtitle: json['subtitle'] as String? ?? '',
+      id: (json['id'] as String?) ?? '',
+      emoji: (json['emoji'] as String?) ?? '📄',
+      title: (json['title'] as String?) ?? '',
+      subtitle: (json['subtitle'] as String?) ?? '',
       url: json['url'] as String?,
     );
   }

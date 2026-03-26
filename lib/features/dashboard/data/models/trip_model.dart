@@ -59,6 +59,7 @@ class TripModel {
   /// URL (network) or local file path for the trip's cover photo.
   /// Null if no cover photo has been uploaded — falls back to trip-type default.
   final String? coverImage;
+  final bool simplifyDebts;
 
   const TripModel({
     required this.id,
@@ -71,6 +72,7 @@ class TripModel {
     this.emoji = '♠️',
     this.tripType = 'Other',
     this.coverImage,
+    this.simplifyDebts = false,
   });
 
   /// Parses a trip from the backend JSON map.
@@ -90,6 +92,7 @@ class TripModel {
       emoji: json['emoji'] as String? ?? '♠️',
       tripType: json['tripType'] as String? ?? 'Other',
       coverImage: json['coverImage'] as String?,
+      simplifyDebts: json['simplifyDebts'] as bool? ?? false,
     );
   }
 
@@ -106,6 +109,7 @@ class TripModel {
       'emoji': emoji,
       'tripType': tripType,
       'coverImage': coverImage,
+      'simplifyDebts': simplifyDebts,
     };
   }
 
@@ -122,6 +126,7 @@ class TripModel {
     String? emoji,
     String? tripType,
     String? coverImage,
+    bool? simplifyDebts,
   }) {
     return TripModel(
       id: id ?? this.id,
@@ -134,6 +139,7 @@ class TripModel {
       emoji: emoji ?? this.emoji,
       tripType: tripType ?? this.tripType,
       coverImage: coverImage ?? this.coverImage,
+      simplifyDebts: simplifyDebts ?? this.simplifyDebts,
     );
   }
 }

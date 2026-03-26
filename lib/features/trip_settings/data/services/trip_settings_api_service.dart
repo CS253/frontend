@@ -1,7 +1,13 @@
+import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_endpoints.dart';
 import '../models/member_model.dart';
 import '../models/trip_settings_model.dart';
 
 class TripSettingsApiService {
+  final ApiClient _apiClient;
+
+  TripSettingsApiService({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient();
   // TODO: MOCK - Remove this mock delay when switching to real backend
   Future<void> _mockNetworkDelay() async {
     await Future.delayed(const Duration(milliseconds: 600));
@@ -137,13 +143,15 @@ class TripSettingsApiService {
 
   // Get Trip App Settings
   Future<TripSettingsModel> getTripSettings(String tripId) async {
-    // TODO: MOCK - Replace with GET request
-    await _mockNetworkDelay();
+    final response = await _apiClient.get(ApiEndpoints.groupDetails(tripId));
+    final raw = response as Map<String, dynamic>;
+    final tripData = raw['trip'] as Map<String, dynamic>? ?? raw['data'] as Map<String, dynamic>;
+    
     return TripSettingsModel(
-      id: tripId,
-      name: 'The Lyaari Trip',
-      icon: '🏖️',
-      simplifyExpenses: true,
+      id: tripData['id'] as String? ?? tripId,
+      name: tripData['name'] as String? ?? tripData['title'] as String? ?? 'Trip Name',
+      icon: '🏖️', // Default icon as it might not be in the backend yet
+      simplifyDebts: tripData['simplifyDebts'] as bool? ?? tripData['simplify_debts'] as bool? ?? false,
     );
   }
 
@@ -152,8 +160,19 @@ class TripSettingsApiService {
     String tripId,
     Map<String, dynamic> data,
   ) async {
-    // TODO: MOCK - Replace with PATCH request
-    await _mockNetworkDelay();
+    if (data.containsKey('simplifyDebts') || data.containsKey('simplify_debts')) {
+      final value = data['simplifyDebts'] ?? data['simplify_debts'];
+      await _apiClient.put(
+        ApiEndpoints.simplifyDebts(tripId),
+        body: {'simplifyDebts': value},
+      );
+    } else {
+      // Handle other settings if necessary, but the request was specifically for simplifyDebts
+      await _apiClient.put(
+        ApiEndpoints.updateTrip(tripId),
+        body: data,
+      );
+    }
   }
 
   // Get Notification Preferences

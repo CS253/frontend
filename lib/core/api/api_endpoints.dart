@@ -204,6 +204,7 @@ class ApiEndpoints {
   // ---------------------------------------------------------------------------
 
   static const String documents = '/documents';
+  static const String uploadDocument = '/documents/upload';
   static String documentById(String id) => '/documents/$id';
 
   // ---------------------------------------------------------------------------
@@ -227,5 +228,5 @@ class ApiEndpoints {
   // ---------------------------------------------------------------------------
 
   /// POST — Get optimized route and place timings.
-  static const String planRoute = '/plan/route';
+  static const String planRoute = '/route-planner/plan';
 }

@@ -4,6 +4,7 @@ import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 
 class PayWithUpiDialog extends StatefulWidget {
   final String groupId;
@@ -43,7 +44,8 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
     });
 
     try {
-      final result = await PaymentRepository().initiatePayment(
+      if (!mounted) return;
+      final result = await context.read<PaymentRepository>().initiatePayment(
         widget.groupId,
         toUserId: widget.toUserId,
         amount: double.tryParse(widget.amount) ?? 0.0,

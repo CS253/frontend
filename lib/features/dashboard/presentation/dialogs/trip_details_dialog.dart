@@ -533,19 +533,24 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                 ),
                 child: Row(
                   children: [
-                    // Avatar circle with emoji
+                    // Avatar circle with initials
                     Container(
-                      width: 30,
-                      height: 30,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: const Color(0xFFD9F0FC),
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white, width: 1.5),
                       ),
                       child: Center(
                         child: Text(
-                          participant.emoji,
-                          style: const TextStyle(fontSize: 14),
+                          _initialsFor(participant.name),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Nunito',
+                            color: Color(0xFF074066),
+                          ),
                         ),
                       ),
                     ),
@@ -759,6 +764,17 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         ),
       ),
     );
+  }
+
+  String _initialsFor(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) {
+      return '?';
+    }
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
   }
 }
 

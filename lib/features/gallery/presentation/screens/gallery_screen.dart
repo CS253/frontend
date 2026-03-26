@@ -7,9 +7,10 @@ import '../widgets/photo_card.dart';
 import '../../../../core/widgets/glass_back_button.dart';
 
 class GalleryScreen extends StatefulWidget {
+  final String groupId;
   final VoidCallback? onBackPressed;
 
-  const GalleryScreen({super.key, this.onBackPressed});
+  const GalleryScreen({super.key, required this.groupId, this.onBackPressed});
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -19,13 +20,21 @@ class _GalleryScreenState extends State<GalleryScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GalleryProvider>().fetchPhotos();
-    });
+    if (widget.groupId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<GalleryProvider>().fetchPhotos(widget.groupId);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.groupId.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('A trip id is required to open the gallery.')),
+      );
+    }
+
     final provider = context.watch<GalleryProvider>();
     final inSelectionMode = provider.isSelectionMode;
 
@@ -63,7 +72,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -74,8 +86,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ],
           ),
           child: inSelectionMode
-            ? _buildSelectionHeaderContent(provider)
-            : _buildStandardHeaderContent(provider),
+              ? _buildSelectionHeaderContent(provider)
+              : _buildStandardHeaderContent(provider),
         ),
       ),
     );
@@ -200,7 +212,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
       child: GestureDetector(
         onTap: () {
-          context.read<GalleryProvider>().pickAndUploadMedia();
+          context.read<GalleryProvider>().pickAndUploadMedia(widget.groupId);
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
+import 'package:provider/provider.dart';
 
 /// Dialog showing full details for a specific expense.
 class PaymentDetailsDialog extends StatefulWidget {
@@ -21,11 +22,12 @@ class PaymentDetailsDialog extends StatefulWidget {
 
 class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
   late Future<Map<String, dynamic>> _detailsFuture;
-  final PaymentService _service = PaymentService();
+  late final PaymentService _service;
 
   @override
   void initState() {
     super.initState();
+    _service = context.read<PaymentService>();
     _detailsFuture = _service.fetchExpenseDetails(widget.groupId, widget.expenseId);
   }
 

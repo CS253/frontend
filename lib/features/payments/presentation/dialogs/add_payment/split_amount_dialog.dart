@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_split_row.dart';
@@ -30,7 +31,6 @@ class SplitAmountDialog extends StatefulWidget {
 class _SplitAmountDialogState extends State<SplitAmountDialog> {
   bool splitEqually = true;
   late Map<String, TextEditingController> controllers; // keyed by userId
-  bool _isLoading = true;
   bool _isSubmitting = false;
   List<MemberModel> _members = [];
 
@@ -42,25 +42,14 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
       controllers[id] = TextEditingController();
     }
     _recalculateSplits();
-    _fetchMembers();
-  }
-
-  Future<void> _fetchMembers() async {
-    try {
-      final members = await PaymentRepository().getGroupMembers(widget.groupId);
-      if (mounted) {
-        setState(() {
-          _members = members;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    
+    final participants = context.read<DashboardProvider>().participants;
+    _members = participants.map((p) => MemberModel(
+      id: p.id,
+      userId: p.id,
+      name: p.name,
+      avatarColor: const Color(0xFFD9F0FC)
+    )).toList();
   }
 
   void _recalculateSplits() {
@@ -150,7 +139,8 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
     }
 
     try {
-      await PaymentService().createExpense(widget.groupId, body);
+      if (!mounted) return;
+      await context.read<PaymentService>().createExpense(widget.groupId, body);
       if (mounted) {
         Navigator.of(context).pop();
         if (widget.onComplete != null) {
@@ -316,34 +306,28 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
             const SizedBox(height: 16),
             SizedBox(
               height: 300,
-              child: _isLoading
-                  ? ListView.builder(
-                      itemCount: 3,
-                      itemBuilder: (context, index) =>
-                          PaymentSplitRow.buildLoading(),
-                    )
-                  : ListView.builder(
-                      itemCount: activeMembers.length,
-                      itemBuilder: (context, index) {
-                        final member = activeMembers[index];
-                        final controller = controllers[member.userId]!;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: PaymentSplitRow(
-                            member: member,
-                            controller: controller,
-                            currencySymbol: currencySymbol,
-                            onManualEdit: () {
-                              if (splitEqually) {
-                                setState(() {
-                                  splitEqually = false;
-                                });
-                              }
-                            },
-                          ),
-                        );
+              child: ListView.builder(
+                itemCount: activeMembers.length,
+                itemBuilder: (context, index) {
+                  final member = activeMembers[index];
+                  final controller = controllers[member.userId]!;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: PaymentSplitRow(
+                      member: member,
+                      controller: controller,
+                      currencySymbol: currencySymbol,
+                      onManualEdit: () {
+                        if (splitEqually) {
+                          setState(() {
+                            splitEqually = false;
+                          });
+                        }
                       },
                     ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
             DialogPrimaryButton(

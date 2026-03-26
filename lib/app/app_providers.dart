@@ -46,6 +46,10 @@ import '../features/trip_settings/presentation/providers/trip_settings_provider.
 import '../features/plan/data/services/plan_service.dart';
 import '../features/plan/presentation/providers/plan_provider.dart';
 
+// Payments feature
+import '../features/payments/data/services/payment_service.dart';
+import '../features/payments/data/repositories/payment_repository.dart';
+
 /// Creates the shared ApiClient instance.
 ///
 /// TODO: Update ApiEndpoints.baseUrl with real backend URL before deployment.
@@ -72,6 +76,9 @@ class AppProviders {
 
     return MultiProvider(
       providers: [
+        // Shared ApiClient instance so every feature reuses the same auth token.
+        Provider<ApiClient>.value(value: apiClient),
+
         // -----------------------------------------------------------------------
         // Auth Feature Providers
         // -----------------------------------------------------------------------
@@ -121,9 +128,7 @@ class AppProviders {
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<AccountSettingsProvider>(
           create: (_) => AccountSettingsProvider(
-            AccountSettingsRepository(
-              AccountSettingsService(apiClient),
-            ),
+            AccountSettingsRepository(AccountSettingsService(apiClient)),
           ),
         ),
 
@@ -132,9 +137,7 @@ class AppProviders {
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<TripSettingsProvider>(
           create: (_) => TripSettingsProvider(
-            TripSettingsRepository(
-              TripSettingsApiService(),
-            ),
+            TripSettingsRepository(TripSettingsApiService(apiClient: apiClient)),
           ),
         ),
 
@@ -142,8 +145,19 @@ class AppProviders {
         // Plan Feature Providers
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<PlanProvider>(
-          create: (_) => PlanProvider(
-            service: PlanService(apiClient: apiClient),
+          create: (_) =>
+              PlanProvider(service: PlanService(apiClient: apiClient)),
+        ),
+
+        // -----------------------------------------------------------------------
+        // Payments Feature Providers
+        // -----------------------------------------------------------------------
+        Provider<PaymentService>(
+          create: (_) => PaymentService(apiClient: apiClient),
+        ),
+        Provider<PaymentRepository>(
+          create: (context) => PaymentRepository(
+            service: context.read<PaymentService>(),
           ),
         ),
       ],

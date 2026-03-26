@@ -38,6 +38,7 @@ class TripsService {
       'tripType': (rawTrip['tripType'] ?? 'Other') as String,
       'membersCount': membersCount,
       'createdBy': rawTrip['createdBy'] as String?,
+      'simplifyDebts': rawTrip['simplifyDebts'] as bool? ?? false,
       if (rawTrip['currency'] != null) 'currency': rawTrip['currency'],
       if (rawTrip['inviteLink'] != null) 'inviteLink': rawTrip['inviteLink'],
     };

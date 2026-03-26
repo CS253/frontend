@@ -137,8 +137,8 @@ class TripSettingsProvider extends ChangeNotifier {
   Future<void> updateTripSetting(String key, dynamic value) async {
     // Optimistic UI Update
     if (_tripSettings != null) {
-      if (key == 'simplify_expenses') {
-         _tripSettings = _tripSettings!.copyWith(simplifyExpenses: value);
+      if (key == 'simplify_expenses' || key == 'simplify_debts' || key == 'simplifyDebts') {
+         _tripSettings = _tripSettings!.copyWith(simplifyDebts: value);
          notifyListeners();
       }
     }
