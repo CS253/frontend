@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
+import 'package:provider/provider.dart';
 
 class MarkAsPaidDialog extends StatefulWidget {
   final String groupId;
@@ -60,7 +61,8 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
     setState(() => _isSubmitting = true);
 
     try {
-      await PaymentRepository().markSettlementPaid(
+      if (!mounted) return;
+      await context.read<PaymentRepository>().markSettlementPaid(
         widget.groupId,
         fromUserId: widget.fromUserId,
         toUserId: widget.toUserId,

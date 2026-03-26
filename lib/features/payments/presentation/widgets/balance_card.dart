@@ -4,6 +4,7 @@ import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/models/group_summary_model.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/core/services/user_identity_service.dart';
+import 'package:provider/provider.dart';
 
 /// Scrollable per-currency balance card.
 /// Shows one "page" per currency with the user's net balance.
@@ -20,13 +21,14 @@ class BalanceCard extends StatefulWidget {
 
 class _BalanceCardState extends State<BalanceCard> {
   late Future<GroupSummaryModel?> _summaryFuture;
-  final PaymentRepository _repository = PaymentRepository();
+  late final PaymentRepository _repository;
   final PageController _pageController = PageController(viewportFraction: 1.0);
   int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
+    _repository = context.read<PaymentRepository>();
     _summaryFuture = _fetchSummary();
   }
 
@@ -37,7 +39,7 @@ class _BalanceCardState extends State<BalanceCard> {
   }
 
   Future<GroupSummaryModel?> _fetchSummary() async {
-    final userId = await UserIdentityService.instance.getBackendUserId(widget.groupId);
+    final userId = await UserIdentityService.instance.getBackendUserId(widget.groupId, _repository);
     return _repository.getGroupSummary(widget.groupId, userId: userId.isNotEmpty ? userId : null);
   }
 
@@ -97,7 +99,7 @@ class _BalanceCardState extends State<BalanceCard> {
                   final balance = entries[index].value;
                   final isOwe = balance < 0;
                   final symbol = _getCurrencySymbol(currency);
-                  final displayAmount = balance.abs().toStringAsFixed(0);
+                  final displayAmount = balance.abs().toStringAsFixed(2);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -148,7 +150,7 @@ class _BalanceCardState extends State<BalanceCard> {
     final iconBoxColor = isOwe
         ? const Color.fromRGBO(209, 71, 94, 0.17)
         : const Color.fromRGBO(159, 223, 202, 0.3);
-    final iconData = isOwe ? Icons.north_east : Icons.arrow_downward;
+    final iconData = isOwe ? Icons.north_east : Icons.south_west;
     final subtitle = isOwe ? 'You owe' : 'You are owed';
 
     return GestureDetector(

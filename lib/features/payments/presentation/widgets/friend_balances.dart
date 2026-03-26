@@ -5,6 +5,8 @@ import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/core/services/user_identity_service.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 /// Horizontal scrollable friend balance cards with dynamic data.
 class FriendBalances extends StatefulWidget {
@@ -19,24 +21,33 @@ class FriendBalances extends StatefulWidget {
 
 class _FriendBalancesState extends State<FriendBalances> {
   late Future<_SettlementsData> _dataFuture;
-  final PaymentRepository _repository = PaymentRepository();
+  late final PaymentRepository _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = context.read<PaymentRepository>();
     _dataFuture = _fetchData();
   }
 
   Future<_SettlementsData> _fetchData() async {
+    final participants = context.read<DashboardProvider>().participants;
+    final fetchMembers = participants.map((p) => MemberModel(
+      id: p.id,
+      userId: p.id,
+      name: p.name,
+      avatarColor: const Color(0xFFD9F0FC)
+    )).toList();
+
     final results = await Future.wait([
       _repository.getSettlements(widget.groupId, simplifyDebts: false),
-      UserIdentityService.instance.getBackendUserId(widget.groupId),
-      _repository.getGroupMembers(widget.groupId),
+      UserIdentityService.instance.getBackendUserId(widget.groupId, _repository),
     ]);
+
     return _SettlementsData(
       settlements: results[0] as List<SettlementModel>,
       currentUserId: results[1] as String,
-      members: results[2] as List<MemberModel>,
+      members: fetchMembers,
     );
   }
 
@@ -104,22 +115,31 @@ class _FriendBalancesState extends State<FriendBalances> {
 
               if (iOwe) {
                 displayName = toName;
-                statusText = 'I owe $currencySymbol${settlement.amount.toStringAsFixed(0)}';
+                statusText = 'I owe $currencySymbol${settlement.amount.toStringAsFixed(2)}';
                 statusColor = const Color(0xFFFDE8E8);
                 statusTextColor = const Color(0xFFD1475E);
               } else if (owesMe) {
                 displayName = fromName;
-                statusText = 'Owes you $currencySymbol${settlement.amount.toStringAsFixed(0)}';
+                statusText = 'Owes you $currencySymbol${settlement.amount.toStringAsFixed(2)}';
                 statusColor = const Color(0xFFE0F5EE);
                 statusTextColor = const Color(0xFF339977);
               } else {
                 displayName = '$fromName → $toName';
-                statusText = '$currencySymbol${settlement.amount.toStringAsFixed(0)}';
+                statusText = '$currencySymbol${settlement.amount.toStringAsFixed(2)}';
                 statusColor = const Color(0xFFF0ECE8);
                 statusTextColor = const Color(0xFF8A8075);
               }
 
               final initials = _getInitials(displayName);
+
+              Color avatarColor = const Color(0xFFEEECE8);
+              if (iOwe) {
+                avatarColor = _getMemberColor(settlement.toUserId, members);
+              } else if (owesMe) {
+                avatarColor = _getMemberColor(settlement.fromUserId, members);
+              } else {
+                avatarColor = _getMemberColor(settlement.fromUserId, members);
+              }
 
               return Padding(
                 padding: EdgeInsets.only(right: isLast ? 0 : 10),
@@ -129,6 +149,7 @@ class _FriendBalancesState extends State<FriendBalances> {
                   statusText: statusText,
                   statusColor: statusColor,
                   statusTextColor: statusTextColor,
+                  avatarColor: avatarColor,
                   onTap: () => widget.onSettle?.call(
                     displayName,
                     initials,
@@ -157,12 +178,21 @@ class _FriendBalancesState extends State<FriendBalances> {
   }
 
   String _getInitials(String name) {
-    if (name.isEmpty) return '??';
-    final parts = name.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) {
+      return '?';
     }
-    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+  }
+
+  Color _getMemberColor(String userId, List<MemberModel> members) {
+    for (final m in members) {
+      if (m.userId == userId) return m.avatarColor;
+    }
+    return const Color(0xFFD9F0FC);
   }
 
   Widget _card({
@@ -171,12 +201,13 @@ class _FriendBalancesState extends State<FriendBalances> {
     required Color statusColor,
     required Color statusTextColor,
     required String statusText,
+    required Color avatarColor,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 136,
+        width: 155,
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
         decoration: BoxDecoration(
           color: const Color(0xFFFDFDFB),
@@ -191,17 +222,18 @@ class _FriendBalancesState extends State<FriendBalances> {
             Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFFEEECE8),
+                color: avatarColor,
               ),
               child: Center(
                 child: Text(
                   initials,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: const Color(0xFF38332E),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontFamily: 'Nunito',
+                    color: Color(0xFF074066),
                   ),
                 ),
               ),

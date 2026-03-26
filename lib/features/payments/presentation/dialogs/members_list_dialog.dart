@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 /// Dialog that shows the list of group members.
 class MembersListDialog extends StatelessWidget {
@@ -51,16 +52,17 @@ class MembersListDialog extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            FutureBuilder<List<MemberModel>>(
-              future: PaymentRepository().getGroupMembers(groupId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+            Builder(
+              builder: (context) {
+                final participants = context.read<DashboardProvider>().participants;
+                final members = participants.map((p) => MemberModel(
+                  id: p.id,
+                  userId: p.id,
+                  name: p.name,
+                  avatarColor: const Color(0xFFD9F0FC),
+                )).toList();
+
+                if (members.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Center(
@@ -72,7 +74,6 @@ class MembersListDialog extends StatelessWidget {
                   );
                 }
 
-                final members = snapshot.data!;
                 return ConstrainedBox(
                   constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
                   child: ListView.separated(
@@ -100,10 +101,11 @@ class MembersListDialog extends StatelessWidget {
                               child: Center(
                                 child: Text(
                                   member.initials,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: const Color(0xFF38332E),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    fontFamily: 'Nunito',
+                                    color: Color(0xFF074066),
                                   ),
                                 ),
                               ),

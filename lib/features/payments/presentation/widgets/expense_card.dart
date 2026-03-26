@@ -5,6 +5,7 @@ import 'package:travelly/features/payments/data/repositories/payment_repository.
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/core/services/user_identity_service.dart';
+import 'package:provider/provider.dart';
 
 /// List of all expense cards with dynamic data fetching.
 class AllExpensesList extends StatefulWidget {
@@ -19,11 +20,12 @@ class AllExpensesList extends StatefulWidget {
 
 class _AllExpensesListState extends State<AllExpensesList> {
   late Future<_ExpensesData> _dataFuture;
-  final PaymentRepository _repository = PaymentRepository();
+  late final PaymentRepository _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = context.read<PaymentRepository>();
     _refreshExpenses();
   }
 
@@ -36,7 +38,7 @@ class _AllExpensesListState extends State<AllExpensesList> {
   Future<_ExpensesData> _fetchData() async {
     final results = await Future.wait([
       _repository.getExpenses(widget.groupId),
-      UserIdentityService.instance.getBackendUserId(widget.groupId),
+      UserIdentityService.instance.getBackendUserId(widget.groupId, _repository),
     ]);
     return _ExpensesData(
       expenses: results[0] as List<ExpenseModel>,

@@ -11,14 +11,14 @@ class UserIdentityService {
 
   /// Returns the backend userId for the current Firebase user in this group.
   /// Returns empty string if resolution fails.
-  Future<String> getBackendUserId(String groupId) async {
+  Future<String> getBackendUserId(String groupId, PaymentRepository repository) async {
     if (_cache.containsKey(groupId)) return _cache[groupId]!;
 
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser == null || firebaseUser.email == null) return '';
 
     try {
-      final members = await PaymentRepository().getGroupMembers(groupId);
+      final members = await repository.getGroupMembers(groupId);
       for (final m in members) {
         if (m.email.toLowerCase() == firebaseUser.email!.toLowerCase()) {
           _cache[groupId] = m.userId;

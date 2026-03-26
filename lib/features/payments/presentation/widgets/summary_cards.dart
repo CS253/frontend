@@ -5,6 +5,8 @@ import 'package:travelly/features/payments/data/repositories/payment_repository.
 import 'package:travelly/features/payments/presentation/dialogs/currency_breakdown_dialog.dart';
 import 'package:travelly/features/payments/presentation/dialogs/members_list_dialog.dart';
 import 'package:travelly/core/services/user_identity_service.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 /// Summary cards row (Total Expense, You Paid, Members).
 class SummaryCards extends StatefulWidget {
@@ -18,16 +20,17 @@ class SummaryCards extends StatefulWidget {
 
 class _SummaryCardsState extends State<SummaryCards> {
   late Future<GroupSummaryModel?> _summaryFuture;
-  final PaymentRepository _repository = PaymentRepository();
+  late final PaymentRepository _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = context.read<PaymentRepository>();
     _summaryFuture = _fetchSummary();
   }
 
   Future<GroupSummaryModel?> _fetchSummary() async {
-    final userId = await UserIdentityService.instance.getBackendUserId(widget.groupId);
+    final userId = await UserIdentityService.instance.getBackendUserId(widget.groupId, _repository);
     return _repository.getGroupSummary(widget.groupId, userId: userId.isNotEmpty ? userId : null);
   }
 
@@ -88,7 +91,7 @@ class _SummaryCardsState extends State<SummaryCards> {
                 iconColor: Colors.purpleAccent,
                 icon: Icons.people_outline,
                 title: 'Members',
-                amount: '${summary?.memberCount ?? 0}',
+                amount: '${context.watch<DashboardProvider>().participants.length}',
                 onTap: () => MembersListDialog.show(context, groupId: widget.groupId),
               ),
               const SizedBox(width: 8),
