@@ -1,104 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/group_summary_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
 import 'package:travelly/features/payments/presentation/dialogs/currency_breakdown_dialog.dart';
 import 'package:travelly/features/payments/presentation/dialogs/members_list_dialog.dart';
-import 'package:travelly/core/services/user_identity_service.dart';
 import 'package:provider/provider.dart';
 import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 
 /// Summary cards row (Total Expense, You Paid, Members).
-class SummaryCards extends StatefulWidget {
+class SummaryCards extends StatelessWidget {
   final String groupId;
+  final GroupSummaryModel? summary;
+  final bool isLoading;
 
-  const SummaryCards({super.key, required this.groupId});
-
-  @override
-  State<SummaryCards> createState() => _SummaryCardsState();
-}
-
-class _SummaryCardsState extends State<SummaryCards> {
-  late Future<GroupSummaryModel?> _summaryFuture;
-  late final PaymentRepository _repository;
-
-  @override
-  void initState() {
-    super.initState();
-    _repository = context.read<PaymentRepository>();
-    _summaryFuture = _fetchSummary();
-  }
-
-  Future<GroupSummaryModel?> _fetchSummary() async {
-    final userId = await UserIdentityService.instance.getBackendUserId(widget.groupId, _repository);
-    return _repository.getGroupSummary(widget.groupId, userId: userId.isNotEmpty ? userId : null);
-  }
+  const SummaryCards({
+    super.key,
+    required this.groupId,
+    this.summary,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<GroupSummaryModel?>(
-      future: _summaryFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 120,
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
+    if (isLoading) {
+      return const SizedBox(
+        height: 120,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-        final summary = snapshot.data;
+    // Per-currency maps for dialogs
+    final totalExpensesByCurrency = summary?.individual?.totalExpensesByPaymentCurrency ?? {};
+    final youPaidByCurrency = summary?.individual?.paid ?? {};
 
-        // Per-currency maps for dialogs
-        final totalExpensesByCurrency = summary?.individual?.totalExpensesByPaymentCurrency ?? {};
-        final youPaidByCurrency = summary?.individual?.paid ?? {};
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(width: 8),
-              _buildSummaryCard(
-                context: context,
-                iconBoxColor: const Color(0xFFD8F1FD),
-                iconColor: Colors.blueAccent,
-                icon: Icons.account_balance_wallet_outlined,
-                title: 'Total Expense',
-                subtitle: 'Tap to view',
-                onTap: () => CurrencyBreakdownDialog.show(
-                  context,
-                  title: 'Total Expenses',
-                  currencyAmounts: totalExpensesByCurrency,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildSummaryCard(
-                context: context,
-                iconBoxColor: const Color(0xFFE0F5EE),
-                iconColor: const Color(0xFF339977),
-                icon: Icons.trending_up,
-                title: 'You Paid',
-                subtitle: 'Tap to view',
-                onTap: () => CurrencyBreakdownDialog.show(
-                  context,
-                  title: 'You Paid',
-                  currencyAmounts: youPaidByCurrency,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildSummaryCard(
-                context: context,
-                iconBoxColor: const Color(0xFFF0E8F7),
-                iconColor: Colors.purpleAccent,
-                icon: Icons.people_outline,
-                title: 'Members',
-                amount: '${context.watch<DashboardProvider>().participants.length}',
-                onTap: () => MembersListDialog.show(context, groupId: widget.groupId),
-              ),
-              const SizedBox(width: 8),
-            ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(width: 8),
+          _buildSummaryCard(
+            context: context,
+            iconBoxColor: const Color(0xFFD8F1FD),
+            iconColor: Colors.blueAccent,
+            icon: Icons.account_balance_wallet_outlined,
+            title: 'Total Expense',
+            subtitle: 'Tap to view',
+            onTap: () => CurrencyBreakdownDialog.show(
+              context,
+              title: 'Total Expenses',
+              currencyAmounts: totalExpensesByCurrency,
+            ),
           ),
-        );
-      },
+          const SizedBox(width: 8),
+          _buildSummaryCard(
+            context: context,
+            iconBoxColor: const Color(0xFFE0F5EE),
+            iconColor: const Color(0xFF339977),
+            icon: Icons.trending_up,
+            title: 'You Paid',
+            subtitle: 'Tap to view',
+            onTap: () => CurrencyBreakdownDialog.show(
+              context,
+              title: 'You Paid',
+              currencyAmounts: youPaidByCurrency,
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildSummaryCard(
+            context: context,
+            iconBoxColor: const Color(0xFFF0E8F7),
+            iconColor: Colors.purpleAccent,
+            icon: Icons.people_outline,
+            title: 'Members',
+            amount: '${context.watch<DashboardProvider>().participants.length}',
+            onTap: () => MembersListDialog.show(context, groupId: groupId),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 

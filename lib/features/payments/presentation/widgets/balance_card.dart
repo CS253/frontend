@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/models/group_summary_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
-import 'package:travelly/core/services/user_identity_service.dart';
-import 'package:provider/provider.dart';
 
 /// Scrollable per-currency balance card.
 /// Shows one "page" per currency with the user's net balance.
@@ -12,35 +9,29 @@ import 'package:provider/provider.dart';
 class BalanceCard extends StatefulWidget {
   final String groupId;
   final VoidCallback? onSettleTap;
+  final GroupSummaryModel? summary;
+  final bool isLoading;
 
-  const BalanceCard({super.key, required this.groupId, this.onSettleTap});
+  const BalanceCard({
+    super.key,
+    required this.groupId,
+    this.onSettleTap,
+    this.summary,
+    this.isLoading = false,
+  });
 
   @override
   State<BalanceCard> createState() => _BalanceCardState();
 }
 
 class _BalanceCardState extends State<BalanceCard> {
-  late Future<GroupSummaryModel?> _summaryFuture;
-  late final PaymentRepository _repository;
   final PageController _pageController = PageController(viewportFraction: 1.0);
   int _currentPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _repository = context.read<PaymentRepository>();
-    _summaryFuture = _fetchSummary();
-  }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<GroupSummaryModel?> _fetchSummary() async {
-    final userId = await UserIdentityService.instance.getBackendUserId(widget.groupId, _repository);
-    return _repository.getGroupSummary(widget.groupId, userId: userId.isNotEmpty ? userId : null);
   }
 
   String _getCurrencySymbol(String code) {
@@ -55,87 +46,82 @@ class _BalanceCardState extends State<BalanceCard> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<GroupSummaryModel?>(
-      future: _summaryFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildSingleCard(
-            isOwe: false,
-            amount: '...',
-            currencySymbol: AppCurrency.symbol,
-            currencyCode: AppCurrency.code,
-          );
-        }
+    if (widget.isLoading) {
+      return _buildSingleCard(
+        isOwe: false,
+        amount: '...',
+        currencySymbol: AppCurrency.symbol,
+        currencyCode: AppCurrency.code,
+      );
+    }
 
-        final summary = snapshot.data;
-        final balanceMap = summary?.individual?.balance ?? {};
+    final summary = widget.summary;
+    final balanceMap = summary?.individual?.balance ?? {};
 
-        // If no individual balance data, show a single card with 0
-        if (balanceMap.isEmpty) {
-          final currency = summary?.currency ?? AppCurrency.code;
-          return _buildSingleCard(
-            isOwe: false,
-            amount: '0',
-            currencySymbol: _getCurrencySymbol(currency),
-            currencyCode: currency,
-          );
-        }
+    // If no individual balance data, show a single card with 0
+    if (balanceMap.isEmpty) {
+      final currency = summary?.currency ?? AppCurrency.code;
+      return _buildSingleCard(
+        isOwe: false,
+        amount: '0',
+        currencySymbol: _getCurrencySymbol(currency),
+        currencyCode: currency,
+      );
+    }
 
-        // Build list of per-currency balance entries
-        final entries = balanceMap.entries.toList();
+    // Build list of per-currency balance entries
+    final entries = balanceMap.entries.toList();
 
-        return Column(
-          children: [
-            SizedBox(
-              height: 110,
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: entries.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  final currency = entries[index].key;
-                  final balance = entries[index].value;
-                  final isOwe = balance < 0;
-                  final symbol = _getCurrencySymbol(currency);
-                  final displayAmount = balance.abs().toStringAsFixed(2);
+    return Column(
+      children: [
+        SizedBox(
+          height: 110,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: entries.length,
+            onPageChanged: (index) {
+              setState(() => _currentPage = index);
+            },
+            itemBuilder: (context, index) {
+              final currency = entries[index].key;
+              final balance = entries[index].value;
+              final isOwe = balance < 0;
+              final symbol = _getCurrencySymbol(currency);
+              final displayAmount = balance.abs().toStringAsFixed(2);
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: _buildSingleCard(
-                      isOwe: isOwe,
-                      amount: displayAmount,
-                      currencySymbol: symbol,
-                      currencyCode: currency,
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (entries.length > 1) ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(entries.length, (index) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: _currentPage == index ? 20 : 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: _currentPage == index
-                          ? const Color(0xFF38332E)
-                          : const Color(0xFFD5D0CA),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ],
-        );
-      },
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: _buildSingleCard(
+                  isOwe: isOwe,
+                  amount: displayAmount,
+                  currencySymbol: symbol,
+                  currencyCode: currency,
+                ),
+              );
+            },
+          ),
+        ),
+        if (entries.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(entries.length, (index) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _currentPage == index ? 20 : 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: _currentPage == index
+                      ? const Color(0xFF38332E)
+                      : const Color(0xFFD5D0CA),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
     );
   }
 
