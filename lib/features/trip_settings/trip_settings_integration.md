@@ -104,7 +104,7 @@ Removes a member from the trip. Will fail if they have unsettled balances unless
 
 ### 5. Fetch Trip App Options (Settings)
 **GET** `/trips/{tripId}/settings`  
-Retrieves settings such as `simplify_expenses` and general trip info.
+Retrieves settings such as `simplify_debts` and general trip info.
 
 #### Response JSON
 ```json
@@ -113,19 +113,19 @@ Retrieves settings such as `simplify_expenses` and general trip info.
     "id": "trip_123",
     "name": "The Lyaari Trip",
     "icon": "🏖️",
-    "simplify_expenses": true
+    "simplify_debts": true
   }
 }
 ```
 
 ### 6. Update Trip Settings
 **PATCH** `/trips/{tripId}/settings`  
-Toggle `simplify_expenses` or update currency.
+Toggle `simplify_debts` or update currency.
 
 #### Request Format
 ```json
 {
-  "simplify_expenses": false
+  "simplify_debts": false
 }
 ```
 
@@ -177,8 +177,8 @@ Gets the authenticated user's notification preferences for this specific trip.
 
 #### `lib/features/trip_settings/presentation/screens/trip_settings_screen.dart`
 **Action Needed:**
-1. Wrap the widget body with a `Consumer<TripSettingsProvider>` to read the `simplifyExpenses` boolean dynamically.
-2. Replace local state variable `_simplifyExpenses` in `_buildSwitch`. The `onChanged` property should trigger `provider.updateTripSetting('simplify_expenses', value)`.
+1. Wrap the widget body with a `Consumer<TripSettingsProvider>` to read the `simplifyDebts` boolean dynamically.
+2. Replace local state variable `_simplifyDebts` in `_buildSwitch`. The `onChanged` property should trigger `provider.updateTripSetting('simplify_debts', value)`.
 3. `_buildTripCard()` details ('The Lyaari Trip') should come from the provider.
 
 #### `lib/features/trip_settings/presentation/screens/notification_settings_screen.dart`

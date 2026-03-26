@@ -171,4 +171,14 @@ class PaymentRepository {
     }
     return null;
   }
+
+  /// Fetch specifically the simplifyDebts setting for a group.
+  Future<bool> getSimplifyDebtsSetting(String groupId) async {
+    final response = await _service.fetchGroupDetails(groupId);
+    final data = response['data'] ?? response['trip'] ?? response;
+    if (data is Map<String, dynamic>) {
+       return data['simplifyDebts'] as bool? ?? data['simplify_debts'] as bool? ?? false;
+    }
+    return false;
+  }
 }

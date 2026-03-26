@@ -61,13 +61,13 @@ class TripSettingsModel {
   final String id;
   final String name;
   final String icon;
-  final bool simplifyExpenses;
+  final bool simplifyDebts;
 
   TripSettingsModel({
     required this.id,
     required this.name,
     required this.icon,
-    required this.simplifyExpenses,
+    required this.simplifyDebts,
   });
 
   factory TripSettingsModel.fromJson(Map<String, dynamic> json) {
@@ -76,7 +76,7 @@ class TripSettingsModel {
       id: json['id'] as String? ?? 't_000',
       name: json['name'] as String? ?? 'Trip Name',
       icon: json['icon'] as String? ?? '🏖️',
-      simplifyExpenses: json['simplify_expenses'] as bool? ?? true,
+      simplifyDebts: json['simplify_debts'] as bool? ?? json['simplifyDebts'] as bool? ?? true,
     );
   }
 
@@ -84,13 +84,13 @@ class TripSettingsModel {
     String? id,
     String? name,
     String? icon,
-    bool? simplifyExpenses,
+    bool? simplifyDebts,
   }) {
     return TripSettingsModel(
       id: id ?? this.id,
       name: name ?? this.name,
       icon: icon ?? this.icon,
-      simplifyExpenses: simplifyExpenses ?? this.simplifyExpenses,
+      simplifyDebts: simplifyDebts ?? this.simplifyDebts,
     );
   }
 }

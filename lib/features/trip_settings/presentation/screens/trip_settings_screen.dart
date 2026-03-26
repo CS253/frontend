@@ -52,7 +52,7 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
           Consumer<TripSettingsProvider>(
             builder: (context, provider, child) {
               // Build the switch state optimistically based on provider values
-              final simplifyExpenses = provider.tripSettings?.simplifyExpenses ?? true;
+              final simplifyDebts = provider.tripSettings?.simplifyDebts ?? true;
 
               return SingleChildScrollView(
                 padding: EdgeInsets.only(
@@ -126,15 +126,23 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                             endIndent: 16,
                           ),
                           SettingItem(
-                            title: 'Simplify Expenses',
+                            title: 'Simplify Debts',
                             subtitle: 'Reduce the number of transactions',
                             icon: Icons.account_tree_outlined,
                             iconBgColor: const Color(0xFFD9F2EA),
                             iconColor: const Color(0xFF57C2A1),
-                            trailing: _buildSwitch(
-                              simplifyExpenses,
-                              (value) => provider.updateTripSetting('simplify_expenses', value),
-                            ),
+                            trailing: provider.isLoadingTripSettings
+                                ? const SizedBox(
+                                    width: 44,
+                                    height: 44,
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(radius: 8),
+                                    ),
+                                  )
+                                : _buildSwitch(
+                                    simplifyDebts,
+                                    (value) => provider.updateTripSetting('simplify_debts', value),
+                                  ),
                             showChevron: false,
                           ),
                         ],

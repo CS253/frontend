@@ -39,8 +39,12 @@ class _FriendBalancesState extends State<FriendBalances> {
       avatarColor: const Color(0xFFD9F0FC)
     )).toList();
 
+    // 1. Fetch the latest simplifyDebts setting from the API
+    final simplifyDebts = await _repository.getSimplifyDebtsSetting(widget.groupId);
+
+    // 2. Fetch settlements using the fresh setting
     final results = await Future.wait([
-      _repository.getSettlements(widget.groupId, simplifyDebts: false),
+      _repository.getSettlements(widget.groupId, simplifyDebts: simplifyDebts),
       UserIdentityService.instance.getBackendUserId(widget.groupId, _repository),
     ]);
 

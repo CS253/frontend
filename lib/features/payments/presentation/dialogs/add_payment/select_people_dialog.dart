@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:provider/provider.dart';
 import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
@@ -35,14 +34,18 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
     if (widget.initialPeopleIds != null) {
       selectedIds.addAll(widget.initialPeopleIds!);
     }
-    
+
     final participants = context.read<DashboardProvider>().participants;
-    _members = participants.map((p) => MemberModel(
-      id: p.id,
-      userId: p.id,
-      name: p.name,
-      avatarColor: const Color(0xFFD9F0FC)
-    )).toList();
+    _members = participants
+        .map(
+          (p) => MemberModel(
+            id: p.id,
+            userId: p.id,
+            name: p.name,
+            avatarColor: const Color(0xFFD9F0FC),
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -116,7 +119,9 @@ class _SelectPeopleDialogState extends State<SelectPeopleDialog> {
               onPressed: () {
                 if (selectedIds.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select at least one person')),
+                    const SnackBar(
+                      content: Text('Please select at least one person'),
+                    ),
                   );
                   return;
                 }

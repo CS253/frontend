@@ -137,7 +137,7 @@ class AppProviders {
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<TripSettingsProvider>(
           create: (_) => TripSettingsProvider(
-            TripSettingsRepository(TripSettingsApiService()),
+            TripSettingsRepository(TripSettingsApiService(apiClient: apiClient)),
           ),
         ),
 
