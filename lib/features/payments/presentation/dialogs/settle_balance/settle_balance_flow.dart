@@ -14,9 +14,10 @@ class SettleBalanceFlow {
     required String fromUserId,
     required String toUserId,
     required String currency,
+    String? currentUserId,
     VoidCallback? onComplete,
   }) {
-    _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
+    _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
   }
 
   static void _showSelectOption(
@@ -28,8 +29,12 @@ class SettleBalanceFlow {
     String fromUserId,
     String toUserId,
     String currency,
+    String? currentUserId,
     VoidCallback? onComplete,
   ) {
+    // Current user can only pay with UPI if they are the one who owes (fromUserId)
+    final bool showPayWithUpi = currentUserId == null || currentUserId == fromUserId;
+
     showDialog(
       context: context,
       builder: (ctx) => KeyboardSafeDialog(
@@ -38,13 +43,14 @@ class SettleBalanceFlow {
           initials: initials,
           amount: amount,
           currency: currency,
+          showPayWithUpi: showPayWithUpi,
           onMarkAsPaid: () {
             Navigator.pop(ctx);
-            _showMarkAsPaid(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
+            _showMarkAsPaid(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
           },
           onPayWithUpi: () {
             Navigator.pop(ctx);
-            _showPayWithUpi(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
+            _showPayWithUpi(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
           },
         ),
       ),
@@ -60,6 +66,7 @@ class SettleBalanceFlow {
     String fromUserId,
     String toUserId,
     String currency,
+    String? currentUserId,
     VoidCallback? onComplete,
   ) {
     showDialog(
@@ -75,7 +82,7 @@ class SettleBalanceFlow {
           currency: currency,
           onBack: () {
             Navigator.pop(ctx);
-            _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
+            _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
           },
           onComplete: onComplete,
         ),
@@ -92,6 +99,7 @@ class SettleBalanceFlow {
     String fromUserId,
     String toUserId,
     String currency,
+    String? currentUserId,
     VoidCallback? onComplete,
   ) {
     showDialog(
@@ -107,7 +115,7 @@ class SettleBalanceFlow {
           currency: currency,
           onBack: () {
             Navigator.pop(ctx);
-            _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, onComplete);
+            _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
           },
         ),
       ),

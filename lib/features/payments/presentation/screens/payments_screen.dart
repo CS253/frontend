@@ -44,18 +44,20 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
   void _loadData() {
     final dashboardProvider = context.read<DashboardProvider>();
-    final currentTrip = dashboardProvider.currentTrip;
     final participants = dashboardProvider.participants;
 
     _paymentsProvider.loadAll(
       groupId: widget.groupId,
-      simplifyDebts: currentTrip?.simplifyDebts ?? false,
-      participants: participants.map((p) => MemberModel(
-        id: p.id,
-        userId: p.id,
-        name: p.name,
-        avatarColor: const Color(0xFFD9F0FC),
-      )).toList(),
+      participants: participants
+          .map(
+            (p) => MemberModel(
+              id: p.id,
+              userId: p.id,
+              name: p.name,
+              avatarColor: const Color(0xFFD9F0FC),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -107,19 +109,28 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         currentUserId: provider.currentUserId,
                         members: provider.members,
                         isLoading: provider.isLoading,
-                        onSettle: (name, initials, amount, {String? fromUserId, String? toUserId, String? currency}) {
-                          SettleBalanceFlow.show(
-                            context,
-                            groupId: widget.groupId,
-                            name: name,
-                            initials: initials,
-                            amount: amount,
-                            fromUserId: fromUserId ?? '',
-                            toUserId: toUserId ?? '',
-                            currency: currency ?? 'INR',
-                            onComplete: _reload,
-                          );
-                        },
+                        onSettle:
+                            (
+                              name,
+                              initials,
+                              amount, {
+                              String? fromUserId,
+                              String? toUserId,
+                              String? currency,
+                            }) {
+                              SettleBalanceFlow.show(
+                                context,
+                                groupId: widget.groupId,
+                                name: name,
+                                initials: initials,
+                                amount: amount,
+                                fromUserId: fromUserId ?? '',
+                                toUserId: toUserId ?? '',
+                                currency: currency ?? 'INR',
+                                currentUserId: provider.currentUserId,
+                                onComplete: _reload,
+                              );
+                            },
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -138,27 +149,35 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         isLoading: provider.isLoading,
                         onDelete: (expenseId) async {
                           try {
-                            final dashProvider = context.read<DashboardProvider>();
+                            final dashProvider = context
+                                .read<DashboardProvider>();
                             await provider.deleteExpense(
                               widget.groupId,
                               expenseId,
-                              simplifyDebts: dashProvider.currentTrip?.simplifyDebts ?? false,
-                              participants: dashProvider.participants.map((p) => MemberModel(
-                                id: p.id,
-                                userId: p.id,
-                                name: p.name,
-                                avatarColor: const Color(0xFFD9F0FC),
-                              )).toList(),
+                              participants: dashProvider.participants
+                                  .map(
+                                    (p) => MemberModel(
+                                      id: p.id,
+                                      userId: p.id,
+                                      name: p.name,
+                                      avatarColor: const Color(0xFFD9F0FC),
+                                    ),
+                                  )
+                                  .toList(),
                             );
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Expense deleted successfully')),
+                                const SnackBar(
+                                  content: Text('Expense deleted successfully'),
+                                ),
                               );
                             }
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error deleting expense: $e')),
+                                SnackBar(
+                                  content: Text('Error deleting expense: $e'),
+                                ),
                               );
                             }
                           }
@@ -197,7 +216,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -246,25 +268,43 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Balances with friends',
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w500, fontSize: 13, color: const Color(0xFF8A8075))),
-        Text('Detailed',
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w500, fontSize: 13, color: const Color(0xFF8A8075))),
+        Text(
+          'Balances with friends',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: const Color(0xFF8A8075),
+          ),
+        ),
+        Text(
+          'Detailed',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: const Color(0xFF8A8075),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildAddPaymentButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => AddPaymentFlow.show(context, groupId: widget.groupId, onComplete: _reload),
+      onTap: () => AddPaymentFlow.show(
+        context,
+        groupId: widget.groupId,
+        onComplete: _reload,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF75CCFE),
           borderRadius: BorderRadius.circular(9159),
           boxShadow: const [
-            BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.12), blurRadius: 27, offset: Offset(0, 7)),
+            BoxShadow(
+              color: Color.fromRGBO(56, 51, 46, 0.12),
+              blurRadius: 27,
+              offset: Offset(0, 7),
+            ),
           ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
@@ -273,9 +313,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           children: [
             const Icon(Icons.add, color: Color(0xFF064460), size: 18),
             const SizedBox(width: 8),
-            Text('Add Payment',
-                style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold, fontSize: 14.6, color: const Color(0xFF064460))),
+            Text(
+              'Add Payment',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold,
+                fontSize: 14.6,
+                color: const Color(0xFF064460),
+              ),
+            ),
           ],
         ),
       ),

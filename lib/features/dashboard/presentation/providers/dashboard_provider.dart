@@ -64,6 +64,15 @@ class DashboardProvider extends ChangeNotifier {
   /// Calls [notifyListeners] at each state transition so the UI
   /// can react (show loading spinner, render data, or show error).
   Future<void> fetchDashboard(String tripId) async {
+    // ── Step 0: Clear stale data if switching trips ──────────────
+    // If the tripId is different from the current one, clear the data
+    // so the UI shows a loading spinner instead of the previous trip.
+    if (_currentTrip?.id != tripId) {
+      _currentTrip = null;
+      _participants = [];
+      _activities = [];
+    }
+
     // ── Step 1: Enter loading state ──────────────────────────────
     _isLoading = true;
     _errorMessage = '';
@@ -137,6 +146,14 @@ class DashboardProvider extends ChangeNotifier {
     } catch (e) {
       // Re-throw so the dialog can show feedback
       rethrow;
+    }
+  }
+
+  /// Optimistically updates the simplifyDebts setting for the current trip.
+  void updateSimplifyDebts(bool value) {
+    if (_currentTrip != null) {
+      _currentTrip = _currentTrip!.copyWith(simplifyDebts: value);
+      notifyListeners();
     }
   }
 

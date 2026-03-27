@@ -94,6 +94,7 @@ class DashboardService {
       'tripType': tripType.isEmpty ? 'Other' : tripType,
       'coverImage': group['coverImage'] as String?,
       'membersCount': memberCount,
+      'simplifyDebts': group['simplifyDebts'] as bool? ?? false,
     };
   }
 

@@ -25,7 +25,9 @@
 // =============================================================================
 
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -85,6 +87,7 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
   DateTime? _fromDate;
   DateTime? _toDate;
   String? _coverImagePath;
+  Uint8List? _coverImageBytes;
   bool _isSaving = false;
 
   /// Date validation error displayed inline.
@@ -213,7 +216,8 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         }
 
         setState(() {
-          _coverImagePath = platformFile.path!;
+          _coverImagePath = platformFile.path; // Might be null on web
+          _coverImageBytes = platformFile.bytes;
         });
       }
     } catch (e) {
@@ -437,20 +441,29 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: _coverImagePath!.startsWith('http')
-              ? Image.network(
-                  _coverImagePath!,
+          child: _coverImageBytes != null
+              ? Image.memory(
+                  _coverImageBytes!,
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _buildUploadPlaceholder(),
                 )
-              : Image.file(
-                  File(_coverImagePath!),
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+              : (_coverImagePath != null && _coverImagePath!.startsWith('http'))
+                  ? Image.network(
+                      _coverImagePath!,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => _buildUploadPlaceholder(),
+                    )
+                  : (_coverImagePath != null && !kIsWeb)
+                      ? Image.file(
+                          File(_coverImagePath!),
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : _buildUploadPlaceholder(),
         ),
         // Replace image button
         Positioned(

@@ -141,7 +141,10 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                                   )
                                 : _buildSwitch(
                                     simplifyDebts,
-                                    (value) => provider.updateTripSetting('simplify_debts', value),
+                                    (value) {
+                                      provider.updateTripSetting('simplify_debts', value);
+                                      context.read<DashboardProvider>().updateSimplifyDebts(value);
+                                    },
                                   ),
                             showChevron: false,
                           ),

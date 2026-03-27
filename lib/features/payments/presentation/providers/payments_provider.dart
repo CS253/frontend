@@ -4,6 +4,7 @@ import 'package:travelly/features/payments/data/models/group_summary_model.dart'
 import 'package:travelly/features/payments/data/models/settlement_model.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:travelly/features/payments/data/models/balance_model.dart';
 import 'package:travelly/core/services/user_identity_service.dart';
 
 /// Centralized provider for the Payments screen.
@@ -14,7 +15,7 @@ class PaymentsProvider extends ChangeNotifier {
   final PaymentRepository _repository;
 
   PaymentsProvider({required PaymentRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   // ---------------------------------------------------------------------------
   // State
@@ -44,6 +45,9 @@ class PaymentsProvider extends ChangeNotifier {
   bool _simplifyDebts = false;
   bool get simplifyDebts => _simplifyDebts;
 
+  List<UserBalance> _balances = [];
+  List<UserBalance> get balances => _balances;
+
   // ---------------------------------------------------------------------------
   // Load All Data
   // ---------------------------------------------------------------------------
@@ -55,12 +59,11 @@ class PaymentsProvider extends ChangeNotifier {
   /// [participants] — from DashboardProvider.participants (for member list).
   Future<void> loadAll({
     required String groupId,
-    required bool simplifyDebts,
+    bool? simplifyDebts,
     List<MemberModel>? participants,
   }) async {
     _isLoading = true;
     _error = null;
-    _simplifyDebts = simplifyDebts;
     notifyListeners();
 
     try {
@@ -75,19 +78,30 @@ class PaymentsProvider extends ChangeNotifier {
         _members = participants;
       }
 
+      // If simplifyDebts not provided, fetch it from settings endpoint
+      bool finalSimplify;
+      if (simplifyDebts == null) {
+        finalSimplify = await _repository.getSimplifyDebtsSetting(groupId);
+      } else {
+        finalSimplify = simplifyDebts;
+      }
+      _simplifyDebts = finalSimplify;
+
       // 3. Fire all data requests in parallel
       final results = await Future.wait([
+        _repository.getExpenses(groupId),
+        _repository.getBalances(groupId), // Added getBalances
+        _repository.getSettlements(groupId, simplifyDebts: finalSimplify),
         _repository.getGroupSummary(
           groupId,
           userId: _currentUserId.isNotEmpty ? _currentUserId : null,
         ),
-        _repository.getSettlements(groupId, simplifyDebts: simplifyDebts),
-        _repository.getExpenses(groupId),
       ]);
 
-      _summary = results[0] as GroupSummaryModel?;
-      _settlements = results[1] as List<SettlementModel>;
-      _expenses = results[2] as List<ExpenseModel>;
+      _expenses = results[0] as List<ExpenseModel>;
+      _balances = results[1] as List<UserBalance>;
+      _settlements = results[2] as List<SettlementModel>;
+      _summary = results[3] as GroupSummaryModel?;
     } catch (e) {
       _error = e.toString();
       debugPrint('PaymentsProvider.loadAll error: $e');
@@ -100,7 +114,7 @@ class PaymentsProvider extends ChangeNotifier {
   /// Refresh all data (e.g. after adding/deleting an expense).
   Future<void> refresh({
     required String groupId,
-    required bool simplifyDebts,
+    bool? simplifyDebts, // Changed to nullable
     List<MemberModel>? participants,
   }) async {
     await loadAll(
@@ -111,15 +125,28 @@ class PaymentsProvider extends ChangeNotifier {
   }
 
   /// Delete an expense and refresh.
-  Future<void> deleteExpense(String groupId, String expenseId, {
-    required bool simplifyDebts,
+  Future<void> deleteExpense(
+    String groupId,
+    String expenseId, {
+    bool? simplifyDebts,
     List<MemberModel>? participants,
   }) async {
-    await _repository.deleteExpense(groupId, expenseId);
-    await refresh(
-      groupId: groupId,
-      simplifyDebts: simplifyDebts,
-      participants: participants,
-    );
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteExpense(groupId, expenseId);
+      await refresh(
+        groupId: groupId,
+        simplifyDebts: simplifyDebts,
+        participants: participants,
+      );
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
   }
 }

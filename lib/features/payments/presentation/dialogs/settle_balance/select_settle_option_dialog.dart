@@ -9,6 +9,7 @@ class SelectSettleOptionDialog extends StatelessWidget {
   final String currency;
   final VoidCallback onMarkAsPaid;
   final VoidCallback onPayWithUpi;
+  final bool showPayWithUpi;
 
   const SelectSettleOptionDialog({
     super.key,
@@ -18,6 +19,7 @@ class SelectSettleOptionDialog extends StatelessWidget {
     required this.currency,
     required this.onMarkAsPaid,
     required this.onPayWithUpi,
+    this.showPayWithUpi = true,
   });
 
   @override
@@ -99,14 +101,16 @@ class SelectSettleOptionDialog extends StatelessWidget {
               const Color(0xFF9FDFCA),
               onMarkAsPaid,
             ),
-            const SizedBox(height: 10),
-            _buildButton(
-              'Pay with UPI',
-              'Open UPI app to make payment',
-              Icons.account_balance_outlined,
-              const Color(0xFF87D4F8),
-              onPayWithUpi,
-            ),
+            if (showPayWithUpi) ...[
+              const SizedBox(height: 10),
+              _buildButton(
+                'Pay with UPI',
+                'Open UPI app to make payment',
+                Icons.account_balance_outlined,
+                const Color(0xFF87D4F8),
+                onPayWithUpi,
+              ),
+            ],
           ],
         ),
       ),

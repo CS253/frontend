@@ -10,6 +10,7 @@ class GalleryProvider with ChangeNotifier {
   GalleryProvider({required PhotoRepository photoRepository})
     : _photoRepository = photoRepository;
 
+  String? _currentGroupId;
   List<Photo> _photos = [];
   final Set<String> _selectedPhotoIds = {};
   bool _isLoading = false;
@@ -93,8 +94,13 @@ class GalleryProvider with ChangeNotifier {
   }
 
   Future<void> fetchPhotos(String groupId) async {
+    if (_currentGroupId != groupId) {
+      _photos = [];
+      _selectedPhotoIds.clear();
+      _error = null;
+    }
+    _currentGroupId = groupId;
     _isLoading = true;
-    _error = null;
     notifyListeners();
 
     try {
