@@ -57,6 +57,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
     Navigator.pop(context, {
       'name': _nameController.text.trim(),
       'description': _descriptionController.text.trim(),

@@ -27,6 +27,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   late final DocumentService _documentService;
   final DocumentDownloadService _downloadService = DocumentDownloadService();
   final Map<String, bool> _downloadingIds = {};
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -90,12 +91,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error downloading: $e')));
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _downloadingIds[id] = false;
+        });
       }
-      setState(() {
-        _downloadingIds[id] = false;
-      });
     }
   }
 
@@ -108,6 +108,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     if (result == null || !mounted) {
       return;
     }
+
+    setState(() {
+      _isUploading = true;
+    });
 
     try {
       await _documentService.uploadDocument(
@@ -129,6 +133,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error uploading document: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
   }
 
@@ -231,6 +241,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             child: Center(
               child: PrimaryFabButton(
                 label: 'Add Document',
+                isLoading: _isUploading,
                 onPressed: _uploadDocument,
               ),
             ),

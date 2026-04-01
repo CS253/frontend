@@ -379,9 +379,6 @@ class TimelineStop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isOpen = stop.placeStatus.toLowerCase().contains('open');
-    bool isClosed = stop.placeStatus.toLowerCase().contains('closed');
-
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,34 +445,6 @@ class TimelineStop extends StatelessWidget {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isOpen
-                                  ? const Color(0xFFE8F5E9)
-                                  : (isClosed
-                                        ? const Color(0xFFFFEBEE)
-                                        : const Color(0xFFF2F2F2)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              stop.placeStatus,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: isOpen
-                                    ? const Color(0xFF4CAF50)
-                                    : (isClosed
-                                          ? const Color(0xFFF44336)
-                                          : const Color(0xFF8B8893)),
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
                           const Icon(
                             Icons.access_time_rounded,
                             size: 16,

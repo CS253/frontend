@@ -357,15 +357,15 @@ class _PlanScreenState extends State<PlanScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
 
                 // Itinerary Timeline Header
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 24.0,
                       vertical: 24,
                     ),
                     child: Text(
-                      'Optimized Itinerary',
-                      style: TextStyle(
+                      _isOptimized ? 'Optimized Itinerary' : 'Custom Itinerary',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF212022),

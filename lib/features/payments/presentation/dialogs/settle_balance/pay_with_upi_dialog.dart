@@ -70,7 +70,14 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Error initiating payment: $e';
+          String errMsg = e.toString();
+          if (errMsg.contains('ApiException')) {
+            final parts = errMsg.split(': ');
+            if (parts.length > 1) {
+              errMsg = parts.sublist(1).join(': ');
+            }
+          }
+          _error = errMsg;
           _isLoading = false;
         });
       }
