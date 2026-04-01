@@ -364,7 +364,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       vertical: 24,
                     ),
                     child: Text(
-                      _isOptimized ? 'Optimized Itinerary' : 'Custom Itinerary',
+                      'Your Itinerary',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
