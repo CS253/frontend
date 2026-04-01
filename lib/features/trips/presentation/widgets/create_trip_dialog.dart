@@ -61,12 +61,10 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   DateTime? _fromDate;
   DateTime? _toDate;
 
-
   // Step 1 — date validation error displayed inline
   String? _dateError;
   bool _isSearching = false;
   Timer? _debounce;
-
 
   // Step 2 controllers
   final _memberNameController = TextEditingController();
@@ -159,7 +157,10 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   Future<void> _handleCreateTrip() async {
     final userId = context.read<AuthProvider>().user?.id;
     if (userId == null || userId.isEmpty) {
-      Helpers.showErrorSnackbar(context, 'Please log in again to create a trip.');
+      Helpers.showErrorSnackbar(
+        context,
+        'Please log in again to create a trip.',
+      );
       return;
     }
 
@@ -202,7 +203,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     // Reset form validation state after adding
     _step2FormKey.currentState?.reset();
   }
-
 
   /// Builds a required field label with a red asterisk (*) using RichText + TextSpan.
   Widget _buildRequiredLabel(String label, {IconData? icon}) {
@@ -257,7 +257,10 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 16.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -268,11 +271,19 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                           onTap: _previousStep,
                           child: const Padding(
                             padding: EdgeInsets.only(right: 8.0),
-                            child: Icon(Icons.arrow_back_ios, size: 18, color: Color(0xFF5A7184)),
+                            child: Icon(
+                              Icons.arrow_back_ios,
+                              size: 18,
+                              color: Color(0xFF5A7184),
+                            ),
                           ),
                         ),
                       Text(
-                        _currentStep == 0 ? 'New Trip' : _currentStep == 1 ? 'Add Members' : 'Review Trip',
+                        _currentStep == 0
+                            ? 'New Trip'
+                            : _currentStep == 1
+                            ? 'Add Members'
+                            : 'Review Trip',
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 18,
@@ -287,7 +298,11 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                       context.read<TripsProvider>().cancelCreation();
                       Navigator.pop(context);
                     },
-                    child: const Icon(Icons.close, size: 24, color: Color(0xFF5A7184)),
+                    child: const Icon(
+                      Icons.close,
+                      size: 24,
+                      color: Color(0xFF5A7184),
+                    ),
                   ),
                 ],
               ),
@@ -296,7 +311,10 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
 
             // Progress Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 children: List.generate(3, (index) {
                   return Expanded(
@@ -304,7 +322,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                       margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
                       height: 4,
                       decoration: BoxDecoration(
-                        color: index <= _currentStep ? const Color(0xFF6BB5E5) : const Color(0xFFF3F3F3),
+                        color: index <= _currentStep
+                            ? const Color(0xFF6BB5E5)
+                            : const Color(0xFFF3F3F3),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -352,9 +372,12 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               decoration: _inputDecoration('Enter trip name'),
             ),
             const SizedBox(height: 16),
-            
+
             // Destination * — Required
-            _buildRequiredLabel('Destination', icon: Icons.location_on_outlined),
+            _buildRequiredLabel(
+              'Destination',
+              icon: Icons.location_on_outlined,
+            ),
 
             Autocomplete<String>(
               optionsBuilder: (TextEditingValue textEditingValue) async {
@@ -368,7 +391,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                 _debounce = Timer(const Duration(milliseconds: 500), () async {
                   if (mounted) setState(() => _isSearching = true);
                   try {
-                    final results = await DestinationService.searchCities(textEditingValue.text);
+                    final results = await DestinationService.searchCities(
+                      textEditingValue.text,
+                    );
                     completer.complete(results);
                   } finally {
                     if (mounted) setState(() => _isSearching = false);
@@ -380,37 +405,47 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               onSelected: (String selection) {
                 _destinationController.text = selection;
               },
-              fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                // Sync main controller with autocomplete internal controller
-                if (_destinationController.text.isNotEmpty && controller.text.isEmpty) {
-                  controller.text = _destinationController.text;
-                }
-                
-                controller.addListener(() {
-                  _destinationController.text = controller.text;
-                });
+              fieldViewBuilder:
+                  (context, controller, focusNode, onFieldSubmitted) {
+                    // Sync main controller with autocomplete internal controller
+                    if (_destinationController.text.isNotEmpty &&
+                        controller.text.isEmpty) {
+                      controller.text = _destinationController.text;
+                    }
 
-                return TextFormField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  onFieldSubmitted: (value) => onFieldSubmitted(),
-                  validator: Validators.validateDestination,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-                  decoration: _inputDecoration('Enter destination').copyWith(
-                    suffixIcon: _isSearching 
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF6BB5E5)),
+                    controller.addListener(() {
+                      _destinationController.text = controller.text;
+                    });
+
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      onFieldSubmitted: (value) => onFieldSubmitted(),
+                      validator: Validators.validateDestination,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                      decoration: _inputDecoration('Enter destination')
+                          .copyWith(
+                            suffixIcon: _isSearching
+                                ? const Padding(
+                                    padding: EdgeInsets.all(12.0),
+                                    child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFF6BB5E5),
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.search,
+                                    size: 20,
+                                    color: Color(0xFF5A7184),
+                                  ),
                           ),
-                        )
-                      : const Icon(Icons.search, size: 20, color: Color(0xFF5A7184)),
-                  ),
-                );
-              },
+                    );
+                  },
               optionsViewBuilder: (context, onSelected, options) {
                 if (options.isEmpty) {
                   return const SizedBox.shrink();
@@ -423,7 +458,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                     borderRadius: BorderRadius.circular(12),
                     color: Colors.white,
                     child: Container(
-                      width: MediaQuery.of(context).size.width - 64, 
+                      width: MediaQuery.of(context).size.width - 64,
                       constraints: const BoxConstraints(maxHeight: 250),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFF3F3F3)),
@@ -433,16 +468,24 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                         padding: EdgeInsets.zero,
                         shrinkWrap: true,
                         itemCount: options.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF3F3F3)),
+                        separatorBuilder: (context, index) =>
+                            const Divider(height: 1, color: Color(0xFFF3F3F3)),
                         itemBuilder: (BuildContext context, int index) {
                           final String option = options.elementAt(index);
                           return InkWell(
                             onTap: () => onSelected(option),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF5A7184)),
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    size: 16,
+                                    color: Color(0xFF5A7184),
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -474,7 +517,10 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildRequiredLabel('Start Date', icon: Icons.calendar_today_outlined),
+                      _buildRequiredLabel(
+                        'Start Date',
+                        icon: Icons.calendar_today_outlined,
+                      ),
                       _buildDateField(isFrom: true),
                     ],
                   ),
@@ -516,7 +562,11 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               runSpacing: 8,
               children: [
                 _buildTypeChip('Beach', '🏖️', _selectedTripType == 'Beach'),
-                _buildTypeChip('Mountain', '⛰️', _selectedTripType == 'Mountain'),
+                _buildTypeChip(
+                  'Mountain',
+                  '⛰️',
+                  _selectedTripType == 'Mountain',
+                ),
                 _buildTypeChip('City', '🏙️', _selectedTripType == 'City'),
                 _buildTypeChip('Nature', '🌿', _selectedTripType == 'Nature'),
                 _buildTypeChip('Island', '🏝️', _selectedTripType == 'Island'),
@@ -588,7 +638,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
               ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF6BB5E5)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -638,7 +690,11 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                   child: Column(
                     children: [
                       SizedBox(height: 24),
-                      Icon(Icons.people_outline, size: 48, color: Color(0xFFB0B0B0)),
+                      Icon(
+                        Icons.people_outline,
+                        size: 48,
+                        color: Color(0xFFB0B0B0),
+                      ),
                       SizedBox(height: 16),
                       Text(
                         'No members added yet',
@@ -675,50 +731,64 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...tripsProvider.newTripMembers.map((member) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7F7F7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.person_outline, size: 18, color: Color(0xFF6BB5E5)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  member.name,
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                if (member.phone != null)
+                  ...tripsProvider.newTripMembers.map(
+                    (member) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F7F7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline,
+                              size: 18,
+                              color: Color(0xFF6BB5E5),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    member.phone!,
+                                    member.name,
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 11,
-                                      color: Color(0xFF828282),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                              ],
+                                  if (member.phone != null)
+                                    Text(
+                                      member.phone!,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 11,
+                                        color: Color(0xFF828282),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () => tripsProvider.removeMemberFromNewTrip(member.id),
-                            child: const Icon(Icons.close, size: 16, color: Color(0xFF828282)),
-                          ),
-                        ],
+                            GestureDetector(
+                              onTap: () => tripsProvider
+                                  .removeMemberFromNewTrip(member.id),
+                              child: const Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Color(0xFF828282),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  )),
+                  ),
                 ],
               );
             },
@@ -782,10 +852,15 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF828282)),
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 14,
+                                color: Color(0xFF828282),
+                              ),
                               const SizedBox(width: 4),
                               Text(
-                                tripsProvider.newTripDestination ?? 'No destination',
+                                tripsProvider.newTripDestination ??
+                                    'No destination',
                                 style: const TextStyle(
                                   fontFamily: 'Inter',
                                   fontSize: 12,
@@ -799,10 +874,17 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF828282)),
+                                  const Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 14,
+                                    color: Color(0xFF828282),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    _formatDateRange(tripsProvider.newTripStartDate, tripsProvider.newTripEndDate),
+                                    _formatDateRange(
+                                      tripsProvider.newTripStartDate,
+                                      tripsProvider.newTripEndDate,
+                                    ),
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 12,
@@ -814,7 +896,11 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                               const SizedBox(width: 16),
                               Row(
                                 children: [
-                                  const Icon(Icons.people_outline, size: 14, color: Color(0xFF828282)),
+                                  const Icon(
+                                    Icons.people_outline,
+                                    size: 14,
+                                    color: Color(0xFF828282),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '${tripsProvider.newTripMembers.length} members',
@@ -835,22 +921,33 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildChecklistItem('Trip details', tripsProvider.newTripName != null),
+              _buildChecklistItem(
+                'Trip details',
+                tripsProvider.newTripName != null,
+              ),
               const SizedBox(height: 8),
-              _buildChecklistItem('Dates set', tripsProvider.newTripStartDate != null),
+              _buildChecklistItem(
+                'Dates set',
+                tripsProvider.newTripStartDate != null,
+              ),
               const SizedBox(height: 8),
               _buildChecklistItem('Trip type selected', true),
               const SizedBox(height: 8),
-              _buildChecklistItem('Members invited', tripsProvider.newTripMembers.isNotEmpty),
+              _buildChecklistItem(
+                'Members invited',
+                tripsProvider.newTripMembers.isNotEmpty,
+              ),
 
               const SizedBox(height: 32),
 
               // Create Trip button with loading state
-                // BACKEND CALL: Sends POST /groups
+              // BACKEND CALL: Sends POST /groups
               tripsProvider.isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6BB5E5)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF6BB5E5),
+                        ),
                       ),
                     )
                   : _buildPrimaryButton('Create Trip', _nextStep),
@@ -868,7 +965,11 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF828282)),
+      hintStyle: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 14,
+        color: Color(0xFF828282),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -891,12 +992,18 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
 
   String _getEmojiForTripType(String type) {
     switch (type) {
-      case 'Beach': return '🏖️';
-      case 'Mountain': return '⛰️';
-      case 'City': return '🏙️';
-      case 'Nature': return '🌿';
-      case 'Island': return '🏝️';
-      default: return '🌍';
+      case 'Beach':
+        return '🏖️';
+      case 'Mountain':
+        return '⛰️';
+      case 'City':
+        return '🏙️';
+      case 'Nature':
+        return '🌿';
+      case 'Island':
+        return '🏝️';
+      default:
+        return '🌍';
     }
   }
 
@@ -916,7 +1023,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
         children: [
           Icon(
             isComplete ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isComplete ? const Color(0xFF20B95B) : const Color(0xFFB0B0B0),
+            color: isComplete
+                ? const Color(0xFF20B95B)
+                : const Color(0xFFB0B0B0),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -925,7 +1034,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
-              color: isComplete ? const Color(0xFF4A4A4A) : const Color(0xFFB0B0B0),
+              color: isComplete
+                  ? const Color(0xFF4A4A4A)
+                  : const Color(0xFFB0B0B0),
             ),
           ),
         ],
@@ -1010,7 +1121,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: hasError ? Colors.red : const Color(0xFFF3F3F3)),
+          border: Border.all(
+            color: hasError ? Colors.red : const Color(0xFFF3F3F3),
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Align(
@@ -1018,7 +1131,9 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
           child: Text(
             date != null
                 ? Helpers.formatDisplayDate(date)
-                : isFrom ? 'Start date' : 'End date',
+                : isFrom
+                ? 'Start date'
+                : 'End date',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
@@ -1039,9 +1154,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6BB5E5),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: Text(
           text,

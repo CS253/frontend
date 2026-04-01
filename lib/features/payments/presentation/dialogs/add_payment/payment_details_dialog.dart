@@ -50,14 +50,18 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     dateController = TextEditingController(
       text: widget.initialDetails?['date'] ?? '',
     );
-    
+
     final participants = context.read<DashboardProvider>().participants;
-    _members = participants.map((p) => MemberModel(
-      id: p.id,
-      userId: p.id,
-      name: p.name,
-      avatarColor: const Color(0xFFD9F0FC)
-    )).toList();
+    _members = participants
+        .map(
+          (p) => MemberModel(
+            id: p.id,
+            userId: p.id,
+            name: p.name,
+            avatarColor: const Color(0xFFD9F0FC),
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -333,7 +337,10 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
             ),
             onChanged: onChanged,
             items: items.map<DropdownMenuItem<String>>((MemberModel member) {
-              return DropdownMenuItem<String>(value: member.userId, child: Text(member.name));
+              return DropdownMenuItem<String>(
+                value: member.userId,
+                child: Text(member.name),
+              );
             }).toList(),
           ),
         ),
