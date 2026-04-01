@@ -32,8 +32,9 @@ class SettleBalanceFlow {
     String? currentUserId,
     VoidCallback? onComplete,
   ) {
-    // Current user can only pay with UPI if they are the one who owes (fromUserId)
-    final bool showPayWithUpi = currentUserId == null || currentUserId == fromUserId;
+    // Current user can only pay with UPI if they are the one who owes (fromUserId) and currency is INR
+    final bool showPayWithUpi = (currency.toUpperCase() == 'INR') &&
+        (currentUserId == null || currentUserId == fromUserId);
 
     showDialog(
       context: context,
@@ -117,6 +118,7 @@ class SettleBalanceFlow {
             Navigator.pop(ctx);
             _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
           },
+          onComplete: onComplete,
         ),
       ),
     );
