@@ -83,5 +83,13 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>LSSupportsOpeningDocumentsInPlace</key>
+		<true/>
+		<key>UIFileSharingEnabled</key>
+		<true/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Travelly needs access to your gallery to upload trip photos.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>Travelly needs permission to save trip photos to your gallery.</string>
 	</dict>
 </plist>

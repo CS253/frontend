@@ -215,12 +215,22 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       onView: url == null ? null : () => _openDocument(doc),
                       onDownload: url == null
                           ? null
-                          : () => _downloadDocument(
-                              doc['id'] as String,
-                              url,
-                              (doc['title'] as String?) ??
-                                  (doc['fileName'] as String? ?? 'document'),
-                            ),
+                          : () {
+                              String title = (doc['title'] as String?) ?? (doc['fileName'] as String? ?? 'document');
+                              // If title doesn't have an extension, try to pull it from the URL
+                              if (!title.contains('.')) {
+                                final uri = Uri.parse(url);
+                                final lastSegment = uri.pathSegments.last;
+                                if (lastSegment.contains('.')) {
+                                  final ext = lastSegment.split('.').last;
+                                  title = '$title.$ext';
+                                } else {
+                                  // Fallback to .pdf if we can't find one
+                                  title = '$title.pdf';
+                                }
+                              }
+                              _downloadDocument(doc['id'] as String, url, title);
+                            },
                       onDelete: () => _deleteDocument(doc['id'] as String),
                     ),
                   );

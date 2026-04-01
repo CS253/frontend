@@ -90,14 +90,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                       BalanceCard(
                         groupId: widget.groupId,
                         summary: provider.summary,
-                        isLoading: provider.isLoading,
+                        isLoading: provider.isSummaryLoading,
                       ),
                       const SizedBox(height: 12),
                       Center(
                         child: SummaryCards(
                           groupId: widget.groupId,
                           summary: provider.summary,
-                          isLoading: provider.isLoading,
+                          isLoading: provider.isSummaryLoading,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -108,7 +108,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         settlements: provider.settlements,
                         currentUserId: provider.currentUserId,
                         members: provider.members,
-                        isLoading: provider.isLoading,
+                        isLoading: provider.isSettlementsLoading,
                         onSettle:
                             (
                               name,
@@ -146,7 +146,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         groupId: widget.groupId,
                         expenses: provider.expenses,
                         currentUserId: provider.currentUserId,
-                        isLoading: provider.isLoading,
+                        isLoading: provider.isExpensesLoading,
                         onDelete: (expenseId) async {
                           try {
                             final dashProvider = context

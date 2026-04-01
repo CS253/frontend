@@ -9,8 +9,9 @@ import 'package:travelly/core/services/user_identity_service.dart';
 
 /// Centralized provider for the Payments screen.
 ///
-/// Fetches all required data (summary, settlements, expenses) in parallel
-/// and distributes it to child widgets, eliminating duplicate API calls.
+/// Uses **progressive loading**: each section (summary, settlements, expenses)
+/// loads independently and notifies the UI as soon as its data arrives.
+/// This eliminates the "blank screen until everything loads" problem.
 class PaymentsProvider extends ChangeNotifier {
   final PaymentRepository _repository;
 
@@ -18,11 +19,24 @@ class PaymentsProvider extends ChangeNotifier {
     : _repository = repository;
 
   // ---------------------------------------------------------------------------
-  // State
+  // State — granular loading flags per section
   // ---------------------------------------------------------------------------
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  /// True only during the initial bootstrap (userId + simplifyDebts resolution).
+  bool _isInitializing = true;
+  bool get isInitializing => _isInitializing;
+
+  /// Legacy getter — true if ANY section is still loading.
+  bool get isLoading => _isSummaryLoading || _isSettlementsLoading || _isExpensesLoading;
+
+  bool _isSummaryLoading = true;
+  bool get isSummaryLoading => _isSummaryLoading;
+
+  bool _isSettlementsLoading = true;
+  bool get isSettlementsLoading => _isSettlementsLoading;
+
+  bool _isExpensesLoading = true;
+  bool get isExpensesLoading => _isExpensesLoading;
 
   String? _error;
   String? get error => _error;
@@ -49,64 +63,102 @@ class PaymentsProvider extends ChangeNotifier {
   List<UserBalance> get balances => _balances;
 
   // ---------------------------------------------------------------------------
-  // Load All Data
+  // Load All Data — Progressive
   // ---------------------------------------------------------------------------
 
-  /// Loads all payments page data in parallel.
+  /// Loads all payments page data with progressive rendering.
   ///
-  /// [groupId] — the current group/trip ID.
-  /// [simplifyDebts] — from DashboardProvider.currentTrip.simplifyDebts.
-  /// [participants] — from DashboardProvider.participants (for member list).
+  /// Phase 1: Resolve userId + simplifyDebts (needed as inputs for later calls).
+  /// Phase 2: Fire expenses, balances, settlements, summary **in parallel**.
+  ///          Each one updates the UI independently as it completes.
   Future<void> loadAll({
     required String groupId,
     bool? simplifyDebts,
     List<MemberModel>? participants,
   }) async {
-    _isLoading = true;
+    _isInitializing = true;
+    _isSummaryLoading = true;
+    _isSettlementsLoading = true;
+    _isExpensesLoading = true;
     _error = null;
-    notifyListeners();
+
+    // Store participants immediately so the UI can render member avatars
+    if (participants != null) {
+      _members = participants;
+    }
+    notifyListeners(); // Show the screen skeleton right away
 
     try {
-      // 1. Resolve userId (cached after first call — no API hit on subsequent loads)
-      _currentUserId = await UserIdentityService.instance.getBackendUserId(
-        groupId,
-        _repository,
-      );
-
-      // 2. Store participants as members
-      if (participants != null) {
-        _members = participants;
-      }
-
-      // If simplifyDebts not provided, fetch it from settings endpoint
-      bool finalSimplify;
-      if (simplifyDebts == null) {
-        finalSimplify = await _repository.getSimplifyDebtsSetting(groupId);
-      } else {
-        finalSimplify = simplifyDebts;
-      }
-      _simplifyDebts = finalSimplify;
-
-      // 3. Fire all data requests in parallel
-      final results = await Future.wait([
-        _repository.getExpenses(groupId),
-        _repository.getBalances(groupId), // Added getBalances
-        _repository.getSettlements(groupId, simplifyDebts: finalSimplify),
-        _repository.getGroupSummary(
-          groupId,
-          userId: _currentUserId.isNotEmpty ? _currentUserId : null,
-        ),
+      // Phase 1: Resolve prerequisites in parallel
+      final prereqResults = await Future.wait([
+        UserIdentityService.instance.getBackendUserId(groupId, _repository),
+        if (simplifyDebts == null)
+          _repository.getSimplifyDebtsSetting(groupId),
       ]);
 
-      _expenses = results[0] as List<ExpenseModel>;
-      _balances = results[1] as List<UserBalance>;
-      _settlements = results[2] as List<SettlementModel>;
-      _summary = results[3] as GroupSummaryModel?;
+      _currentUserId = prereqResults[0] as String;
+      final bool finalSimplify = simplifyDebts ??
+          (prereqResults.length > 1 ? prereqResults[1] as bool : false);
+      _simplifyDebts = finalSimplify;
+
+      _isInitializing = false;
+      notifyListeners(); // UI can now show userId-dependent elements
+
+      // Phase 2: Fire all data requests in parallel — each updates UI on arrival
+      Future<void> loadExpenses() async {
+        try {
+          _expenses = await _repository.getExpenses(groupId);
+        } catch (e) {
+          debugPrint('PaymentsProvider: expenses error: $e');
+        } finally {
+          _isExpensesLoading = false;
+          notifyListeners();
+        }
+      }
+
+      Future<void> loadSettlements() async {
+        try {
+          final results = await Future.wait([
+            _repository.getBalances(groupId),
+            _repository.getSettlements(groupId, simplifyDebts: finalSimplify),
+          ]);
+          _balances = results[0] as List<UserBalance>;
+          _settlements = results[1] as List<SettlementModel>;
+        } catch (e) {
+          debugPrint('PaymentsProvider: settlements error: $e');
+        } finally {
+          _isSettlementsLoading = false;
+          notifyListeners();
+        }
+      }
+
+      Future<void> loadSummary() async {
+        try {
+          _summary = await _repository.getGroupSummary(
+            groupId,
+            userId: _currentUserId.isNotEmpty ? _currentUserId : null,
+          );
+        } catch (e) {
+          debugPrint('PaymentsProvider: summary error: $e');
+        } finally {
+          _isSummaryLoading = false;
+          notifyListeners();
+        }
+      }
+
+      // All three fire simultaneously — whichever finishes first renders first
+      await Future.wait([
+        loadExpenses(),
+        loadSettlements(),
+        loadSummary(),
+      ]);
     } catch (e) {
       _error = e.toString();
       debugPrint('PaymentsProvider.loadAll error: $e');
-    } finally {
-      _isLoading = false;
+      _isInitializing = false;
+      _isSummaryLoading = false;
+      _isSettlementsLoading = false;
+      _isExpensesLoading = false;
       notifyListeners();
     }
   }
@@ -114,7 +166,7 @@ class PaymentsProvider extends ChangeNotifier {
   /// Refresh all data (e.g. after adding/deleting an expense).
   Future<void> refresh({
     required String groupId,
-    bool? simplifyDebts, // Changed to nullable
+    bool? simplifyDebts,
     List<MemberModel>? participants,
   }) async {
     await loadAll(
@@ -131,7 +183,7 @@ class PaymentsProvider extends ChangeNotifier {
     bool? simplifyDebts,
     List<MemberModel>? participants,
   }) async {
-    _isLoading = true;
+    _isExpensesLoading = true;
     _error = null;
     notifyListeners();
 
@@ -144,7 +196,7 @@ class PaymentsProvider extends ChangeNotifier {
       );
     } catch (e) {
       _error = e.toString();
-      _isLoading = false;
+      _isExpensesLoading = false;
       notifyListeners();
       rethrow;
     }
