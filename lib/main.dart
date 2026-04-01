@@ -24,7 +24,20 @@ void main() async {
   await dotenv.load(fileName: ".env");
 
   // Initialize Firebase for all platforms
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    if (e is FirebaseException && e.code == 'duplicate-app') {
+      // Firebase is already initialized on the native side
+    } else {
+      // Safe fallback if e is not FirebaseException or another error occurred
+      if (e.toString().contains('duplicate-app')) {
+        // Ignore duplicate app error
+      } else {
+        rethrow;
+      }
+    }
+  }
 
   runApp(const App(startFromTrips: kStartFromTrips));
 }

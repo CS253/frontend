@@ -90,12 +90,14 @@ class AuthService {
       // Update display name if provided
       if (name != null && user != null) {
         await user.updateDisplayName(name);
+        await user.reload();
       }
 
       // Send verification email
       await user?.sendEmailVerification();
 
-      final token = await user?.getIdToken();
+      // Force a fresh token so the backend gets the updated display name
+      final token = await user?.getIdToken(true);
 
       if (token != null) {
         await syncWithBackend(
