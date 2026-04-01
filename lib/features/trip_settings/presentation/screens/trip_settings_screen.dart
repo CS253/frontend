@@ -349,31 +349,30 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
   }
 
   Widget _buildStockFallback(String tripType) {
-    String stockUrl;
+    String stockAsset;
     switch (tripType) {
       case 'Beach':
-        stockUrl = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80';
+        stockAsset = 'assets/images/Beach.png';
         break;
       case 'Mountain':
-        stockUrl = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+        stockAsset = 'assets/images/Mountain.png';
         break;
       case 'City':
-        stockUrl = 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80';
+        stockAsset = 'assets/images/City.png';
         break;
       case 'Nature':
-        stockUrl = 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
+        stockAsset = 'assets/images/Nature.png';
         break;
       case 'Island':
-        stockUrl = 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=60';
+        stockAsset = 'assets/images/Island.png';
         break;
       default:
-        stockUrl = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+        stockAsset = 'assets/images/Other.png';
     }
-    return CachedNetworkImage(
-      imageUrl: stockUrl,
+    return Image.asset(
+      stockAsset,
       fit: BoxFit.cover,
-      placeholder: (context, url) => Container(color: const Color(0xFF90CAF9)),
-      errorWidget: (context, url, error) => Container(color: const Color(0xFF90CAF9)),
+      errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF90CAF9)),
     );
   }
 

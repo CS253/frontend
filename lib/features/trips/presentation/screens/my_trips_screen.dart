@@ -407,6 +407,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                                     location: trip.destination,
                                     date: trip.formattedDateRange,
                                     imageUrl: trip.coverImage ?? '',
+                                    tripType: trip.tripType,
                                     top: position,
                                     left: isRight ? null : 20,
                                     right: isRight ? 20 : null,
