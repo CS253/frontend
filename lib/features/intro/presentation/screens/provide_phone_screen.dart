@@ -31,7 +31,7 @@ class _ProvidePhoneScreenState extends State<ProvidePhoneScreen> {
     try {
       await authProvider.updatePhone(phone);
       if (!mounted) return;
-      
+
       Navigator.pushNamedAndRemoveUntil(
         context,
         RouteConstants.trips,
@@ -58,7 +58,7 @@ class _ProvidePhoneScreenState extends State<ProvidePhoneScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-             padding: const EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: 24.0,
               vertical: 32.0,
             ),
@@ -142,45 +142,78 @@ class _ProvidePhoneScreenState extends State<ProvidePhoneScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'This phone number must be unique and cannot already belong to another account.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: Color(0xFF6A6A6A),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   Consumer<AuthProvider>(
                     builder: (context, authProvider, _) {
-                      return SizedBox(
-                        width: double.infinity,
-                        height: 40,
-                        child: ElevatedButton(
-                          onPressed: authProvider.isLoading
-                              ? null
-                              : _handleSubmit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6BB5E5),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (authProvider.errorMessage != null &&
+                              authProvider.errorMessage!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                authProvider.errorMessage!,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 40,
+                            child: ElevatedButton(
+                              onPressed: authProvider.isLoading
+                                  ? null
+                                  : _handleSubmit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6BB5E5),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: authProvider.isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                           ),
-                          child: authProvider.isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Text(
-                                  'Continue',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
+                        ],
                       );
                     },
                   ),

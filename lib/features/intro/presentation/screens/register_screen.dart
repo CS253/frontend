@@ -196,6 +196,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     keyboardType: TextInputType.phone,
                     validator: Validators.validatePhone,
                   ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'This phone number must be unique and cannot already belong to another account.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: Color(0xFF6A6A6A),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   // Register Button
