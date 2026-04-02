@@ -27,6 +27,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   late final DocumentService _documentService;
   final DocumentDownloadService _downloadService = DocumentDownloadService();
   final Map<String, bool> _downloadingIds = {};
+  final Map<String, bool> _deletingIds = {};
   bool _isUploading = false;
 
   @override
@@ -41,6 +42,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Future<void> _deleteDocument(String id) async {
+    setState(() {
+      _deletingIds[id] = true;
+    });
+
     try {
       await _documentService.deleteDocument(id);
       if (!mounted) {
@@ -57,6 +62,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error deleting document: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingIds[id] = false;
+        });
+      }
     }
   }
 
@@ -232,6 +243,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                               _downloadDocument(doc['id'] as String, url, title);
                             },
                       onDelete: () => _deleteDocument(doc['id'] as String),
+                      isLoading: _deletingIds[doc['id'] as String] ?? false,
                     ),
                   );
                 },

@@ -147,6 +147,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         expenses: provider.expenses,
                         currentUserId: provider.currentUserId,
                         isLoading: provider.isExpensesLoading,
+                        onUpdated: _reload,
                         onDelete: (expenseId) async {
                           try {
                             final dashProvider = context

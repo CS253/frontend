@@ -96,26 +96,34 @@ class GalleryProvider with ChangeNotifier {
   }
 
   Future<void> deletePhoto(String id) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
     try {
       await _photoRepository.deletePhoto(id);
       _photos.removeWhere((photo) => photo.id == id);
       _selectedPhotoIds.remove(id);
-      notifyListeners();
     } catch (e) {
       _error = 'Failed to delete photo: $e';
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> deleteSelected() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
     try {
       final idsToDelete = _selectedPhotoIds.toList();
       await _photoRepository.deletePhotos(idsToDelete);
       _photos.removeWhere((photo) => idsToDelete.contains(photo.id));
       _selectedPhotoIds.clear();
-      notifyListeners();
     } catch (e) {
       _error = 'Failed to delete photos: $e';
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
@@ -11,6 +12,7 @@ class AllExpensesList extends StatelessWidget {
   final String currentUserId;
   final bool isLoading;
   final void Function(String expenseId)? onDelete;
+  final VoidCallback? onUpdated;
 
   const AllExpensesList({
     super.key,
@@ -19,6 +21,7 @@ class AllExpensesList extends StatelessWidget {
     required this.currentUserId,
     this.isLoading = false,
     this.onDelete,
+    this.onUpdated,
   });
 
   @override
@@ -48,6 +51,7 @@ class AllExpensesList extends StatelessWidget {
               currency: expense.currency,
               groupId: groupId,
               onDelete: onDelete != null ? () => onDelete!(expense.id) : null,
+              onUpdated: onUpdated,
             ),
             const SizedBox(height: 10),
           ],
@@ -84,6 +88,7 @@ class ExpenseCard extends StatelessWidget {
   final String shareTextPrefix;
   final Color payerColor;
   final VoidCallback? onDelete;
+  final VoidCallback? onUpdated;
 
   const ExpenseCard({
     super.key,
@@ -100,6 +105,7 @@ class ExpenseCard extends StatelessWidget {
     required this.currency,
     required this.groupId,
     this.onDelete,
+    this.onUpdated,
   });
 
   @override
@@ -118,9 +124,12 @@ class ExpenseCard extends StatelessWidget {
       onTap: () {
         showDialog(
           context: context,
-          builder: (context) => PaymentDetailsDialog(
-            expenseId: id,
-            groupId: groupId,
+          builder: (context) => KeyboardSafeDialog(
+            child: PaymentDetailsDialog(
+              expenseId: id,
+              groupId: groupId,
+              onUpdated: onUpdated,
+            ),
           ),
         );
       },

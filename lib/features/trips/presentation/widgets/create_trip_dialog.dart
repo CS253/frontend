@@ -1083,7 +1083,7 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
 
     // Date constraints
     final now = DateTime.now();
-    final firstDate = isFrom ? now : (_fromDate ?? now);
+    final firstDate = isFrom ? DateTime(2000) : (_fromDate ?? DateTime(2000));
     final initialDate = date ?? (isFrom ? now : (_fromDate ?? now));
 
     return GestureDetector(
