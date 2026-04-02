@@ -33,6 +33,14 @@ jobs:
           echo $GOOGLE_SERVICES_BASE64 | base64 --decode > android/app/google-services.json
       # ------------------------------
 
+      # --- INJECTED ENV STEP ---
+      - name: Create .env file
+        env:
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE }}
+        run: |
+          echo "$ENV_FILE_CONTENT" > .env
+      # --------------------------
+
       - name: Build APK
         run: flutter build apk --release
 

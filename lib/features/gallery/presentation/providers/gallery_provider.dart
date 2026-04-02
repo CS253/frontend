@@ -22,16 +22,43 @@ class GalleryProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Allowed image extensions for gallery uploads.
+  /// Videos are explicitly blocked.
+  static const _allowedImageExtensions = {
+    'jpg', 'jpeg', 'png', 'gif', 'heic', 'heif', 'webp', 'bmp',
+  };
+
+  /// Returns true if the file extension indicates an image (not a video).
+  bool _isImageFile(String path) {
+    final ext = path.split('.').last.toLowerCase();
+    return _allowedImageExtensions.contains(ext);
+  }
+
   Future<void> pickAndUploadMedia(String groupId) async {
     try {
       final ImagePicker picker = ImagePicker();
-      final List<XFile> pickedFiles = await picker.pickMultipleMedia();
+      // Use pickMultiImage instead of pickMultipleMedia to restrict to images only
+      final List<XFile> pickedFiles = await picker.pickMultiImage();
 
       if (pickedFiles.isNotEmpty) {
+        // Filter out any non-image files (safety net)
+        final imageFiles = pickedFiles.where((f) => _isImageFile(f.path)).toList();
+        final skippedCount = pickedFiles.length - imageFiles.length;
+
+        if (skippedCount > 0) {
+          debugPrint('GalleryProvider: Skipped $skippedCount non-image file(s). Only photos are allowed.');
+        }
+
+        if (imageFiles.isEmpty) {
+          _error = 'Only photos are allowed. Videos cannot be uploaded.';
+          notifyListeners();
+          return;
+        }
+
         _isLoading = true;
         notifyListeners();
 
-        for (var file in pickedFiles) {
+        for (var file in imageFiles) {
           try {
             await _photoRepository.uploadPhoto(
               groupId: groupId,

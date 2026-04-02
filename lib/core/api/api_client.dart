@@ -101,7 +101,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -128,7 +133,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -155,7 +165,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -180,7 +195,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -206,7 +226,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -242,7 +267,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
