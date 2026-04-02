@@ -214,7 +214,8 @@ class ApiClient {
     }
   }
 
-  Future<dynamic> uploadMultipart(
+  Future<dynamic> _sendMultipart(
+    String method,
     String endpoint, {
     required Map<String, String> fields,
     required String fileFieldName,
@@ -222,10 +223,10 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final url = '$baseUrl$endpoint';
-    _logRequest('MULTIPART POST', url, body: fields);
+    _logRequest('MULTIPART $method', url, body: fields);
 
     try {
-      final request = http.MultipartRequest('POST', Uri.parse(url));
+      final request = http.MultipartRequest(method, Uri.parse(url));
       final authHeaders = _buildHeaders(customHeaders: headers);
       authHeaders.remove('Content-Type');
       request.headers.addAll(authHeaders);
@@ -247,6 +248,40 @@ class ApiClient {
       if (e is ApiException) rethrow;
       throw ApiException(statusCode: 0, message: 'Upload failed: $e');
     }
+  }
+
+  Future<dynamic> uploadMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileFieldName,
+    required String filePath,
+    Map<String, String>? headers,
+  }) async {
+    return _sendMultipart(
+      'POST',
+      endpoint,
+      fields: fields,
+      fileFieldName: fileFieldName,
+      filePath: filePath,
+      headers: headers,
+    );
+  }
+
+  Future<dynamic> putMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileFieldName,
+    required String filePath,
+    Map<String, String>? headers,
+  }) async {
+    return _sendMultipart(
+      'PUT',
+      endpoint,
+      fields: fields,
+      fileFieldName: fileFieldName,
+      filePath: filePath,
+      headers: headers,
+    );
   }
 
   dynamic _handleResponse(http.Response response) {

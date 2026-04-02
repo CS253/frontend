@@ -16,6 +16,9 @@ class TripsService {
   Map<String, dynamic> _normalizeTrip(Map<String, dynamic> rawTrip) {
     final members = rawTrip['members'];
     final preAddedParticipants = rawTrip['preAddedParticipants'];
+    final coverImage =
+        (rawTrip['coverImage'] as String? ?? rawTrip['photoUrl'] as String?)
+            ?.trim();
 
     final membersCount =
         rawTrip['membersCount'] as int? ??
@@ -26,7 +29,7 @@ class TripsService {
       'id': (rawTrip['id'] ?? rawTrip['groupId']) as String,
       'name': (rawTrip['name'] ?? rawTrip['title'] ?? '') as String,
       'destination': (rawTrip['destination'] ?? '') as String,
-      'coverImage': rawTrip['coverImage'] as String?,
+      'coverImage': coverImage != null && coverImage.isNotEmpty ? coverImage : null,
       'startDate':
           (rawTrip['startDate'] is String)
               ? rawTrip['startDate'] as String

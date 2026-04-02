@@ -61,6 +61,11 @@ class DashboardService {
     required String emoji,
     String? coverImagePath,
   }) async {
+    final hasNewCoverUpload =
+        coverImagePath != null &&
+        coverImagePath.isNotEmpty &&
+        !coverImagePath.startsWith('http');
+
     final response = await _apiClient.put(
       ApiEndpoints.tripById(tripId),
       body: {
@@ -72,6 +77,16 @@ class DashboardService {
         'emoji': emoji,
       },
     );
+
+    if (hasNewCoverUpload) {
+      await _apiClient.putMultipart(
+        ApiEndpoints.groupPhoto(tripId),
+        fields: const {},
+        fileFieldName: 'photo',
+        filePath: coverImagePath,
+      );
+    }
+
     return response;
   }
 
@@ -81,6 +96,7 @@ class DashboardService {
   ) {
     final destination = (group['destination'] as String? ?? '').trim();
     final tripType = (group['tripType'] as String? ?? 'Other').trim();
+    final coverImage = (group['coverImage'] as String? ?? group['photoUrl'] as String?)?.trim();
 
     return {
       'id': group['id'] as String? ?? '',
@@ -92,7 +108,7 @@ class DashboardService {
       'daysRemaining': _calculateDaysRemaining(group['startDate'] as String?),
       'emoji': _tripEmojiForType(tripType),
       'tripType': tripType.isEmpty ? 'Other' : tripType,
-      'coverImage': group['coverImage'] as String?,
+      'coverImage': coverImage != null && coverImage.isNotEmpty ? coverImage : null,
       'membersCount': memberCount,
       'simplifyDebts': group['simplifyDebts'] as bool? ?? false,
     };

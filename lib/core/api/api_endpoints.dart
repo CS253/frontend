@@ -118,6 +118,7 @@ class ApiEndpoints {
 
   /// PUT — Update a specific trip.
   static String updateTrip(String tripId) => '/groups/$tripId';
+  static String groupPhoto(String tripId) => '/groups/$tripId/photo';
 
   /// DELETE — Delete a specific trip.
   static String deleteTrip(String tripId) => '/groups/$tripId';
