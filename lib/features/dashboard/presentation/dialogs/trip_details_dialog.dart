@@ -210,12 +210,12 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         final sizeInBytes = platformFile.size;
 
         // 1. Validate file type
-        final allowedExtensions = ['jpg', 'jpeg', 'png'];
+        final allowedExtensions = ['jpg', 'jpeg', 'png', 'heic'];
         if (extension == null || !allowedExtensions.contains(extension)) {
           if (!mounted) return;
           Helpers.showErrorSnackbar(
             context,
-            'Invalid file type. Allowed: jpg, jpeg, png',
+            'Invalid file type. Allowed: jpg, jpeg, png, heic',
           );
           return;
         }

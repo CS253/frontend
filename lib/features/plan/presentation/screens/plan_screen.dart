@@ -157,7 +157,8 @@ class _PlanScreenState extends State<PlanScreen> {
 
     final bool canPlan =
         _startLocation.name.isNotEmpty &&
-        _destinations.any((d) => d.name.isNotEmpty);
+        _destinations.isNotEmpty &&
+        _destinations.every((d) => d.name.trim().isNotEmpty);
     final String subtitle = _destinations.isEmpty
         ? 'Add destinations to start'
         : '${_destinations.length} Stops Added';
@@ -423,7 +424,18 @@ class _PlanScreenState extends State<PlanScreen> {
                       foregroundColor: canPlan
                           ? Colors.white
                           : const Color(0xFF9E9E9E),
-                      onPressed: canPlan ? _planRoute : () {},
+                      onPressed: canPlan
+                          ? _planRoute
+                          : () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please enter all stop names before planning.',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
                     ),
             ),
           ),

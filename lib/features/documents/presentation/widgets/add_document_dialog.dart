@@ -27,6 +27,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
   }
 
   Future<void> _pickFile() async {
+    FocusScope.of(context).unfocus();
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
