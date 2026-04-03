@@ -23,9 +23,9 @@ class AuthService {
 
     await _googleSignIn.initialize(
       clientId: kIsWeb
-          ? "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com"
+          ? "545892068210-b90rpi6cl42g7gip8r53if0svcflajo9.apps.googleusercontent.com"
           : null,
-      serverClientId: "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com",
+      serverClientId: "545892068210-b90rpi6cl42g7gip8r53if0svcflajo9.apps.googleusercontent.com",
     );
     _isGoogleSignInInitialized = true;
   }

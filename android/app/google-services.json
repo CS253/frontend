@@ -7,12 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:545892068210:android:4a897759e8699698ac8beb",
+        "mobilesdk_app_id": "1:545892068210:android:21604a8ecb48c0b2ac8beb",
         "android_client_info": {
           "package_name": "com.example.travelly"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "545892068210-b90rpi6cl42g7gip8r53if0svcflajo9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.travelly",
+            "certificate_hash": "4303018331dffd72c8fae5d3e69cd3394c659784"
+          }
+        },
+        {
+          "client_id": "545892068210-o9kmituf82r5s0oc3opu7dqr4k90ukv9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.travelly",
+            "certificate_hash": "dbbd3e00a335baf82d665d40257d0804d133c864"
+          }
+        },
         {
           "client_id": "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com",
           "client_type": 3
@@ -20,7 +36,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBb5o8xaPQUrWL9QKyDE1O7Zf9yGyXvzTk"
+          "current_key": "AIzaSyA7Uklt9CViVv-rp09TGWBOK2g-Q3vFxSA"
         }
       ],
       "services": {
