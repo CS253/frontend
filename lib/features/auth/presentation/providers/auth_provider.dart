@@ -15,6 +15,7 @@ import '../../../../core/services/user_identity_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/auth_response.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../../../core/services/notification_service.dart';
 
 /// Enum representing the current authentication status.
 enum AuthStatus {
@@ -30,8 +31,9 @@ enum AuthStatus {
 
 class AuthProvider with ChangeNotifier {
   final AuthRepository repository;
+  final NotificationService? notificationService;
 
-  AuthProvider({required this.repository});
+  AuthProvider({required this.repository, this.notificationService});
 
   // ---------------------------------------------------------------------------
   // State
@@ -88,6 +90,9 @@ class AuthProvider with ChangeNotifier {
           phone: currentUser.phoneNumber,
         );
       }
+      
+      // Initialize notifications
+      notificationService?.initialize();
     } else {
       _status = AuthStatus.unauthenticated;
     }
@@ -123,6 +128,7 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+      notificationService?.initialize();
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
@@ -152,6 +158,7 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+      notificationService?.initialize();
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
@@ -215,6 +222,7 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+      notificationService?.initialize();
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
@@ -228,6 +236,8 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
 
     try {
+      // Unregister FCM token before logging out from backend
+      await notificationService?.unregisterToken();
       await repository.logout();
     } catch (_) {
       // Proceed with local logout even if API fails
