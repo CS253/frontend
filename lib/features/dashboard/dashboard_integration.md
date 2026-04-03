@@ -313,21 +313,21 @@ User taps "Cover Photo" → file_picker opens
 ```
 1. Custom Cover Photo: User-uploaded (network or local file)
 2. Stock Photo Fallback: If no coverImage, system loads a high-quality 
-   stock photo based on tripType from Unsplash.
+   local asset based on tripType.
 3. Gradient Fallback: If network images fail to load, a themed gradient
    is shown as a last resort.
 ```
 
 ### Stock Photo Fallback URLs
 
-| Trip Type | Unsplash URL (Stock Fallback) |
+| Trip Type | Local Asset Fallback |
 |-----------|-------------------------------|
-| Beach     | `https://images.unsplash.com/photo-1507525428034-b723cf961d3e` |
-| Mountain  | `https://images.unsplash.com/photo-1464822759023-fed622ff2c3b` |
-| City      | `https://images.unsplash.com/photo-1449824913935-59a10b8d2000` |
-| Nature    | `https://images.unsplash.com/photo-1441974231531-c6227db76b6e` |
-| Island    | `https://images.unsplash.com/photo-1559128192-d7379f65c711` |
-| Other     | `https://images.unsplash.com/photo-1488646953014-85cb44e25828` |
+| Beach     | `assets/images/Beach.png` |
+| Mountain  | `assets/images/Mountain.png` |
+| City      | `assets/images/City.png` |
+| Nature    | `assets/images/Nature.png` |
+| Island    | `assets/images/Island.png` |
+| Other     | `assets/images/Other.png` |
 
 ### Dash of Premium UI (Glassmorphic Bar & Overlay)
 

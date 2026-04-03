@@ -55,7 +55,6 @@ class AccountSettingsProvider extends ChangeNotifier {
 
   Future<bool> updateProfile({
     required String name,
-    required String email,
     required String phone,
     required String upiId,
   }) async {
@@ -68,14 +67,12 @@ class AccountSettingsProvider extends ChangeNotifier {
     try {
       await _repository.updateProfile({
         'name': name,
-        'email': email,
         'phone': phone,
         'upi_id': upiId,
       });
       // Optimistic update locally
       _userProfile = _userProfile!.copyWith(
         name: name,
-        email: email,
         phone: phone,
         upiId: upiId,
       );
@@ -116,5 +113,13 @@ class AccountSettingsProvider extends ChangeNotifier {
       debugPrint('Error changing password: $e');
       return false;
     }
+  }
+
+  /// Clears all profile data (e.g., on logout).
+  void clear() {
+    _userProfile = null;
+    _isLoading = false;
+    _errorMessage = null;
+    notifyListeners();
   }
 }

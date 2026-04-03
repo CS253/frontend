@@ -17,6 +17,7 @@ class PrimaryFabButton extends StatelessWidget {
   final VoidCallback onPressed;
   final Color backgroundColor;
   final Color foregroundColor;
+  final bool isLoading;
 
   const PrimaryFabButton({
     super.key,
@@ -25,12 +26,13 @@ class PrimaryFabButton extends StatelessWidget {
     required this.onPressed,
     this.backgroundColor = const Color(0xFFF8DA78),
     this.foregroundColor = const Color(0xFF1A1A1A),
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: isLoading ? null : onPressed,
       child: Container(
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -48,7 +50,17 @@ class PrimaryFabButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: foregroundColor),
+            if (isLoading)
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: foregroundColor,
+                ),
+              )
+            else
+              Icon(icon, size: 20, color: foregroundColor),
             const SizedBox(width: 8),
             Text(
               label,

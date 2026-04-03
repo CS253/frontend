@@ -1,96 +1,181 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/features/payments/data/models/balance_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:travelly/features/payments/data/models/settlement_model.dart';
+import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/core/constants/currency.dart';
 
 /// Horizontal scrollable friend balance cards with dynamic data.
-class FriendBalances extends StatefulWidget {
-  final Function(String name, String initials, String amount)? onSettle;
+class FriendBalances extends StatelessWidget {
+  final String groupId;
+  final List<SettlementModel> settlements;
+  final String currentUserId;
+  final List<MemberModel> members;
+  final bool isLoading;
+  final Function(String name, String initials, String amount, {String? fromUserId, String? toUserId, String? currency})? onSettle;
 
-  const FriendBalances({super.key, this.onSettle});
+  const FriendBalances({
+    super.key,
+    required this.groupId,
+    required this.settlements,
+    required this.currentUserId,
+    required this.members,
+    this.isLoading = false,
+    this.onSettle,
+  });
 
-  @override
-  State<FriendBalances> createState() => _FriendBalancesState();
-}
-
-class _FriendBalancesState extends State<FriendBalances> {
-  late Future<List<BalanceModel>> _balancesFuture;
-  final PaymentRepository _repository = PaymentRepository();
-
-  @override
-  void initState() {
-    super.initState();
-    _balancesFuture = _repository.getBalances();
+  /// Resolve a user's display name: use settlement name if available,
+  /// otherwise look up from group members by userId.
+  String _resolveName(String nameFromApi, String userId) {
+    if (nameFromApi.isNotEmpty) return nameFromApi;
+    for (final m in members) {
+      if (m.userId == userId) return m.name;
+    }
+    return 'Unknown';
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<BalanceModel>>(
-      future: _balancesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 120,
-            child: Center(child: CircularProgressIndicator()),
-          );
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No balances found.'));
-        }
-
-        final balances = snapshot.data!;
-
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          child: Row(
-            children: balances.asMap().entries.map((entry) {
-              final index = entry.key;
-              final balance = entry.value;
-              final isLast = index == balances.length - 1;
-
-              // Check if "You owe" is in the status text to enable settlement
-              final isOwe = balance.statusText.toLowerCase().contains('you owe');
-              String amount = '';
-              if (isOwe) {
-                // Extract amount from "You owe ₹500" or similar
-                amount = balance.statusText.split(AppCurrency.symbol).last;
-              }
-
-              return Padding(
-                padding: EdgeInsets.only(right: isLast ? 0 : 10),
-                child: _card(
-                  avatarColor: Color(balance.avatarColorValue),
-                  initials: balance.initials,
-                  name: balance.name,
-                  statusColor: Color(balance.statusColorValue),
-                  statusTextColor: Color(balance.statusTextColorValue),
-                  statusText: balance.statusText,
-                  onTap: isOwe ? () => widget.onSettle?.call(balance.name, balance.initials, amount) : null,
-                ),
-              );
-            }).toList(),
+    if (isLoading) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        child: Row(
+          children: List.generate(
+            3,
+            (index) => Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: _buildSkeletonCard(),
+            ),
           ),
-        );
-      },
+        ),
+      );
+    }
+
+    final userSettlements = currentUserId.isNotEmpty
+        ? settlements.where((s) => s.fromUserId == currentUserId || s.toUserId == currentUserId).toList()
+        : <SettlementModel>[];
+
+    if (userSettlements.isEmpty) {
+      return const Center(child: Text('All settled up! 🎉'));
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      child: Row(
+        children: userSettlements.asMap().entries.map((entry) {
+          final index = entry.key;
+          final settlement = entry.value;
+          final isLast = index == userSettlements.length - 1;
+
+          final currencySymbol = _getCurrencySymbol(settlement.currency);
+
+          // Resolve names with member fallback
+          final fromName = _resolveName(settlement.fromUserName, settlement.fromUserId);
+          final toName = _resolveName(settlement.toUserName, settlement.toUserId);
+
+          // Determine direction relative to current user
+          final bool iOwe = settlement.fromUserId == currentUserId;
+          final bool owesMe = settlement.toUserId == currentUserId;
+
+          String displayName;
+          String statusText;
+          Color statusColor;
+          Color statusTextColor;
+
+          if (iOwe) {
+            displayName = toName;
+            statusText = 'I owe $currencySymbol${settlement.amount.toStringAsFixed(2)}';
+            statusColor = const Color(0xFFFDE8E8);
+            statusTextColor = const Color(0xFFD1475E);
+          } else if (owesMe) {
+            displayName = fromName;
+            statusText = 'Owes you $currencySymbol${settlement.amount.toStringAsFixed(2)}';
+            statusColor = const Color(0xFFE0F5EE);
+            statusTextColor = const Color(0xFF339977);
+          } else {
+            displayName = '$fromName → $toName';
+            statusText = '$currencySymbol${settlement.amount.toStringAsFixed(2)}';
+            statusColor = const Color(0xFFF0ECE8);
+            statusTextColor = const Color(0xFF8A8075);
+          }
+
+          final initials = _getInitials(displayName);
+
+          Color avatarColor = const Color(0xFFEEECE8);
+          if (iOwe) {
+            avatarColor = _getMemberColor(settlement.toUserId);
+          } else if (owesMe) {
+            avatarColor = _getMemberColor(settlement.fromUserId);
+          } else {
+            avatarColor = _getMemberColor(settlement.fromUserId);
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(right: isLast ? 0 : 10),
+            child: _card(
+              initials: initials,
+              name: displayName,
+              statusText: statusText,
+              statusColor: statusColor,
+              statusTextColor: statusTextColor,
+              avatarColor: avatarColor,
+              onTap: () => onSettle?.call(
+                displayName,
+                initials,
+                settlement.amount.toStringAsFixed(2),
+                fromUserId: settlement.fromUserId,
+                toUserId: settlement.toUserId,
+                currency: settlement.currency,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
+  String _getCurrencySymbol(String code) {
+    switch (code) {
+      case 'INR': return '₹';
+      case 'USD': return '\$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      default: return AppCurrency.symbol;
+    }
+  }
+
+  String _getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    if (parts.isEmpty) {
+      return '?';
+    }
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+  }
+
+  Color _getMemberColor(String userId) {
+    for (final m in members) {
+      if (m.userId == userId) return m.avatarColor;
+    }
+    return const Color(0xFFD9F0FC);
+  }
+
   Widget _card({
-    required Color avatarColor,
     required String initials,
     required String name,
     required Color statusColor,
     required Color statusTextColor,
     required String statusText,
+    required Color avatarColor,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 136,
+        width: 155,
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
         decoration: BoxDecoration(
           color: const Color(0xFFFDFDFB),
@@ -107,16 +192,16 @@ class _FriendBalancesState extends State<FriendBalances> {
               height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFEEECE8),
-                border: Border.all(color: avatarColor, width: 2),
+                color: avatarColor,
               ),
               child: Center(
                 child: Text(
                   initials,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: const Color(0xFF38332E),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontFamily: 'Nunito',
+                    color: Color(0xFF074066),
                   ),
                 ),
               ),
@@ -129,6 +214,7 @@ class _FriendBalancesState extends State<FriendBalances> {
                 fontSize: 13,
                 color: const Color(0xFF38332E),
               ),
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
             Container(
@@ -145,6 +231,51 @@ class _FriendBalancesState extends State<FriendBalances> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Container(
+      width: 155,
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFDFB),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color.fromRGBO(235, 231, 224, 0.5), width: 1),
+        boxShadow: const [
+          BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.08), blurRadius: 18, offset: Offset(0, 3.6))
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFF0ECE8),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: 70,
+            height: 10,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0ECE8),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: 100,
+            height: 20,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0ECE8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ],
       ),
     );
   }

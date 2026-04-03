@@ -17,6 +17,7 @@ class MemberModel {
   final String? phone;
   final String role;
   final String? avatarUrl;
+  final bool pending;
 
   MemberModel({
     required this.id,
@@ -24,6 +25,7 @@ class MemberModel {
     this.phone,
     this.role = 'member',
     this.avatarUrl,
+    this.pending = false,
   });
 
   /// Creates a MemberModel from API JSON response.
@@ -34,6 +36,7 @@ class MemberModel {
       phone: json['phone'] as String?,
       role: json['role'] as String? ?? 'member',
       avatarUrl: json['avatarUrl'] as String?,
+      pending: json['pending'] as bool? ?? false,
     );
   }
 
@@ -45,6 +48,7 @@ class MemberModel {
       'phone': phone,
       'role': role,
       'avatarUrl': avatarUrl,
+      'pending': pending,
     };
   }
 
@@ -55,6 +59,7 @@ class MemberModel {
     String? phone,
     String? role,
     String? avatarUrl,
+    bool? pending,
   }) {
     return MemberModel(
       id: id ?? this.id,
@@ -62,6 +67,7 @@ class MemberModel {
       phone: phone ?? this.phone,
       role: role ?? this.role,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      pending: pending ?? this.pending,
     );
   }
 

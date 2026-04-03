@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travelly/core/api/api_client.dart';
 import '../../data/models/route_model.dart';
 import '../../data/services/plan_service.dart';
 
@@ -33,7 +34,12 @@ class PlanProvider with ChangeNotifier {
     try {
       _routeResponse = await _service.planRoute(request);
     } catch (e) {
-      _errorMessage = e.toString();
+      if (e is ApiException && e.statusCode == 400 ||
+          e.toString().toLowerCase().contains('bad request')) {
+        _errorMessage = 'Invalid stop name entered';
+      } else {
+        _errorMessage = e.toString();
+      }
       debugPrint('Route Planning Error: $e');
     } finally {
       _isLoading = false;

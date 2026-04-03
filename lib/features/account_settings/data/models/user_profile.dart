@@ -22,12 +22,12 @@ class UserProfile {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String?,
+      name: (json['name'] as String?) ?? '',
+      email: (json['email'] as String?) ?? '',
+      phone: (json['phone'] as String?) ?? (json['phoneNumber'] as String?),
       address: json['address'] as String?,
-      imageUrl: json['image_url'] as String?,
-      upiId: json['upi_id'] as String? ?? '',
+      imageUrl: (json['image_url'] as String?) ?? (json['imageUrl'] as String?),
+      upiId: (json['upi_id'] as String?) ?? (json['upiId'] as String?) ?? '',
       notificationsEnabled:
           (json['preferences']?['notifications_enabled'] as bool?) ?? false,
     );

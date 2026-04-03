@@ -11,9 +11,11 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../../../core/services/user_identity_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/auth_response.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../../../core/services/notification_service.dart';
 
 /// Enum representing the current authentication status.
 enum AuthStatus {
@@ -29,8 +31,9 @@ enum AuthStatus {
 
 class AuthProvider with ChangeNotifier {
   final AuthRepository repository;
+  final NotificationService? notificationService;
 
-  AuthProvider({required this.repository});
+  AuthProvider({required this.repository, this.notificationService});
 
   // ---------------------------------------------------------------------------
   // State
@@ -78,7 +81,7 @@ class AuthProvider with ChangeNotifier {
       );
       _status = AuthStatus.authenticated;
       repository.apiClient.setAuthToken(token ?? '');
-      
+
       // Async sync with backend
       if (token != null) {
         repository.service.syncWithBackend(
@@ -87,6 +90,9 @@ class AuthProvider with ChangeNotifier {
           phone: currentUser.phoneNumber,
         );
       }
+      
+      // Initialize notifications
+      notificationService?.initialize();
     } else {
       _status = AuthStatus.unauthenticated;
     }
@@ -122,6 +128,7 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+      notificationService?.initialize();
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
@@ -151,6 +158,7 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+      notificationService?.initialize();
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
@@ -214,6 +222,7 @@ class AuthProvider with ChangeNotifier {
       _token = response.token;
       _user = response.user;
       _status = AuthStatus.authenticated;
+      notificationService?.initialize();
     } catch (e) {
       _errorMessage = _extractErrorMessage(e);
       _status = AuthStatus.unauthenticated;
@@ -227,15 +236,40 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
 
     try {
+      // Unregister FCM token before logging out from backend
+      await notificationService?.unregisterToken();
       await repository.logout();
     } catch (_) {
       // Proceed with local logout even if API fails
     }
 
+    // Clear service and client state
+    repository.apiClient.clearAuthToken();
+    UserIdentityService.instance.clearCache();
+
     _user = null;
     _token = null;
     _status = AuthStatus.unauthenticated;
     _setLoading(false);
+  }
+
+  /// Updates the phone number for the current user.
+  Future<void> updatePhone(String phone) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      await repository.updatePhone(phone);
+      if (_user != null) {
+        _user = _user!.copyWith(phone: phone);
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = _extractErrorMessage(e);
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -260,6 +294,9 @@ class AuthProvider with ChangeNotifier {
   /// Extracts a user-friendly error message from an exception.
   String _extractErrorMessage(dynamic error) {
     final message = error.toString();
+    if (message.contains('An account already exists with this phone number')) {
+      return 'An account already exists with this phone number';
+    }
     if (message.startsWith('Exception: ')) {
       return message.substring(11);
     }

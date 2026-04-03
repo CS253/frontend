@@ -26,9 +26,15 @@ class TripsRepository {
   ///
   /// Replace mockTrips() inside TripsService with API response mapping
   /// when connecting real backend. The repository code remains unchanged.
-  Future<List<TripModel>> getTrips({int page = 1, int limit = 10}) async {
+  Future<List<TripModel>> getTrips({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final rawData = await service.getTrips(page: page, limit: limit);
+      final rawData = await service.getTrips(
+        page: page,
+        limit: limit,
+      );
       final tripsJson = rawData['trips'] as List<dynamic>;
       return tripsJson
           .map((json) => TripModel.fromJson(json as Map<String, dynamic>))
@@ -101,6 +107,36 @@ class TripsRepository {
     }
   }
 
+  Future<MemberModel> removeMember({
+    required String tripId,
+    required String memberId,
+  }) async {
+    try {
+      final rawData = await service.removeMember(
+        tripId: tripId,
+        memberId: memberId,
+      );
+      return MemberModel.fromJson(rawData['member'] as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to remove member: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> leaveTrip({
+    required String tripId,
+    required String userId,
+  }) async {
+    try {
+      final rawData = await service.leaveTrip(
+        tripId: tripId,
+        userId: userId,
+      );
+      return rawData['data'] as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to leave trip: $e');
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Get Members
   // ---------------------------------------------------------------------------
@@ -115,6 +151,20 @@ class TripsRepository {
           .toList();
     } catch (e) {
       throw Exception('Failed to load members: $e');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Update Trip (partial PATCH)
+  // ---------------------------------------------------------------------------
+
+  /// Sends only changed fields to the server. Returns the updated [TripModel].
+  Future<TripModel> updateTrip(String tripId, Map<String, dynamic> fields) async {
+    try {
+      final rawData = await service.updateTrip(tripId, fields);
+      return TripModel.fromJson(rawData['trip'] as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to update trip: $e');
     }
   }
 }

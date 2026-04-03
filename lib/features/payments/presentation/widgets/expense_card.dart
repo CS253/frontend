@@ -1,91 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/features/payments/data/services/payment_service.dart';
+import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
 import 'package:travelly/core/constants/currency.dart';
+import 'package:travelly/features/payments/data/models/member_model.dart';
 
-/// List of all expense cards with dynamic data fetching.
-class AllExpensesList extends StatefulWidget {
-  const AllExpensesList({super.key});
+/// List of all expense cards — now a presentational widget.
+class AllExpensesList extends StatelessWidget {
+  final String groupId;
+  final List<ExpenseModel> expenses;
+  final String currentUserId;
+  final List<MemberModel>? members;
+  final bool isLoading;
+  final void Function(String expenseId)? onDelete;
+  final VoidCallback? onUpdated;
 
-  @override
-  State<AllExpensesList> createState() => _AllExpensesListState();
-}
+  const AllExpensesList({
+    super.key,
+    required this.groupId,
+    required this.expenses,
+    required this.currentUserId,
+    this.members,
+    this.isLoading = false,
+    this.onDelete,
+    this.onUpdated,
+  });
 
-class _AllExpensesListState extends State<AllExpensesList> {
-  late Future<Map<String, dynamic>> _expensesFuture;
-  final PaymentService _paymentService = PaymentService();
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshExpenses();
-  }
-
-  void _refreshExpenses() {
-    setState(() {
-      _expensesFuture = _paymentService.fetchExpenses();
-    });
-  }
-
-  Future<void> _deleteExpense(String id) async {
-    try {
-      await _paymentService.deleteExpense(id);
-      _refreshExpenses();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense deleted successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting expense: $e')));
+  String _resolvePayerName(String payerId, String? payerName) {
+    if (payerName != null && payerName.isNotEmpty && payerName != 'Unknown') {
+      return payerName;
+    }
+    if (members != null) {
+      for (final m in members!) {
+        if (m.userId == payerId) return m.name;
       }
     }
+    return 'Unknown';
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _expensesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData ||
-            (snapshot.data!['expenses'] as List).isEmpty) {
-          return const Center(child: Text('No expenses found.'));
-        }
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        final expenses = snapshot.data!['expenses'] as List;
+    if (expenses.isEmpty) {
+      return const Center(child: Text('No expenses found.'));
+    }
 
+    return Column(
+      children: expenses.map((expense) {
         return Column(
-          children: expenses.map((expense) {
-            return Column(
-              children: [
-                ExpenseCard(
-                  id: expense['id'],
-                  title: expense['title'],
-                  amount: expense['amount'],
-                  payerName: expense['payer_name'],
-                  payerInitials: expense['payer_initials'],
-                  payerColor: Color(expense['payer_color']),
-                  date: expense['date'],
-                  yourShare: expense['your_share'],
-                  status: expense['status'],
-                  currency: expense['currency'] ?? AppCurrency.code,
-                  onDelete: () => _deleteExpense(expense['id']),
-                ),
-                const SizedBox(height: 10),
-              ],
-            );
-          }).toList(),
+          children: [
+            ExpenseCard(
+              id: expense.id,
+              title: expense.title,
+              amount: expense.amount.toStringAsFixed(2),
+              payerName: _resolvePayerName(expense.paidBy, expense.payerName),
+              payerInitials: expense.payerInitials,
+              payerColor: const Color(0xFF87D4F8),
+              date: expense.formattedDate,
+              yourShare: _calculateYourShare(expense),
+              status: 'pending',
+              currency: expense.currency,
+              groupId: groupId,
+              onDelete: onDelete != null ? () => onDelete!(expense.id) : null,
+              onUpdated: onUpdated,
+            ),
+            const SizedBox(height: 10),
+          ],
         );
-      },
+      }).toList(),
     );
+  }
+
+  String _calculateYourShare(ExpenseModel expense) {
+    if (expense.splits.isNotEmpty && currentUserId.isNotEmpty) {
+      for (final split in expense.splits) {
+        if (split.userId == currentUserId) {
+          return split.amount.toStringAsFixed(2);
+        }
+      }
+      return '0.00';
+    }
+    return expense.amount.toStringAsFixed(2);
   }
 }
 
@@ -99,10 +98,12 @@ class ExpenseCard extends StatelessWidget {
       date,
       yourShare,
       status,
-      currency;
+      currency,
+      groupId;
   final String shareTextPrefix;
   final Color payerColor;
   final VoidCallback? onDelete;
+  final VoidCallback? onUpdated;
 
   const ExpenseCard({
     super.key,
@@ -117,7 +118,9 @@ class ExpenseCard extends StatelessWidget {
     this.shareTextPrefix = 'Your share: ',
     required this.status,
     required this.currency,
+    required this.groupId,
     this.onDelete,
+    this.onUpdated,
   });
 
   @override
@@ -136,7 +139,13 @@ class ExpenseCard extends StatelessWidget {
       onTap: () {
         showDialog(
           context: context,
-          builder: (context) => PaymentDetailsDialog(expenseId: id),
+          builder: (context) => KeyboardSafeDialog(
+            child: PaymentDetailsDialog(
+              expenseId: id,
+              groupId: groupId,
+              onUpdated: onUpdated,
+            ),
+          ),
         );
       },
       child: Container(

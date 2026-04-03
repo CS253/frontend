@@ -1,65 +1,134 @@
 import 'package:travelly/core/api/api_client.dart';
 import 'package:travelly/core/api/api_endpoints.dart';
 
-/// Service layer for document-related API calls.
 class DocumentService {
   final ApiClient _apiClient;
 
   DocumentService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
-  Future<Map<String, dynamic>> fetchDocuments() async {
-    Map<String, dynamic> response = {'documents': []};
-    try {
-      response = await _apiClient.get(ApiEndpoints.documents);
-    } catch (e) {
-      // API Error (Documents)
-    }
+  Future<Map<String, dynamic>> fetchDocuments({
+    required String groupId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response =
+        await _apiClient.get(
+              ApiEndpoints.documents,
+              queryParams: {
+                'groupId': groupId,
+                'page': page.toString(),
+                'limit': limit.toString(),
+              },
+            )
+            as Map<String, dynamic>;
 
-    // MOCK DATA: Injecting mock entries for testing.
-    // REMOVE THIS BLOCK once backend is fully populated.
-    final List<dynamic> mockDocuments = [
-      {
-        "id": "mock_doc_1",
-        "emoji": "✈️",
-        "title": "Flight Tickets.pdf",
-        "subtitle": "1.2 MB · pdf · 12 Mar",
-        "url": "https://pdfobject.com/pdf/sample.pdf",
-        "uploadedAt": "2026-03-12T10:00:00Z"
-      },
-      {
-        "id": "mock_doc_2",
-        "emoji": "🛡️",
-        "title": "Travel Insurance.pdf",
-        "subtitle": "800 KB · pdf · 12 Mar",
-        "uploadedAt": "2026-03-12T11:00:00Z"
-      },
-      {
-        "id": "mock_doc_3",
-        "emoji": "🏨",
-        "title": "Hotel Booking.pdf",
-        "subtitle": "450 KB · pdf · 12 Mar",
-        "uploadedAt": "2026-03-12T12:00:00Z"
-      }
-    ];
+    final data = (response['data'] as List<dynamic>? ?? [])
+        .cast<Map<String, dynamic>>();
 
-    if (response['documents'] != null && response['documents'] is List) {
-      final existingIds = (response['documents'] as List).map((e) => e['id']).toSet();
-      final filteredMocks = mockDocuments.where((mock) => !existingIds.contains(mock['id'])).toList();
-      response['documents'] = [...filteredMocks, ...(response['documents'] as List)];
-    } else {
-      response['documents'] = mockDocuments;
-    }
-    // END MOCK DATA
-
-    return response;
+    return {
+      'documents': data.map(_mapDocumentForUi).toList(),
+      'meta': response['meta'],
+    };
   }
 
-  Future<Map<String, dynamic>> uploadDocument(Map<String, dynamic> body) async {
-    return await _apiClient.post(ApiEndpoints.documents, body: body) as Map<String, dynamic>;
+  Future<Map<String, dynamic>> uploadDocument({
+    required String groupId,
+    required String filePath,
+    required String title,
+  }) async {
+    return await _apiClient.uploadMultipart(
+          ApiEndpoints.uploadDocument,
+          fields: {'groupId': groupId, 'title': title},
+          fileFieldName: 'file',
+          filePath: filePath,
+        )
+        as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> deleteDocument(String id) async {
-    return await _apiClient.delete(ApiEndpoints.documentById(id)) as Map<String, dynamic>;
+    return await _apiClient.delete(ApiEndpoints.documentById(id))
+        as Map<String, dynamic>;
+  }
+
+  Map<String, dynamic> _mapDocumentForUi(Map<String, dynamic> item) {
+    final fileName = (item['fileName'] as String?) ?? '';
+    final title = (item['title'] as String?)?.trim().isNotEmpty == true
+        ? item['title'] as String
+        : fileName;
+    final extension = ((item['extension'] as String?) ?? '')
+        .replaceAll('.', '')
+        .toLowerCase();
+    final uploadedAt = item['createdAt'] as String?;
+    final subtitleParts = <String>[
+      _formatFileSize(item['sizeBytes']),
+      if (extension.isNotEmpty) extension.toUpperCase(),
+      if (uploadedAt != null && uploadedAt.isNotEmpty) _formatDate(uploadedAt),
+    ]..removeWhere((part) => part.isEmpty);
+
+    final url = item['documentUrl'] ?? item['downloadUrl'] ?? item['fileUrl'];
+
+    return {
+      'id': item['id'],
+      'emoji': _emojiForExtension(extension),
+      'title': title,
+      'subtitle': subtitleParts.join(' • '),
+      'url': url,
+      'extension': extension,
+      'uploadedAt': uploadedAt,
+      'fileName': fileName,
+    };
+  }
+
+  String _emojiForExtension(String extension) {
+    switch (extension) {
+      case 'pdf':
+        return '📕';
+      case 'doc':
+      case 'docx':
+        return '📝';
+      case 'txt':
+        return '📄';
+      default:
+        return '📎';
+    }
+  }
+
+  String _formatFileSize(dynamic value) {
+    final bytes = value is int ? value : int.tryParse('$value') ?? 0;
+
+    if (bytes >= 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+
+    if (bytes >= 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    }
+
+    return '$bytes B';
+  }
+
+  String _formatDate(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      return value;
+    }
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${parsed.day} ${months[parsed.month - 1]}';
   }
 }

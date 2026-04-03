@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 // =============================================================================
 // API Endpoints — Single source of truth for all backend route paths.
 //
@@ -23,20 +25,23 @@ class ApiEndpoints {
   /// Base URL for the API server.
   /// Dynamically switches based on the platform.
   static String get baseUrl {
+    // Get from .env file
+    String? envBaseUrl = dotenv.env['BASE_URL'];
+
+    if (envBaseUrl != null && envBaseUrl.isNotEmpty) {
+      return envBaseUrl;
+    }
+
+    // Fallback logic
     if (kIsWeb) {
       return 'http://localhost:5000/api';
     } else {
-      // Use 10.0.2.2 for Android emulators to access localhost.
-      // For iOS simulators and physical devices on the same network, 
-      // replace with your computer's local IP (e.g., 192.168.x.x).
       try {
         if (Platform.isAndroid) {
-          return 'http://10.0.2.2:5000/api';
+          return 'http://172.23.36.189:5000/api';
         }
-      } catch (_) {
-        // Fallback or non-mobile platforms
-      }
-      return 'http://localhost:5000/api';
+      } catch (_) {}
+      return 'http://localhost:5001/api';
     }
   }
 
@@ -83,6 +88,8 @@ class ApiEndpoints {
   /// Headers: `Authorization: Bearer <token>`
   /// Response: { "user": { "id", "name", "email", "phone" } }
   static const String profile = '/auth/profile';
+  static const String userProfile = '/users/me';
+  static const String updateUserProfile = '/users/me';
 
   /// POST — Logout and invalidate token.
   /// Headers: `Authorization: Bearer <token>`
@@ -103,51 +110,108 @@ class ApiEndpoints {
   /// Fields: name, destination, startDate, endDate, tripType
   /// File: coverImage
   /// Response: { "trip": { ... } }
-  static const String trips = '/trips';
+  static const String trips = '/groups';
+
+  /// GET — Lean trip summaries (shell data only, no member join).
+  static const String tripsSummary = '/groups/summary';
 
   /// GET — Fetch details of a specific trip.
   /// Response: { "trip": { "id", "name", "destination", ... } }
-  static String tripDetail(String tripId) => '/trips/$tripId';
+  static String tripDetail(String tripId) => '/groups/$tripId';
 
-  /// PUT — Update a specific trip.
-  static String updateTrip(String tripId) => '/trips/$tripId';
+  /// PATCH — Partial update of a trip (only sends changed fields).
+  static String patchTrip(String tripId) => '/groups/$tripId';
+
+  /// PUT — Full update of a specific trip.
+  static String updateTrip(String tripId) => '/groups/$tripId';
+  static String groupPhoto(String tripId) => '/groups/$tripId/photo';
 
   /// DELETE — Delete a specific trip.
-  static String deleteTrip(String tripId) => '/trips/$tripId';
+  static String deleteTrip(String tripId) => '/groups/$tripId';
 
   /// Alias used by DashboardService.updateTrip()
-  static String tripById(String id) => '/trips/$id';
+  static String tripById(String id) => '/groups/$id';
 
   /// GET — Get members of a trip.
-  static String tripMembers(String tripId) => '/trips/$tripId/members';
+  static String tripMembers(String tripId) => '/groups/$tripId/members';
 
   /// POST — Add members to a trip.
   /// Request: { "members": [{ "name": "...", "phone": "..." }] }
   /// Response: { "members": [...] }
-  static String addMembers(String tripId) => '/trips/$tripId/members';
+  static String addMembers(String tripId) => '/groups/$tripId/members';
 
   /// GET — Get members of a trip.
-  static String getMembers(String tripId) => '/trips/$tripId/members';
+  static String getMembers(String tripId) => '/groups/$tripId/members';
 
   /// DELETE — Remove a member from a trip.
   static String removeMember(String tripId, String memberId) =>
-      '/trips/$tripId/members/$memberId';
+      '/groups/$tripId/members/$memberId';
+
+  /// POST — Leave a trip as the current user.
+  static String leaveTrip(String tripId) => '/groups/$tripId/leave';
 
   // ---------------------------------------------------------------------------
-  // Payments Endpoints
+  // Groups & Payments Endpoints
   // ---------------------------------------------------------------------------
 
-  static const String payments = '/payments';
-  static const String expenses = '/payments/expenses';
-  static const String balances = '/payments/balances';
-  static const String settle = '/payments/settle';
-  static String paymentById(String id) => '/payments/expenses/$id';
+  /// POST — Create a new group.
+  static const String groups = '/groups';
+
+  /// GET — Get group details (includes members).
+  static String groupDetails(String groupId) => '/groups/$groupId';
+
+  /// PUT — Update group title/currency.
+  static String updateGroup(String groupId) => '/groups/$groupId';
+
+  /// POST — Add member to group.
+  static String groupMembers(String groupId) => '/groups/$groupId/members';
+
+  /// GET/POST — Group expenses.
+  static String groupExpenses(String groupId) => '/groups/$groupId/expenses';
+
+  /// GET/PUT/DELETE — Single expense.
+  static String groupExpense(String groupId, String expenseId) =>
+      '/groups/$groupId/expenses/$expenseId';
+
+  /// GET — Group balances (per-currency).
+  static String groupBalances(String groupId) => '/groups/$groupId/balances';
+
+  /// GET — Group settlements (with optional ?simplifyDebts=true/false).
+  static String groupSettlements(String groupId) =>
+      '/groups/$groupId/settlements';
+
+  /// POST — Mark a settlement as paid.
+  static String markSettlementPaid(String groupId) =>
+      '/groups/$groupId/settlements/mark-paid';
+
+  /// POST — Request payment from a debtor.
+  static String requestPayment(String groupId) =>
+      '/groups/$groupId/settlements/request-payment';
+
+  /// POST — Initiate UPI payment (get deep link).
+  static String initiatePayment(String groupId) =>
+      '/groups/$groupId/settlements/initiate-payment';
+
+  /// GET — Payment/reimbursement history.
+  static String paymentHistory(String groupId) =>
+      '/groups/$groupId/payment-history';
+
+  /// GET — Full expense history (chronological).
+  static String groupHistory(String groupId) => '/groups/$groupId/history';
+
+  /// GET — Group summary & stats.
+  static String groupSummary(String groupId) => '/groups/$groupId/summary';
+
+  /// PUT — Toggle simplify-debts setting.
+  static String simplifyDebts(String groupId) =>
+      '/groups/$groupId/settings/simplify-debts';
 
   // ---------------------------------------------------------------------------
   // Documents Endpoints
   // ---------------------------------------------------------------------------
 
   static const String documents = '/documents';
+  static const String uploadDocument = '/documents/upload';
   static String documentById(String id) => '/documents/$id';
 
   // ---------------------------------------------------------------------------
@@ -171,5 +235,15 @@ class ApiEndpoints {
   // ---------------------------------------------------------------------------
 
   /// POST — Get optimized route and place timings.
-  static const String planRoute = '/plan/route';
+  static const String planRoute = '/route-planner/plan';
+
+  // ---------------------------------------------------------------------------
+  // Notification Endpoints
+  // ---------------------------------------------------------------------------
+
+  /// POST — Register FCM token.
+  static const String registerToken = '/notifications/register-token';
+
+  /// DELETE — Unregister FCM token.
+  static const String unregisterToken = '/notifications/unregister-token';
 }

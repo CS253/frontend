@@ -1,145 +1,272 @@
 import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/data/models/balance_model.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/core/constants/currency.dart';
+import 'package:travelly/features/payments/data/models/settlement_model.dart';
+import 'package:travelly/features/payments/data/models/group_summary_model.dart';
 import 'package:travelly/features/payments/data/services/payment_service.dart';
 
 /// Repository that converts API responses into typed models.
 ///
-/// Currently returns mock data. Replace the mock implementations
-/// with calls to [PaymentService] when the backend is ready.
+/// All methods require a [groupId] since the API is group-scoped.
 class PaymentRepository {
-  // ignore: unused_field — will be used when backend is connected
   final PaymentService _service;
+
+  // In-memory Future caching to prevent redundant API calls during prefetch
+  final Map<String, Future<List<ExpenseModel>>> _expensesCache = {};
+  final Map<String, Future<List<UserBalance>>> _balancesCache = {};
+  final Map<String, Future<List<SettlementModel>>> _settlementsCache = {};
+  final Map<String, Future<GroupSummaryModel?>> _summaryCache = {};
+  final Map<String, Future<List<MemberModel>>> _membersCache = {};
 
   PaymentRepository({PaymentService? service})
     : _service = service ?? PaymentService();
 
   // ---------------------------------------------------------------------------
-  // Mock data (remove when backend is ready)
+  // Prefetch
+  // ---------------------------------------------------------------------------
+  void prefetchAll(String groupId, {String? userId}) {
+    getExpenses(groupId);
+    getBalances(groupId);
+    getGroupSummary(groupId, userId: userId);
+  }
+
+  /// Evict the expenses cache for a group so the next call fetches fresh data.
+  void invalidateExpensesCache(String groupId) {
+    _expensesCache.remove(groupId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Members
   // ---------------------------------------------------------------------------
 
-  /// Fetch all expenses. Returns mock data for now.
-  Future<List<ExpenseModel>> getExpenses() async {
-    // TODO: Replace with real API call:
-    // final response = await _service.fetchExpenses();
-    // return (response['data'] as List).map((e) => ExpenseModel.fromJson(e)).toList();
-
-    return const [
-      ExpenseModel(
-        id: '1',
-        title: 'Hotel Booking - Snow Valley R...',
-        amount: 8000,
-        payerName: 'Ashish',
-        payerInitials: 'AS',
-        payerColorValue: 0xFF9FDFCA,
-        date: 'Dec 20',
-        yourShare: 500,
-        status: 'Pending',
-      ),
-      ExpenseModel(
-        id: '2',
-        title: 'Solang Valley Adventure Sports',
-        amount: 3200,
-        payerName: 'You',
-        payerInitials: 'ME',
-        payerColorValue: 0xFF87D4F8,
-        date: 'Dec 22',
-        yourShare: 3200,
-        shareTextPrefix: 'You paid',
-        status: 'Settled',
-      ),
-      ExpenseModel(
-        id: '3',
-        title: 'Dinner at Cafe 1947',
-        amount: 2400,
-        payerName: 'Priya',
-        payerInitials: 'PR',
-        payerColorValue: 0xFFFABD9E,
-        date: 'Dec 23',
-        yourShare: 600,
-        status: 'Pending',
-      ),
-      ExpenseModel(
-        id: '4',
-        title: 'Taxi to Rohtang Pass',
-        amount: 4000,
-        payerName: 'Rahul',
-        payerInitials: 'RA',
-        payerColorValue: 0xFFCCB3E6,
-        date: 'Dec 24',
-        yourShare: 1000,
-        status: 'Settled',
-      ),
-      ExpenseModel(
-        id: '5',
-        title: "Breakfast at Johnson's Cafe",
-        amount: 1800,
-        payerName: 'You',
-        payerInitials: 'ME',
-        payerColorValue: 0xFF87D4F8,
-        date: 'Dec 25',
-        yourShare: 1800,
-        shareTextPrefix: 'You paid',
-        status: 'Settled',
-      ),
-    ];
+  /// Fetch all members for a group (cached).
+  Future<List<MemberModel>> getMembers(String groupId, {bool forceRefresh = false}) {
+    if (forceRefresh || !_membersCache.containsKey(groupId)) {
+      _membersCache[groupId] = _fetchMembers(groupId);
+    }
+    return _membersCache[groupId]!;
   }
 
-  /// Fetch friend balances. Returns mock data for now.
-  Future<List<BalanceModel>> getBalances() async {
-    // TODO: Replace with real API call:
-    // final response = await _service.fetchBalances();
-    // return (response['data'] as List).map((e) => BalanceModel.fromJson(e)).toList();
-
-    return [
-      BalanceModel(
-        id: '1',
-        name: 'Ashish',
-        initials: 'AS',
-        avatarColorValue: 0xFF9FDFCA,
-        statusText: 'You owe ${AppCurrency.symbol}500',
-        statusColorValue: 0xFFFBE9EC,
-        statusTextColorValue: 0xFFD1475E,
-      ),
-      BalanceModel(
-        id: '2',
-        name: 'Priya',
-        initials: 'PR',
-        avatarColorValue: 0xFFFABD9E,
-        statusText: 'Owes You ${AppCurrency.symbol}800',
-        statusColorValue: 0xFFE0F5EE,
-        statusTextColorValue: 0xFF339977,
-      ),
-      BalanceModel(
-        id: '3',
-        name: 'Rahul',
-        initials: 'RA',
-        avatarColorValue: 0xFFCCB3E6,
-        statusText: 'You owe ${AppCurrency.symbol}200',
-        statusColorValue: 0xFFFBE9EC,
-        statusTextColorValue: 0xFFD1475E,
-      ),
-      BalanceModel(
-        id: '4',
-        name: 'Neha',
-        initials: 'NH',
-        avatarColorValue: 0xFFFAE39E,
-        statusText: 'Settled',
-        statusColorValue: 0xFFE0F5EE,
-        statusTextColorValue: 0xFF339977,
-      ),
-    ];
-  }
-
-  /// Fetch all trip members.
-  Future<List<MemberModel>> getTripMembers() async {
-    final response = await _service.fetchTripMembers();
-    if (response['members'] != null && response['members'] is List) {
-      return (response['members'] as List)
-          .map((m) => MemberModel.fromJson(m))
+  Future<List<MemberModel>> _fetchMembers(String groupId) async {
+    final response = await _service.fetchGroupMembers(groupId);
+    final data = response['members'];
+    if (data is List) {
+      return data
+          .map((m) => MemberModel.fromJson(m as Map<String, dynamic>))
           .toList();
     }
     return [];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Expenses
+  // ---------------------------------------------------------------------------
+
+  /// Fetch all expenses for a group.
+  Future<List<ExpenseModel>> getExpenses(String groupId, {bool forceRefresh = false}) {
+    if (forceRefresh || !_expensesCache.containsKey(groupId)) {
+      _expensesCache[groupId] = _fetchExpenses(groupId);
+    }
+    return _expensesCache[groupId]!;
+  }
+
+  Future<List<ExpenseModel>> _fetchExpenses(String groupId) async {
+    final response = await _service.fetchExpenses(groupId);
+    final data = response['data'];
+    if (data is List) {
+      return data
+          .map((e) => ExpenseModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
+
+  /// Fetch details for a specific expense.
+  Future<ExpenseModel?> getExpenseDetails(
+    String groupId,
+    String expenseId,
+  ) async {
+    final response = await _service.fetchExpenseDetails(groupId, expenseId);
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return ExpenseModel.fromJson(data);
+    }
+    return null;
+  }
+
+  /// Create a new expense.
+  Future<ExpenseModel?> createExpense(
+    String groupId,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await _service.createExpense(groupId, body);
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return ExpenseModel.fromJson(data);
+    }
+    return null;
+  }
+
+  /// Update an expense.
+  Future<ExpenseModel?> updateExpense(
+    String groupId,
+    String expenseId,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await _service.updateExpense(groupId, expenseId, body);
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return ExpenseModel.fromJson(data);
+    }
+    return null;
+  }
+
+  /// Delete an expense.
+  Future<void> deleteExpense(String groupId, String expenseId) async {
+    await _service.deleteExpense(groupId, expenseId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Balances & Settlements
+  // ---------------------------------------------------------------------------
+
+  /// Fetch per-currency balances for all members.
+  Future<List<UserBalance>> getBalances(String groupId, {bool forceRefresh = false}) {
+    if (forceRefresh || !_balancesCache.containsKey(groupId)) {
+      _balancesCache[groupId] = _fetchBalances(groupId);
+    }
+    return _balancesCache[groupId]!;
+  }
+
+  Future<List<UserBalance>> _fetchBalances(String groupId) async {
+    final response = await _service.fetchBalances(groupId);
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return parseBalancesResponse(data);
+    }
+    return [];
+  }
+
+  /// Fetch settlement transactions (simplified or netting).
+  Future<List<SettlementModel>> getSettlements(
+    String groupId, {
+    bool? simplifyDebts,
+    bool forceRefresh = false,
+  }) {
+    // Cache key depends on simplifyDebts value to avoid cross-pollination
+    final cacheKey = '${groupId}_$simplifyDebts';
+    if (forceRefresh || !_settlementsCache.containsKey(cacheKey)) {
+      _settlementsCache[cacheKey] = _fetchSettlements(groupId, simplifyDebts: simplifyDebts);
+    }
+    return _settlementsCache[cacheKey]!;
+  }
+
+  Future<List<SettlementModel>> _fetchSettlements(
+    String groupId, {
+    bool? simplifyDebts,
+  }) async {
+    final response = await _service.fetchSettlements(
+      groupId,
+      simplifyDebts: simplifyDebts,
+    );
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return parseSettlementsResponse(data);
+    }
+    return [];
+  }
+
+  /// Mark a settlement as paid.
+  Future<Map<String, dynamic>> markSettlementPaid(
+    String groupId, {
+    required String fromUserId,
+    required String toUserId,
+    required double amount,
+    required String currency,
+  }) async {
+    return await _service.markSettlementPaid(groupId, {
+      'fromUserId': fromUserId,
+      'toUserId': toUserId,
+      'amount': amount,
+      'currency': currency,
+    });
+  }
+
+  /// Initiate UPI payment.
+  Future<Map<String, dynamic>> initiatePayment(
+    String groupId, {
+    required String toUserId,
+    required double amount,
+    required String currency,
+  }) async {
+    final response = await _service.initiatePayment(groupId, {
+      'toUserId': toUserId,
+      'amount': amount,
+      'currency': currency,
+    });
+    return response['data'] as Map<String, dynamic>? ?? {};
+  }
+
+  // ---------------------------------------------------------------------------
+  // Group Members
+  // ---------------------------------------------------------------------------
+
+  /// Fetch group members from the group details endpoint.
+  Future<List<MemberModel>> getGroupMembers(String groupId) async {
+    final response = await _service.fetchGroupDetails(groupId);
+    final data = response['data'];
+    if (data is Map<String, dynamic> && data['members'] is List) {
+      return (data['members'] as List)
+          .map((m) => MemberModel.fromJson(m as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Summary
+  // ---------------------------------------------------------------------------
+
+  /// Fetch group summary with optional individual stats.
+  Future<GroupSummaryModel?> getGroupSummary(
+    String groupId, {
+    String? userId,
+    bool forceRefresh = false,
+  }) {
+    // Cache key depends on userId to avoid cross-pollination
+    final cacheKey = '${groupId}_$userId';
+    if (forceRefresh || !_summaryCache.containsKey(cacheKey)) {
+      _summaryCache[cacheKey] = _fetchGroupSummary(groupId, userId: userId);
+    }
+    return _summaryCache[cacheKey]!;
+  }
+
+  Future<GroupSummaryModel?> _fetchGroupSummary(
+    String groupId, {
+    String? userId,
+  }) async {
+    final response = await _service.fetchGroupSummary(
+      groupId,
+      userId: userId,
+    );
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return GroupSummaryModel.fromJson(data);
+    }
+    return null;
+  }
+
+  /// Fetch specifically the simplifyDebts setting for a group.
+  Future<bool> getSimplifyDebtsSetting(String groupId) async {
+    try {
+      final response = await _service.fetchSimplifyDebtsSetting(groupId);
+      final data = response['data'];
+      if (data is Map<String, dynamic>) {
+        return data['simplifyDebts'] as bool? ?? false;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 }

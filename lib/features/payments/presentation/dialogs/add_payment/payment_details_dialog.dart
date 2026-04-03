@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/core/widgets/emoji_picker_dialog.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_amount_field.dart';
 
 class PaymentDetailsDialog extends StatefulWidget {
+  final String groupId;
   final Map<String, String>? initialDetails;
   final Function(Map<String, String>) onContinue;
 
   const PaymentDetailsDialog({
     super.key,
+    required this.groupId,
     this.initialDetails,
     required this.onContinue,
   });
@@ -22,20 +24,20 @@ class PaymentDetailsDialog extends StatefulWidget {
 }
 
 class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
-  String? selectedPayer;
+  String? selectedPayerId;
   String _selectedEmoji = '✈️';
   late String selectedCurrency;
   late TextEditingController amountController;
   late TextEditingController descriptionController;
   late TextEditingController dateController;
+  DateTime? _selectedDate;
 
   List<MemberModel> _members = [];
-  bool _isLoadingMembers = true;
 
   @override
   void initState() {
     super.initState();
-    selectedPayer = widget.initialDetails?['payer'];
+    selectedPayerId = widget.initialDetails?['payerId'];
     _selectedEmoji = widget.initialDetails?['emoji'] ?? '✈️';
     selectedCurrency = widget.initialDetails?['currency'] ?? AppCurrency.code;
     amountController = TextEditingController(
@@ -47,7 +49,18 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     dateController = TextEditingController(
       text: widget.initialDetails?['date'] ?? '',
     );
-    _fetchMembers();
+
+    final participants = context.read<DashboardProvider>().participants;
+    _members = participants
+        .map(
+          (p) => MemberModel(
+            id: p.id,
+            userId: p.id,
+            name: p.name,
+            avatarColor: const Color(0xFFD9F0FC),
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -56,24 +69,6 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     descriptionController.dispose();
     dateController.dispose();
     super.dispose();
-  }
-
-  Future<void> _fetchMembers() async {
-    try {
-      final members = await PaymentRepository().getTripMembers();
-      if (mounted) {
-        setState(() {
-          _members = members;
-          _isLoadingMembers = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingMembers = false;
-        });
-      }
-    }
   }
 
   @override
@@ -174,33 +169,6 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
             const SizedBox(height: 16),
             Row(
               children: [
-                GestureDetector(
-                  onTap: () async {
-                    final emoji = await showEmojiPicker(context);
-                    if (emoji != null) {
-                      setState(() => _selectedEmoji = emoji);
-                    }
-                  },
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCFAF8),
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(
-                        color: const Color(0xFFEBE7E0),
-                        width: 0.75,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _selectedEmoji,
-                        style: const TextStyle(fontSize: 28),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: PaymentAmountField(
                     label: 'Description *',
@@ -213,36 +181,13 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
             const SizedBox(height: 16),
             _buildLabel('Paid by *'),
             const SizedBox(height: 8),
-            _isLoadingMembers
-                ? Container(
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCFAF8),
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(
-                        color: const Color(0xFFEBE7E0),
-                        width: 0.75,
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: const Center(
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF8A8075),
-                        ),
-                      ),
-                    ),
-                  )
-                : _buildDropdown(
-                    value: selectedPayer,
-                    items: _members.map((e) => e.name).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => selectedPayer = val);
-                    },
-                  ),
+            _buildDropdown(
+              value: selectedPayerId,
+              items: _members,
+              onChanged: (val) {
+                if (val != null) setState(() => selectedPayerId = val);
+              },
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -260,6 +205,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                         lastDate: DateTime(2100),
                       );
                       if (picked != null) {
+                        _selectedDate = picked;
                         setState(() {
                           dateController.text =
                               "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
@@ -286,7 +232,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   );
                   return;
                 }
-                if (selectedPayer == null) {
+                if (selectedPayerId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please select who paid for this'),
@@ -298,8 +244,8 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   'amount': amountController.text,
                   'description': descriptionController.text,
                   'emoji': _selectedEmoji,
-                  'payer': selectedPayer!,
-                  'date': dateController.text,
+                  'payerId': selectedPayerId!,
+                  'date': _selectedDate?.toIso8601String() ?? '',
                   'currency': selectedCurrency,
                 });
               },
@@ -323,7 +269,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
 
   Widget _buildDropdown({
     required String? value,
-    required List<String> items,
+    required List<MemberModel> items,
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
@@ -342,7 +288,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-            value: items.contains(value) ? value : null,
+            value: items.any((m) => m.userId == value) ? value : null,
             hint: Text(
               'Select Person',
               style: GoogleFonts.plusJakartaSans(
@@ -362,8 +308,11 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
               color: const Color(0xFF38332E),
             ),
             onChanged: onChanged,
-            items: items.map<DropdownMenuItem<String>>((String val) {
-              return DropdownMenuItem<String>(value: val, child: Text(val));
+            items: items.map<DropdownMenuItem<String>>((MemberModel member) {
+              return DropdownMenuItem<String>(
+                value: member.userId,
+                child: Text(member.name),
+              );
             }).toList(),
           ),
         ),

@@ -1,44 +1,55 @@
-/// Data model for a friend balance.
-class BalanceModel {
-  final String id;
-  final String name;
-  final String initials;
-  final int avatarColorValue;
-  final String statusText;
-  final int statusColorValue;
-  final int statusTextColorValue;
+/// Data model for per-user balance within a group.
+///
+/// The API returns balances organized by currency:
+/// ```json
+/// { "USD": { "user-id-1": { "paid": 150, "owed": 100, "balance": 50 } } }
+/// ```
+/// This model represents a single user's balance for a single currency.
+class UserBalance {
+  final String userId;
+  final String currency;
+  final double paid;
+  final double owed;
+  final double balance; // positive = owed money, negative = owes money
 
-  const BalanceModel({
-    required this.id,
-    required this.name,
-    required this.initials,
-    required this.avatarColorValue,
-    required this.statusText,
-    required this.statusColorValue,
-    required this.statusTextColorValue,
+  const UserBalance({
+    required this.userId,
+    required this.currency,
+    required this.paid,
+    required this.owed,
+    required this.balance,
   });
 
-  factory BalanceModel.fromJson(Map<String, dynamic> json) {
-    return BalanceModel(
-      id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      initials: json['initials'] as String? ?? '',
-      avatarColorValue: json['avatar_color'] as int? ?? 0xFF87D4F8,
-      statusText: json['status_text'] as String? ?? '',
-      statusColorValue: json['status_color'] as int? ?? 0xFFE0F5EE,
-      statusTextColorValue: json['status_text_color'] as int? ?? 0xFF339977,
-    );
-  }
+  /// Whether this user owes money (negative balance).
+  bool get owesMoney => balance < 0;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'initials': initials,
-      'avatar_color': avatarColorValue,
-      'status_text': statusText,
-      'status_color': statusColorValue,
-      'status_text_color': statusTextColorValue,
-    };
+  /// Whether this user is owed money (positive balance).
+  bool get isOwed => balance > 0;
+
+  /// Whether this user is settled (zero balance).
+  bool get isSettled => balance == 0;
+
+  /// Absolute balance value for display.
+  double get absBalance => balance.abs();
+}
+
+/// Parses the API balance response into a flat list of [UserBalance].
+///
+/// Input format: `{ "USD": { "user-id": { paid, owed, balance } }, "INR": { ... } }`
+List<UserBalance> parseBalancesResponse(Map<String, dynamic> data) {
+  final List<UserBalance> result = [];
+  for (final currency in data.keys) {
+    final usersMap = data[currency] as Map<String, dynamic>;
+    for (final userId in usersMap.keys) {
+      final balanceData = usersMap[userId] as Map<String, dynamic>;
+      result.add(UserBalance(
+        userId: userId,
+        currency: currency,
+        paid: (balanceData['paid'] as num?)?.toDouble() ?? 0.0,
+        owed: (balanceData['owed'] as num?)?.toDouble() ?? 0.0,
+        balance: (balanceData['balance'] as num?)?.toDouble() ?? 0.0,
+      ));
+    }
   }
+  return result;
 }

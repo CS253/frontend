@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/user_profile.dart';
+import '../../../../core/utils/initials_util.dart';
 
 class ProfileCard extends StatelessWidget {
   final UserProfile? userProfile;
@@ -37,6 +38,8 @@ class ProfileCard extends StatelessWidget {
       return const SizedBox.shrink(); // Hide if no data is available
     }
 
+    final String initials = getInitials(userProfile!.name);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -54,52 +57,33 @@ class ProfileCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                width: 74,
-                height: 74,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFD9F2EA), width: 3),
-                  image: DecorationImage(
-                    image: userProfile!.imageUrl != null
-                        ? NetworkImage(userProfile!.imageUrl!) as ImageProvider
-                        : const AssetImage(
-                            'assets/images/default_avatar.png',
-                          ), // Fallback
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF353337),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
+          Container(
+            width: 74,
+            height: 74,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFE3F2FD), // Background color for initials
+              border: Border.all(color: const Color(0xFFD9F2EA), width: 3),
+              image: userProfile!.imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(userProfile!.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: userProfile!.imageUrl == null
+                ? Center(
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6BB5E5),
+                        fontFamily: 'Inter',
                       ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.white,
-                      size: 14,
                     ),
-                  ),
-                ),
-              ),
-            ],
+                  )
+                : null,
           ),
           const SizedBox(height: 12),
           Text(

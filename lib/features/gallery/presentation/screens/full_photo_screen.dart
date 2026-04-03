@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/gallery_provider.dart';
+import 'package:travelly/features/documents/data/services/document_download_service.dart';
 
 class FullPhotoScreen extends StatefulWidget {
   final int initialIndex;
@@ -17,6 +18,8 @@ class FullPhotoScreen extends StatefulWidget {
 class _FullPhotoScreenState extends State<FullPhotoScreen> {
   late PageController _pageController;
   late int _currentIndex;
+  bool _isDownloading = false;
+  final _downloadService = DocumentDownloadService();
 
   @override
   void initState() {
@@ -29,6 +32,42 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _downloadPhoto(GalleryProvider provider) async {
+    if (provider.photos.isEmpty || _isDownloading) return;
+    
+    final photo = provider.photos[_currentIndex];
+    
+    setState(() => _isDownloading = true);
+    
+    try {
+      // Create a filename from photo id or title
+      final extension = photo.imageUrl.toLowerCase().contains('.png') ? '.png' : '.jpg';
+      final fileName = 'travelly_${photo.id.substring(0, 8)}$extension';
+      
+      final savedPath = await _downloadService.downloadDocument(photo.imageUrl, fileName);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              savedPath != null
+                  ? 'Photo saved to $savedPath'
+                  : 'Download cancelled.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving photo: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
   }
 
   Future<void> _deleteCurrentPhoto(BuildContext context, GalleryProvider provider) async {
@@ -64,6 +103,24 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          _isDownloading
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.download_outlined, color: Colors.white),
+                  onPressed: () => _downloadPhoto(provider),
+                ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.white),
             onPressed: () => _deleteCurrentPhoto(context, provider),
@@ -123,4 +180,3 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
     );
   }
 }
-

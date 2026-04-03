@@ -2,18 +2,50 @@
 // Trips Service — Handles all trip-related API calls.
 //
 // This service communicates with the backend via ApiClient.
-// It does NOT transform data — that's the repository's job.
-//
-//   Fields: tripName, destination, startDate, endDate, tripType
-// TODO: Replace mock implementations with real API calls when backend is ready.
+// It also normalizes group-shaped responses into the trip shape used by the app.
 // =============================================================================
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_endpoints.dart';
 
 class TripsService {
   final ApiClient apiClient;
 
   TripsService({required this.apiClient});
+
+  Map<String, dynamic> _normalizeTrip(Map<String, dynamic> rawTrip) {
+    final members = rawTrip['members'];
+    final preAddedParticipants = rawTrip['preAddedParticipants'];
+    final coverImage =
+        (rawTrip['coverImage'] as String? ?? rawTrip['photoUrl'] as String?)
+            ?.trim();
+
+    final membersCount =
+        rawTrip['membersCount'] as int? ??
+        ((members is List ? members.length : 0) +
+            (preAddedParticipants is List ? preAddedParticipants.length : 0));
+
+    return {
+      'id': (rawTrip['id'] ?? rawTrip['groupId']) as String,
+      'name': (rawTrip['name'] ?? rawTrip['title'] ?? '') as String,
+      'destination': (rawTrip['destination'] ?? '') as String,
+      'coverImage': coverImage != null && coverImage.isNotEmpty ? coverImage : null,
+      'startDate':
+          (rawTrip['startDate'] is String)
+              ? rawTrip['startDate'] as String
+              : rawTrip['startDate'].toString(),
+      'endDate':
+          (rawTrip['endDate'] is String)
+              ? rawTrip['endDate'] as String
+              : rawTrip['endDate'].toString(),
+      'tripType': (rawTrip['tripType'] ?? 'Other') as String,
+      'membersCount': membersCount,
+      'createdBy': rawTrip['createdBy'] as String?,
+      'simplifyDebts': rawTrip['simplifyDebts'] as bool? ?? false,
+      if (rawTrip['currency'] != null) 'currency': rawTrip['currency'],
+      if (rawTrip['inviteLink'] != null) 'inviteLink': rawTrip['inviteLink'],
+    };
+  }
 
   // ---------------------------------------------------------------------------
   // Get Trips (List)
@@ -21,60 +53,13 @@ class TripsService {
 
   /// Fetches the list of trips with pagination support.
   ///
-  /// BACKEND CALL: GET /trips?page=1&limit=10
+  /// BACKEND CALL: GET /groups?page=1&limit=10
   /// Response: { "trips": [...], "total": 20, "page": 1, "limit": 10 }
   ///
-  /// TODO: Replace mock data once backend API is connected
-  Future<Map<String, dynamic>> getTrips({int page = 1, int limit = 10}) async {
-    // -------------------------------------------------------------------------
-    // MOCK DATA — Active by default
-    // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(milliseconds: 800));
-    return {
-      'trips': [
-        {
-          'id': 'trip-001',
-          'name': 'Santorini Dreams',
-          'destination': 'Santorini, Greece',
-          'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-05-01',
-          'endDate': '2024-05-15',
-          'tripType': 'Beach',
-          'membersCount': 5,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-002',
-          'name': 'Paris Escape',
-          'destination': 'Paris, France',
-          'coverImage': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-07-01',
-          'endDate': '2024-07-10',
-          'tripType': 'City',
-          'membersCount': 3,
-          'createdBy': 'user-001',
-        },
-        {
-          'id': 'trip-003',
-          'name': 'Mountain Trek',
-          'destination': 'Swiss Alps',
-          'coverImage': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-          'startDate': '2024-06-01',
-          'endDate': '2024-06-10',
-          'tripType': 'Mountain',
-          'membersCount': 8,
-          'createdBy': 'user-001',
-        },
-      ],
-      'total': 3,
-      'page': page,
-      'limit': limit,
-    };
-
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Commented out until backend is ready
-    // -------------------------------------------------------------------------
-    /*
+  Future<Map<String, dynamic>> getTrips({
+    int page = 1,
+    int limit = 10,
+  }) async {
     final response = await apiClient.get(
       ApiEndpoints.trips,
       queryParams: {
@@ -82,8 +67,19 @@ class TripsService {
         'limit': limit.toString(),
       },
     );
-    return response as Map<String, dynamic>;
-    */
+
+    final raw = response as Map<String, dynamic>;
+    final data = raw['data'] as List<dynamic>? ?? raw['trips'] as List<dynamic>? ?? [];
+
+    return {
+      'trips': data
+          .map((item) => _normalizeTrip(item as Map<String, dynamic>))
+          .toList(),
+      'total': raw['total'] ?? (raw['meta'] as Map<String, dynamic>?)?['total'],
+      'page': raw['page'] ?? (raw['meta'] as Map<String, dynamic>?)?['page'] ?? page,
+      'limit':
+          raw['limit'] ?? (raw['meta'] as Map<String, dynamic>?)?['limit'] ?? limit,
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -92,34 +88,14 @@ class TripsService {
 
   /// Fetches a specific trip by ID.
   ///
-  /// BACKEND CALL: GET /trips/{tripId}
+  /// BACKEND CALL: GET /groups/{tripId}
   ///
-  /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> getTripById(String tripId) async {
-    // -------------------------------------------------------------------------
-    // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
-    // TODO: Replace mock data once backend API is connected
-    // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(milliseconds: 500));
-    return {
-      'trip': {
-        'id': tripId,
-        'name': 'Santorini Dreams',
-        'destination': 'Santorini, Greece',
-        'coverImage': 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5f1',
-        'startDate': '2024-05-01',
-        'endDate': '2024-05-15',
-        'tripType': 'Beach',
-        'membersCount': 5,
-        'createdBy': 'user-001',
-      },
-    };
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
-    // BACKEND CALL: GET /trips/{tripId}
-    // return await apiClient.get(ApiEndpoints.tripDetail(tripId));
-    // -------------------------------------------------------------------------
+    final response = await apiClient.get(ApiEndpoints.tripDetail(tripId));
+    final raw = response as Map<String, dynamic>;
+    final trip = raw['trip'] as Map<String, dynamic>? ?? raw['data'] as Map<String, dynamic>;
+
+    return {'trip': _normalizeTrip(trip)};
   }
 
   // ---------------------------------------------------------------------------
@@ -128,12 +104,11 @@ class TripsService {
 
   /// Creates a new trip.
   ///
-  /// BACKEND CALL: POST /trips
+  /// BACKEND CALL: POST /groups
   ///
   ///
   /// When no cover image, sends regular JSON POST request.
   ///
-  /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> createTrip({
     required String name,
     required String destination,
@@ -141,25 +116,21 @@ class TripsService {
     required String endDate,
     required String tripType,
   }) async {
-    // -------------------------------------------------------------------------
-    // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
-    // TODO: Replace mock data once backend API is connected
-    // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(seconds: 1));
-    return {
-      'trip': {
-        'id': 'trip-new-${DateTime.now().millisecondsSinceEpoch}',
-        'name': name,
+    final response = await apiClient.post(
+      ApiEndpoints.trips,
+      body: {
+        'title': name,
         'destination': destination,
-        'coverImage': null,
         'startDate': startDate,
         'endDate': endDate,
         'tripType': tripType,
-        'membersCount': 0,
-        'createdBy': 'user-001',
       },
-    };
-    // -------------------------------------------------------------------------
+    );
+
+    final raw = response as Map<String, dynamic>;
+    final trip = raw['trip'] as Map<String, dynamic>? ?? raw['data'] as Map<String, dynamic>;
+
+    return {'trip': _normalizeTrip(trip)};
   }
 
   // ---------------------------------------------------------------------------
@@ -168,35 +139,42 @@ class TripsService {
 
   /// Adds members to a trip.
   ///
-  /// BACKEND CALL: POST /trips/{tripId}/members
+  /// BACKEND CALL: POST /groups/{tripId}/members
   /// Request: { "members": [{ "name": "...", "phone": "..." }] }
   ///
-  /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> addMembers({
     required String tripId,
     required List<Map<String, String>> members,
   }) async {
-    // -------------------------------------------------------------------------
-    // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
-    // TODO: Replace mock data once backend API is connected
-    // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(milliseconds: 500));
-    return {
-      'members': members.map((m) => {
-        ...m,
-        'id': 'member-${DateTime.now().millisecondsSinceEpoch}',
-        'role': 'member',
-      }).toList(),
-    };
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
-    // BACKEND CALL: POST /trips/{tripId}/members
-    // return await apiClient.post(
-    //   ApiEndpoints.addMembers(tripId),
-    //   body: {'members': members},
-    // );
-    // -------------------------------------------------------------------------
+    final response = await apiClient.post(
+      ApiEndpoints.addMembers(tripId),
+      body: {'members': members},
+    );
+
+    return response as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> removeMember({
+    required String tripId,
+    required String memberId,
+  }) async {
+    final response = await apiClient.delete(
+      ApiEndpoints.removeMember(tripId, memberId),
+    );
+
+    return response as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> leaveTrip({
+    required String tripId,
+    required String userId,
+  }) async {
+    final response = await apiClient.post(
+      ApiEndpoints.leaveTrip(tripId),
+      body: {'userId': userId},
+    );
+
+    return response as Map<String, dynamic>;
   }
 
   // ---------------------------------------------------------------------------
@@ -205,26 +183,32 @@ class TripsService {
 
   /// Fetches members of a trip.
   ///
-  /// BACKEND CALL: GET /trips/{tripId}/members
+  /// BACKEND CALL: GET /groups/{tripId}/members
   ///
-  /// TODO: Replace mock data once backend API is connected
   Future<Map<String, dynamic>> getMembers(String tripId) async {
-    // -------------------------------------------------------------------------
-    // MOCK DATA — REMOVE AFTER BACKEND CONNECTED
-    // TODO: Replace mock data once backend API is connected
-    // -------------------------------------------------------------------------
-    await Future.delayed(const Duration(milliseconds: 500));
-    return {
-      'members': [
-        {'id': 'member-001', 'name': 'Alice', 'phone': '+1234567890', 'role': 'admin'},
-        {'id': 'member-002', 'name': 'Bob', 'phone': '+0987654321', 'role': 'member'},
-      ],
-    };
-    // -------------------------------------------------------------------------
-    // REAL API CALL — Uncomment when backend is ready:
-    //
-    // BACKEND CALL: GET /trips/{tripId}/members
-    // return await apiClient.get(ApiEndpoints.getMembers(tripId));
-    // -------------------------------------------------------------------------
+    final response = await apiClient.get(ApiEndpoints.getMembers(tripId));
+    return response as Map<String, dynamic>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Patch Trip (partial update)
+  // ---------------------------------------------------------------------------
+
+  /// Sends only the changed fields to the server via PATCH.
+  ///
+  /// BACKEND CALL: PATCH /groups/{tripId}
+  /// Body: only the dirty fields (e.g. { "destination": "Goa" })
+  ///
+  Future<Map<String, dynamic>> updateTrip(
+    String tripId,
+    Map<String, dynamic> fields,
+  ) async {
+    final response = await apiClient.patch(
+      ApiEndpoints.patchTrip(tripId),
+      body: fields,
+    );
+    final raw = response as Map<String, dynamic>;
+    final trip = raw['data'] as Map<String, dynamic>? ?? raw['trip'] as Map<String, dynamic>? ?? raw;
+    return {'trip': _normalizeTrip(trip)};
   }
 }

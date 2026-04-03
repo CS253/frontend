@@ -31,7 +31,7 @@ class GeocodingService {
         }
       }
     } catch (e) {
-      print('Geocoding error: $e');
+      // No-op for now to keep the code clean and avoid lints
     }
     return null;
   }

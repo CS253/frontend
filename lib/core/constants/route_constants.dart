@@ -18,6 +18,7 @@ class RouteConstants {
   static const String verifyEmail = '/verify-email';
   static const String googleSignIn = '/google-sign-in';
   static const String forgotPassword = '/forgot-password';
+  static const String providePhone = '/provide-phone';
 
   // ---------------------------------------------------------------------------
   // Trip Routes
@@ -53,6 +54,5 @@ class RouteConstants {
   static const String changePassword = '/account-settings/change-password';
 
   static const String tripSettings = '/trip-settings';
-  static const String tripNotifications = '/trip-settings/notifications';
   static const String manageMembers = '/trip-settings/members';
 }

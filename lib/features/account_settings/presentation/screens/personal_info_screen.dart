@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/models/user_profile.dart';
 import '../providers/account_settings_provider.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _upiIdController;
+  bool _hasHydratedProfile = false;
 
   @override
   void initState() {
@@ -26,6 +28,15 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     _emailController = TextEditingController(text: profile?.email ?? '');
     _phoneController = TextEditingController(text: profile?.phone ?? '');
     _upiIdController = TextEditingController(text: profile?.upiId ?? '');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<AccountSettingsProvider>();
+      if (provider.userProfile == null) {
+        await provider.loadUserProfile();
+      }
+      if (!mounted) return;
+      _hydrateFromProfile(provider.userProfile);
+    });
   }
 
   @override
@@ -43,7 +54,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     final provider = context.read<AccountSettingsProvider>();
     final success = await provider.updateProfile(
       name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       upiId: _upiIdController.text.trim(),
     );
@@ -111,6 +121,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       ),
       body: Consumer<AccountSettingsProvider>(
         builder: (context, provider, child) {
+          _hydrateFromProfile(provider.userProfile);
+
           return Form(
             key: _formKey,
             child: ListView(
@@ -150,6 +162,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         controller: _phoneController,
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
+                        isReadOnly: true,
                       ),
                       const SizedBox(height: 24),
                       _buildTextField(
@@ -358,5 +371,15 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         ],
       ],
     );
+  }
+
+  void _hydrateFromProfile(UserProfile? profile) {
+    if (_hasHydratedProfile || profile == null) return;
+
+    _nameController.text = profile.name;
+    _emailController.text = profile.email;
+    _phoneController.text = profile.phone ?? '';
+    _upiIdController.text = profile.upiId;
+    _hasHydratedProfile = true;
   }
 }

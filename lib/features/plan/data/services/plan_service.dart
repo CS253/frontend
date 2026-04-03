@@ -14,10 +14,18 @@ class PlanService {
       body: request.toJson(),
     );
 
-    if (response != null && response['success'] == true) {
-      return RouteResponse.fromJson(response);
+    if (response == null) {
+      throw Exception('No response from server');
+    }
+
+    // Handle both { success: true, data: {...} } and direct response shapes
+    final isSuccess = response['success'] == true ||
+        (response['data'] != null && response['error'] == null);
+
+    if (isSuccess) {
+      return RouteResponse.fromJson(response as Map<String, dynamic>);
     } else {
-      throw Exception(response?['error'] ?? 'Failed to plan route');
+      throw Exception(response['error'] ?? response['message'] ?? 'Failed to plan route');
     }
   }
 }

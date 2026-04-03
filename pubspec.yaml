@@ -33,6 +33,7 @@ dependencies:
 
   google_fonts: ^8.0.2
   provider: ^6.1.5+1
+  flutter_dotenv: ^5.1.0
   file_picker: ^10.3.10
   google_sign_in: ^7.2.0
 
@@ -52,6 +53,9 @@ dependencies:
   cloud_firestore: ^6.1.3
   cupertino_native: ^0.1.1
   google_nav_bar: ^5.0.7
+  url_launcher: ^6.3.2
+  firebase_messaging: ^16.1.3
+  flutter_local_notifications: ^21.0.0
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +82,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/images/
     - assets/images/gallery/
     - assets/fonts/

@@ -16,6 +16,7 @@ import '../features/intro/presentation/screens/register_screen.dart';
 import '../features/intro/presentation/screens/otp_screen.dart';
 import '../features/intro/presentation/screens/google_sign_in_screen.dart';
 import '../features/intro/presentation/screens/forgot_password_screen.dart';
+import '../features/intro/presentation/screens/provide_phone_screen.dart';
 
 // Trip screens
 import '../features/trips/presentation/screens/my_trips_screen.dart';
@@ -28,7 +29,6 @@ import '../features/trip_settings/presentation/screens/trip_settings_screen.dart
 import '../features/account_settings/presentation/screens/personal_info_screen.dart';
 import '../features/account_settings/presentation/screens/change_password_screen.dart';
 import '../features/trip_settings/presentation/screens/manage_members_screen.dart';
-import '../features/trip_settings/presentation/screens/notification_settings_screen.dart';
 
 // Feature screens
 import '../features/payments/presentation/screens/payments_screen.dart';
@@ -70,13 +70,22 @@ class AppRoutes {
       case RouteConstants.forgotPassword:
         return _buildRoute(const ForgotPasswordScreen(), settings);
 
+      case RouteConstants.providePhone:
+        return _buildRoute(const ProvidePhoneScreen(), settings);
+
       // Trips
       case RouteConstants.trips:
         return _buildRoute(const MyTripsScreen(), settings);
 
       // Dashboard (main screen with bottom navigation)
       case RouteConstants.dashboard:
-        return _buildRoute(const MainScreen(), settings);
+        final dashboardArgs = settings.arguments;
+        final dashboardTripId = dashboardArgs is String
+            ? dashboardArgs
+            : dashboardArgs is Map<String, dynamic>
+            ? dashboardArgs['tripId'] as String?
+            : null;
+        return _buildRoute(MainScreen(tripId: dashboardTripId), settings);
 
       // Settings
       case RouteConstants.accountSettings:
@@ -89,23 +98,55 @@ class AppRoutes {
         return _buildRoute(const ChangePasswordScreen(), settings);
 
       case RouteConstants.tripSettings:
-        return _buildRoute(const TripSettingsScreen(), settings);
+        final tripSettingsArgs = settings.arguments;
+        final tripSettingsTripId = tripSettingsArgs is String
+            ? tripSettingsArgs
+            : tripSettingsArgs is Map<String, dynamic>
+            ? tripSettingsArgs['tripId'] as String?
+            : null;
+        return _buildRoute(
+          TripSettingsScreen(tripId: tripSettingsTripId),
+          settings,
+        );
 
-      case RouteConstants.tripNotifications:
-        return _buildRoute(const NotificationSettingsScreen(), settings);
 
       case RouteConstants.manageMembers:
-        return _buildRoute(const ManageMembersScreen(), settings);
+        final args = settings.arguments;
+        final tripId = args is String
+            ? args
+            : args is Map<String, dynamic>
+            ? args['tripId'] as String?
+            : null;
+
+        if (tripId == null || tripId.isEmpty) {
+          return _buildRoute(
+            const Scaffold(
+              body: Center(child: Text('Manage Members requires a tripId.')),
+            ),
+            settings,
+          );
+        }
+
+        return _buildRoute(ManageMembersScreen(tripId: tripId), settings);
 
       // Features
       case RouteConstants.payments:
-        return _buildCupertinoRoute(const PaymentsScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        final groupId = args?['groupId'] as String? ?? '';
+        return _buildCupertinoRoute(PaymentsScreen(groupId: groupId), settings);
 
       case RouteConstants.gallery:
-        return _buildCupertinoRoute(const GalleryScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        final groupId = args?['groupId'] as String? ?? '';
+        return _buildCupertinoRoute(GalleryScreen(groupId: groupId), settings);
 
       case RouteConstants.documents:
-        return _buildCupertinoRoute(const DocumentsScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        final groupId = args?['groupId'] as String? ?? '';
+        return _buildCupertinoRoute(
+          DocumentsScreen(groupId: groupId),
+          settings,
+        );
 
       case RouteConstants.plan:
         return _buildCupertinoRoute(const PlanScreen(), settings);

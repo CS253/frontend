@@ -9,11 +9,11 @@
 //   • Trip list caching (avoids redundant API calls)
 //
 // BACKEND TRIGGER POINTS (UI Action → Provider Method → API Endpoint):
-//   • MyTripsScreen loads     → loadTrips()      → GET /trips
-//   • Trip card tap           → loadTripDetail() → GET /trips/{id}
-//   • Create Trip button      → createTrip()     → POST /trips (multipart/form-data)
+//   • MyTripsScreen loads     → loadTrips()      → GET /groups
+//   • Trip card tap           → loadTripDetail() → GET /groups/{id}
+//   • Create Trip button      → createTrip()     → POST /groups
 //   • Add Member button       → addMemberToNewTrip() → (local state)
-//   • Members loaded          → loadMembers()    → GET /trips/{id}/members
+//   • Members loaded          → loadMembers()    → GET /groups/{id}/members
 //
 // Data Flow: Screen → TripsProvider → TripsRepository → TripsService → API
 //
@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/trip_model.dart';
 import '../../data/models/member_model.dart';
 import '../../data/repositories/trips_repository.dart';
+import '../../../../core/cache/trip_cache.dart';
 
 class TripsProvider with ChangeNotifier {
   final TripsRepository repository;
@@ -93,31 +94,45 @@ class TripsProvider with ChangeNotifier {
   /// Members of the currently selected trip.
   List<MemberModel> _members = [];
   List<MemberModel> get members => _members;
+  String? _membersTripId;
+
+  bool _isUpdatingMembers = false;
+  bool get isUpdatingMembers => _isUpdatingMembers;
+
+  bool _isLeavingTrip = false;
+  bool get isLeavingTrip => _isLeavingTrip;
 
   // ---------------------------------------------------------------------------
   // Load Trips
   // ---------------------------------------------------------------------------
 
-  /// Loads the trip list from the backend (or mock).
+  /// Loads the trip list from the backend.
   ///
-  /// BACKEND CALL: MyTripsScreen loads → TripsProvider.loadTrips()
-  ///   → TripsRepository.getTrips() → TripsService.getTrips()
-  ///   → GET /trips?page=1&limit=10
+  /// Stale-while-revalidate: if TripCache already has data, shows it
+  /// INSTANTLY (no spinner) then fetches fresh data in the background
+  /// and silently updates the UI when it arrives.
   ///
-  /// TODO: Replace mock data once backend API is connected
-  Future<void> loadTrips({bool refresh = false}) async {
+  /// Pass [context] to enable cover image pre-fetching (eliminates flicker).
+  Future<void> loadTrips({bool refresh = false, BuildContext? context}) async {
+    final cache = TripCache.instance;
+
+    // Serve from cache immediately for instant UI on revisit
+    if (!refresh && cache.hasShells && _trips.isEmpty) {
+      _trips = cache.getAllShells();
+      notifyListeners(); // instant render
+    }
+
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
-      _trips = [];
+      if (!cache.hasShells) _trips = []; // only clear if no cache
     }
 
-    // Don't load if already loading or no more data
     if (_isLoading || (!_hasMore && !refresh)) return;
 
     _isLoading = true;
+    if (_trips.isEmpty) notifyListeners(); // show spinner only if no cache
     _errorMessage = null;
-    notifyListeners();
 
     try {
       final newTrips = await repository.getTrips(
@@ -125,10 +140,24 @@ class TripsProvider with ChangeNotifier {
         limit: 10,
       );
 
+      if (refresh || _currentPage == 1) {
+        _trips = newTrips;
+        cache.setAll(newTrips); // update cache
+      } else {
+        _trips.addAll(newTrips);
+        for (final t in newTrips) {
+          cache.putShell(t);
+        }
+      }
+
+      // Pre-fetch all cover images into GPU memory so navigation is flicker-free
+      if (context != null && context.mounted) {
+        cache.precacheAll(newTrips, context);
+      }
+
       if (newTrips.isEmpty) {
         _hasMore = false;
       } else {
-        _trips.addAll(newTrips);
         _currentPage++;
       }
     } catch (e) {
@@ -140,6 +169,26 @@ class TripsProvider with ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Update Trip Fields (dirty-check PATCH)
+  // ---------------------------------------------------------------------------
+
+  /// Sends only the changed [fields] to the server via PATCH.
+  /// Updates both the local trip list and the TripCache.
+  Future<TripModel> updateTripFields(
+    String tripId,
+    Map<String, dynamic> fields,
+  ) async {
+    final updated = await repository.updateTrip(tripId, fields);
+    // Update in-list
+    final idx = _trips.indexWhere((t) => t.id == tripId);
+    if (idx >= 0) _trips[idx] = updated;
+    // Update cache
+    TripCache.instance.patchShell(tripId, updated);
+    notifyListeners();
+    return updated;
+  }
+
+  // ---------------------------------------------------------------------------
   // Load Trip Detail
   // ---------------------------------------------------------------------------
 
@@ -147,7 +196,7 @@ class TripsProvider with ChangeNotifier {
   ///
   /// BACKEND CALL: Trip card tap → TripsProvider.loadTripDetail()
   ///   → TripsRepository.getTripById() → TripsService.getTripById()
-  ///   → GET /trips/{tripId}
+  ///   → GET /groups/{tripId}
   ///
   /// TODO: Replace mock data once backend API is connected
   Future<void> loadTripDetail(String tripId) async {
@@ -201,7 +250,7 @@ class TripsProvider with ChangeNotifier {
   ///
   /// BACKEND CALL: Create Trip button → TripsProvider.createTrip()
   ///   → TripsRepository.createTrip() → TripsService.createTrip()
-  ///   → POST /trips (multipart/form-data with coverImage file)
+  ///   → POST /groups
   ///
   /// After this succeeds, the trip is added to the local list and
   /// the creation state is reset.
@@ -229,15 +278,23 @@ class TripsProvider with ChangeNotifier {
       );
 
       // Add members if any were added during creation
+      var tripWithMembers = trip;
       if (_newTripMembers.isNotEmpty) {
         final memberData = _newTripMembers
             .map((m) => {'name': m.name, 'phone': m.phone ?? ''})
             .toList();
-        await repository.addMembers(tripId: trip.id, members: memberData);
+        final addedMembers = await repository.addMembers(
+          tripId: trip.id,
+          members: memberData,
+        );
+        tripWithMembers = trip.copyWith(
+          membersCount: trip.membersCount + addedMembers.length,
+        );
       }
 
       // Add the new trip to the local cache
-      _trips.insert(0, trip.copyWith(membersCount: _newTripMembers.length));
+      _trips.insert(0, tripWithMembers);
+      TripCache.instance.putShell(tripWithMembers); // keep cache in sync
 
       // Reset creation state
       _resetCreationState();
@@ -271,6 +328,11 @@ class TripsProvider with ChangeNotifier {
 
   /// Loads members for a specific trip.
   Future<void> loadMembers(String tripId) async {
+    if (_membersTripId != tripId) {
+      _members = [];
+      _membersTripId = tripId;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -283,6 +345,96 @@ class TripsProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> addMember({
+    required String tripId,
+    required String phone,
+    String? name,
+  }) async {
+    _isUpdatingMembers = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final members = await repository.addMembers(
+        tripId: tripId,
+        members: [
+          {
+            if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+            'phone': phone.trim(),
+          },
+        ],
+      );
+
+      _members = [..._members, ...members];
+      _syncTripMemberCount(tripId, _members.length);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isUpdatingMembers = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeMember({
+    required String tripId,
+    required String memberId,
+  }) async {
+    _isUpdatingMembers = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await repository.removeMember(
+        tripId: tripId,
+        memberId: memberId,
+      );
+
+      _members = _members.where((member) => member.id != memberId).toList();
+      _syncTripMemberCount(tripId, _members.length);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isUpdatingMembers = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> leaveTrip({
+    required String tripId,
+    required String userId,
+  }) async {
+    _isLeavingTrip = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await repository.leaveTrip(
+        tripId: tripId,
+        userId: userId,
+      );
+
+      _trips = _trips.where((trip) => trip.id != tripId).toList();
+      TripCache.instance.remove(tripId); // remove from cache
+      if (_selectedTrip?.id == tripId) {
+        _selectedTrip = null;
+      }
+      if (_membersTripId == tripId) {
+        _membersTripId = null;
+        _members = [];
+      }
+
+      return result;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLeavingTrip = false;
+      notifyListeners();
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -299,10 +451,23 @@ class TripsProvider with ChangeNotifier {
   void clearCache() {
     _trips = [];
     _members = [];
+    _membersTripId = null;
     _selectedTrip = null;
     _currentPage = 1;
     _hasMore = true;
     _resetCreationState();
+    TripCache.instance.clear();
     notifyListeners();
+  }
+
+  void _syncTripMemberCount(String tripId, int membersCount) {
+    final tripIndex = _trips.indexWhere((trip) => trip.id == tripId);
+    if (tripIndex >= 0) {
+      _trips[tripIndex] = _trips[tripIndex].copyWith(membersCount: membersCount);
+    }
+
+    if (_selectedTrip?.id == tripId) {
+      _selectedTrip = _selectedTrip!.copyWith(membersCount: membersCount);
+    }
   }
 }

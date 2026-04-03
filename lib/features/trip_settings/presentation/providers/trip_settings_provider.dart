@@ -47,6 +47,14 @@ class TripSettingsProvider extends ChangeNotifier {
   // INTIALIZATION
   // ---------------------------------------------------------------------------
   void init(String tripId) {
+    if (_tripId != tripId) {
+      _members = [];
+      _tripSettings = null;
+      _notificationSettings = null;
+      _membersError = null;
+      _tripSettingsError = null;
+      _notificationError = null;
+    }
     _tripId = tripId;
     fetchMembers();
     fetchTripSettings();
@@ -137,8 +145,8 @@ class TripSettingsProvider extends ChangeNotifier {
   Future<void> updateTripSetting(String key, dynamic value) async {
     // Optimistic UI Update
     if (_tripSettings != null) {
-      if (key == 'simplify_expenses') {
-         _tripSettings = _tripSettings!.copyWith(simplifyExpenses: value);
+      if (key == 'simplify_expenses' || key == 'simplify_debts' || key == 'simplifyDebts') {
+         _tripSettings = _tripSettings!.copyWith(simplifyDebts: value);
          notifyListeners();
       }
     }
@@ -204,5 +212,19 @@ class TripSettingsProvider extends ChangeNotifier {
       fetchNotificationSettings();
       rethrow;
     }
+  }
+
+  /// Clears all settings data (e.g. on logout).
+  void clear() {
+    _members = [];
+    _tripSettings = null;
+    _notificationSettings = null;
+    _isLoadingMembers = false;
+    _isLoadingTripSettings = false;
+    _isLoadingNotifications = false;
+    _membersError = null;
+    _tripSettingsError = null;
+    _notificationError = null;
+    notifyListeners();
   }
 }

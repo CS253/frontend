@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
-import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
-import 'package:travelly/features/payments/data/services/payment_service.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_split_row.dart';
 import 'package:travelly/core/constants/currency.dart';
 
 class SplitAmountDialog extends StatefulWidget {
+  final String groupId;
   final Map<String, String> paymentDetails;
-  final List<String> selectedPeopleNames;
+  final List<String> selectedPeopleIds;
   final VoidCallback onBack;
+  final void Function(Map<String, dynamic>)? onComplete;
 
   const SplitAmountDialog({
     super.key,
+    required this.groupId,
     required this.paymentDetails,
-    required this.selectedPeopleNames,
+    required this.selectedPeopleIds,
     required this.onBack,
+    this.onComplete,
   });
 
   @override
@@ -25,8 +29,7 @@ class SplitAmountDialog extends StatefulWidget {
 
 class _SplitAmountDialogState extends State<SplitAmountDialog> {
   bool splitEqually = true;
-  late Map<String, TextEditingController> controllers;
-  bool _isLoading = true;
+  late Map<String, TextEditingController> controllers; // keyed by userId
   bool _isSubmitting = false;
   List<MemberModel> _members = [];
 
@@ -34,29 +37,18 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   void initState() {
     super.initState();
     controllers = {};
-    for (var name in widget.selectedPeopleNames) {
-      controllers[name] = TextEditingController();
+    for (var id in widget.selectedPeopleIds) {
+      controllers[id] = TextEditingController();
     }
     _recalculateSplits();
-    _fetchMembers();
-  }
-
-  Future<void> _fetchMembers() async {
-    try {
-      final members = await PaymentRepository().getTripMembers();
-      if (mounted) {
-        setState(() {
-          _members = members;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    
+    final participants = context.read<DashboardProvider>().participants;
+    _members = participants.map((p) => MemberModel(
+      id: p.id,
+      userId: p.id,
+      name: p.name,
+      avatarColor: const Color(0xFFD9F0FC)
+    )).toList();
   }
 
   void _recalculateSplits() {
@@ -64,7 +56,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
     double total =
         double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
-    int divisor = widget.selectedPeopleNames.length;
+    int divisor = widget.selectedPeopleIds.length;
     if (divisor == 0) return;
 
     int totalCents = (total * 100).round();
@@ -77,16 +69,16 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
     double f = fCents / 100.0;
     double c = (fCents + 1) / 100.0;
 
-    List<String> names = List.from(widget.selectedPeopleNames);
-    names.shuffle();
+    List<String> ids = List.from(widget.selectedPeopleIds);
+    ids.shuffle();
 
-    for (int i = 0; i < names.length; i++) {
-      String name = names[i];
-      if (controllers.containsKey(name)) {
+    for (int i = 0; i < ids.length; i++) {
+      String id = ids[i];
+      if (controllers.containsKey(id)) {
         if (i < x) {
-          controllers[name]!.text = f.toStringAsFixed(2);
+          controllers[id]!.text = f.toStringAsFixed(2);
         } else {
-          controllers[name]!.text = c.toStringAsFixed(2);
+          controllers[id]!.text = c.toStringAsFixed(2);
         }
       }
     }
@@ -113,28 +105,45 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
     setState(() => _isSubmitting = true);
 
-    final body = {
-      'amount': widget.paymentDetails['amount'],
-      'description': widget.paymentDetails['description'],
-      'emoji': widget.paymentDetails['emoji'],
-      'payer': widget.paymentDetails['payer'],
-      'date': widget.paymentDetails['date'],
+    // Build the API-compliant payload
+    final Map<String, dynamic> body = {
+      'title': widget.paymentDetails['description'] ?? '',
+      'amount': double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0,
+      'paidBy': widget.paymentDetails['payerId'] ?? '',
       'currency': widget.paymentDetails['currency'] ?? AppCurrency.code,
-      'transaction_id': widget.paymentDetails['transaction_id'],
-      'splits': controllers.entries
-          .map((e) => {'name': e.key, 'amount': e.value.text})
-          .toList(),
     };
 
+    // Add date if provided
+    final dateStr = widget.paymentDetails['date'] ?? '';
+    if (dateStr.isNotEmpty) {
+      body['date'] = dateStr;
+    }
+
+    // Build split payload
+    if (splitEqually) {
+      body['split'] = {
+        'type': 'EQUAL',
+        'participants': widget.selectedPeopleIds,
+      };
+    } else {
+      body['split'] = {
+        'type': 'CUSTOM',
+        'splits': controllers.entries
+            .map((e) => {
+                  'userId': e.key,
+                  'amount': double.tryParse(e.value.text) ?? 0.0,
+                })
+            .toList(),
+      };
+    }
+
     try {
-      await PaymentService().createExpense(body);
-      if (mounted) {
-        Navigator.of(
-          context,
-        ).popUntil((route) => route.isFirst); // Close all dialogs
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense added successfully')),
-        );
+      if (!mounted) return;
+      
+      // Bubble the payload up to be handled optimistically by the Provider
+      Navigator.of(context).pop();
+      if (widget.onComplete != null) {
+        widget.onComplete!(body);
       }
     } catch (e) {
       if (mounted) {
@@ -149,7 +158,7 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   @override
   Widget build(BuildContext context) {
     final activeMembers = _members
-        .where((m) => widget.selectedPeopleNames.contains(m.name))
+        .where((m) => widget.selectedPeopleIds.contains(m.userId))
         .toList();
 
     final currencyCode = widget.paymentDetails['currency'] ?? AppCurrency.code;
@@ -292,34 +301,28 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
             const SizedBox(height: 16),
             SizedBox(
               height: 300,
-              child: _isLoading
-                  ? ListView.builder(
-                      itemCount: 3,
-                      itemBuilder: (context, index) =>
-                          PaymentSplitRow.buildLoading(),
-                    )
-                  : ListView.builder(
-                      itemCount: activeMembers.length,
-                      itemBuilder: (context, index) {
-                        final member = activeMembers[index];
-                        final controller = controllers[member.name]!;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: PaymentSplitRow(
-                            member: member,
-                            controller: controller,
-                            currencySymbol: currencySymbol,
-                            onManualEdit: () {
-                              if (splitEqually) {
-                                setState(() {
-                                  splitEqually = false;
-                                });
-                              }
-                            },
-                          ),
-                        );
+              child: ListView.builder(
+                itemCount: activeMembers.length,
+                itemBuilder: (context, index) {
+                  final member = activeMembers[index];
+                  final controller = controllers[member.userId]!;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: PaymentSplitRow(
+                      member: member,
+                      controller: controller,
+                      currencySymbol: currencySymbol,
+                      onManualEdit: () {
+                        if (splitEqually) {
+                          setState(() {
+                            splitEqually = false;
+                          });
+                        }
                       },
                     ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
             DialogPrimaryButton(

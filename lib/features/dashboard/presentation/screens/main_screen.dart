@@ -5,7 +5,12 @@ import '../../../../features/account_settings/presentation/screens/account_setti
 import '../../../../core/widgets/floating_navbar.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final String? tripId;
+
+  const MainScreen({
+    super.key,
+    this.tripId,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -24,13 +29,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
-        return const DashboardScreen();
+        return DashboardScreen(tripId: widget.tripId ?? '');
       case 1:
-        return const TripSettingsScreen();
+        return TripSettingsScreen(tripId: widget.tripId);
       case 2:
         return const AccountSettingsScreen();
       default:
-        return const DashboardScreen();
+        return DashboardScreen(tripId: widget.tripId ?? '');
     }
   }
 
