@@ -50,6 +50,9 @@ import '../features/plan/presentation/providers/plan_provider.dart';
 import '../features/payments/data/services/payment_service.dart';
 import '../features/payments/data/repositories/payment_repository.dart';
 
+// Notification Core Service
+import '../core/services/notification_service.dart';
+
 /// Creates the shared ApiClient instance.
 ///
 /// TODO: Update ApiEndpoints.baseUrl with real backend URL before deployment.
@@ -79,15 +82,21 @@ class AppProviders {
         // Shared ApiClient instance so every feature reuses the same auth token.
         Provider<ApiClient>.value(value: apiClient),
 
+        // Core Notification Service
+        Provider<NotificationService>(
+          create: (_) => NotificationService(apiClient),
+        ),
+
         // -----------------------------------------------------------------------
         // Auth Feature Providers
         // -----------------------------------------------------------------------
         ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(
+          create: (context) => AuthProvider(
             repository: AuthRepository(
               service: AuthService(apiClient: apiClient),
               apiClient: apiClient,
             ),
+            notificationService: context.read<NotificationService>(),
           ),
         ),
 
@@ -159,6 +168,13 @@ class AppProviders {
           create: (context) => PaymentRepository(
             service: context.read<PaymentService>(),
           ),
+        ),
+
+        // -----------------------------------------------------------------------
+        // Core Services
+        // -----------------------------------------------------------------------
+        Provider<NotificationService>(
+          create: (_) => NotificationService(apiClient),
         ),
       ],
       child: child,

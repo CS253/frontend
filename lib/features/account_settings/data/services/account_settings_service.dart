@@ -20,14 +20,18 @@ class AccountSettingsService {
         'phone': raw['phoneNumber'] ?? '',
         'upi_id': raw['upiId'] ?? '',
         'image_url': null,
-        'preferences': {'notifications_enabled': true},
+        'preferences': {
+          'notifications_enabled': raw['notificationsEnabled'] ?? true
+        },
       },
     };
   }
 
   Future<void> updateNotificationPreferences(bool enabled) async {
-    // MOCK RESPONSE
-    await Future.delayed(const Duration(milliseconds: 500));
+    await apiClient.put(
+      ApiEndpoints.updateUserProfile,
+      body: {'notificationsEnabled': enabled},
+    );
   }
 
   Future<void> updateProfile(Map<String, dynamic> data) async {

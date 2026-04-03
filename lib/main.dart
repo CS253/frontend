@@ -25,7 +25,9 @@ void main() async {
 
   // Initialize Firebase for all platforms
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     if (e is FirebaseException && e.code == 'duplicate-app') {
       // Firebase is already initialized on the native side

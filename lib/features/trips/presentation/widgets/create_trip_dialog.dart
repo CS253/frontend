@@ -646,40 +646,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
           ),
           const SizedBox(height: 16),
 
-          const Text(
-            'Or Add from Contacts',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF5A7184),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.group_add_outlined, color: Color(0xFF6BB5E5)),
-                SizedBox(width: 8),
-                Text(
-                  'Contacts',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Color(0xFF333333),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 24),
 
           // Members list from provider

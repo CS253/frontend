@@ -213,15 +213,20 @@ class ApiClient {
   Future<dynamic> delete(
     String endpoint, {
     Map<String, String>? headers,
+    dynamic body,
   }) async {
     final url = '$baseUrl$endpoint';
-    _logRequest('DELETE', url);
+    _logRequest('DELETE', url, body: body);
 
     try {
-      final response = await _client.delete(
-        Uri.parse(url),
-        headers: _buildHeaders(customHeaders: headers),
-      );
+      final request = http.Request('DELETE', Uri.parse(url));
+      request.headers.addAll(_buildHeaders(customHeaders: headers));
+      if (body != null) {
+        request.body = jsonEncode(body);
+      }
+
+      final streamedResponse = await _client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
       _logResponse(response);
       return _handleResponse(response);
     } on SocketException {

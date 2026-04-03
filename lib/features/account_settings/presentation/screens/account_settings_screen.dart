@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
 import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
@@ -113,20 +115,22 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                   );
                                 },
                               ),
-                              const Divider(
-                                height: 1,
-                                color: Color(0xFFEDEDED),
-                                indent: 16,
-                                endIndent: 16,
-                              ),
-                              SettingItem(
-                                title: 'Notification Settings',
-                                subtitle: 'Toggle Alerts',
-                                icon: Icons.notifications_none,
-                                iconBgColor: const Color(0xFFE3D9F2),
-                                iconColor: const Color(0xFF333136),
-                                trailing: _buildSwitch(provider),
-                              ),
+                              if (!kIsWeb && !Platform.isIOS) ...[
+                                const Divider(
+                                  height: 1,
+                                  color: Color(0xFFEDEDED),
+                                  indent: 16,
+                                  endIndent: 16,
+                                ),
+                                SettingItem(
+                                  title: 'Notification Settings',
+                                  subtitle: 'Toggle Alerts',
+                                  icon: Icons.notifications_none,
+                                  iconBgColor: const Color(0xFFE3D9F2),
+                                  iconColor: const Color(0xFF333136),
+                                  trailing: _buildSwitch(provider),
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -255,7 +259,16 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   }
 
   Widget _buildSwitch(AccountSettingsProvider provider) {
-    // If not loaded yet, use default false for switch
+    if (provider.isLoading) {
+      return const SizedBox(
+        width: 44, // Match switch standard width
+        height: 44,
+        child: Center(
+          child: CupertinoActivityIndicator(radius: 8),
+        ),
+      );
+    }
+
     final isEnabled = provider.userProfile?.notificationsEnabled ?? false;
 
     return Transform.scale(
@@ -263,11 +276,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       child: CupertinoSwitch(
         value: isEnabled,
         activeTrackColor: const Color(0xFF6BB5E5),
-        onChanged: provider.isLoading
-            ? null
-            : (bool value) {
-                provider.toggleNotifications(value);
-              },
+        onChanged: (bool value) {
+          provider.toggleNotifications(value);
+        },
       ),
     );
   }
