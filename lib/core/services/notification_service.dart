@@ -18,6 +18,12 @@ class NotificationService {
   /// Initializes the notification service.
   /// Requests permissions and sets up listeners for FCM messages.
   Future<void> initialize() async {
+    // Return early if iOS - push notifications are disabled for iOS
+    if (!kIsWeb && Platform.isIOS) {
+      debugPrint('Notification system disabled for iOS');
+      return;
+    }
+
     // 1. Request Permission (especially for iOS)
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
