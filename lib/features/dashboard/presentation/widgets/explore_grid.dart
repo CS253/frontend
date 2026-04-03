@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/route_constants.dart';
+import '../providers/dashboard_provider.dart';
 import 'explore_card.dart';
 
 /// 2×2 grid of explore navigation cards on the dashboard.
@@ -50,10 +52,13 @@ class ExploreGrid extends StatelessWidget {
               icon: Icons.account_balance_wallet_outlined,
               iconBgColor: const Color(0xFF7EF1CB),
               cardBgColor: const Color(0xFFE5F8F1),
-              onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(
-                RouteConstants.payments,
-                arguments: {'groupId': tripId},
-              ),
+              onTap: () {
+                final dsProvider = context.read<DashboardProvider>();
+                Navigator.of(context, rootNavigator: true).pushNamed(
+                  RouteConstants.payments,
+                  arguments: {'groupId': tripId},
+                ).then((_) => dsProvider.refreshActivities(tripId));
+              },
             ),
             ExploreCard(
               title: 'Gallery',

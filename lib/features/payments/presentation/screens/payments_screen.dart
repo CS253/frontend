@@ -69,6 +69,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   /// via optimistic updates so no full reload is needed.
   void _reload() {
     _paymentsProvider.refreshDerived(groupId: widget.groupId);
+    try {
+      context.read<DashboardProvider>().refreshActivities(widget.groupId);
+    } catch (_) {
+      // Ignored if unavailable
+    }
   }
 
   @override
@@ -282,7 +287,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           ),
         ),
         Text(
-          'Detailed',
+          _paymentsProvider.simplifyDebts ? 'Simplified' : 'Detailed',
           style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w500,
             fontSize: 13,

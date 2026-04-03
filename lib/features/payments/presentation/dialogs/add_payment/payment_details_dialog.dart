@@ -46,8 +46,13 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     descriptionController = TextEditingController(
       text: widget.initialDetails?['description'] ?? '',
     );
+    final initialDateStr = widget.initialDetails?['date'] ?? '';
+    _selectedDate = initialDateStr.isNotEmpty 
+        ? DateTime.tryParse(initialDateStr) ?? DateTime.now() 
+        : DateTime.now();
+
     dateController = TextEditingController(
-      text: widget.initialDetails?['date'] ?? '',
+      text: initialDateStr.isNotEmpty ? initialDateStr : "${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}",
     );
 
     final participants = context.read<DashboardProvider>().participants;

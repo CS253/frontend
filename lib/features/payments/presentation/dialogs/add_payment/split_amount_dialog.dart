@@ -94,16 +94,31 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
           .round();
     }
 
-    if (currentSumCents != totalCents) {
+    // Allow 1-cent tolerance to handle floating-point representation differences.
+    if ((currentSumCents - totalCents).abs() > 1) {
+      final diff = (totalCents - currentSumCents) / 100.0;
+      final sym = widget.paymentDetails['currency'] == 'USD' ? '\$'
+          : widget.paymentDetails['currency'] == 'EUR' ? '€'
+          : widget.paymentDetails['currency'] == 'GBP' ? '£'
+          : '₹';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Split amounts must equal total payment amount'),
+        SnackBar(
+          content: Text(
+            diff > 0
+                ? 'Still $sym${diff.toStringAsFixed(2)} unallocated — adjust splits to match total'
+                : 'Split exceeds total by $sym${(-diff).toStringAsFixed(2)} — reduce amounts',
+          ),
+          backgroundColor: const Color(0xFFD1475E),
+          behavior: SnackBarBehavior.floating,
         ),
       );
+      setState(() => _isSubmitting = false);
       return;
     }
 
     setState(() => _isSubmitting = true);
+
+    debugPrint('[SplitAmountDialog] Submitting: splitEqually=$splitEqually, totalCents=$totalCents, currentSumCents=$currentSumCents, ids=${controllers.keys.toList()}');
 
     // Build the API-compliant payload
     final Map<String, dynamic> body = {
@@ -138,13 +153,9 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
     }
 
     try {
-      if (!mounted) return;
-      
       // Bubble the payload up to be handled optimistically by the Provider
-      Navigator.of(context).pop();
-      if (widget.onComplete != null) {
-        widget.onComplete!(body);
-      }
+      if (mounted) Navigator.of(context).pop();
+      widget.onComplete?.call(body);
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -157,9 +168,19 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final activeMembers = _members
-        .where((m) => widget.selectedPeopleIds.contains(m.userId))
-        .toList();
+    // Build an activeMembers list that always includes ALL selected people,
+    // using a fallback placeholder for any IDs not yet in _members.
+    final activeMembers = widget.selectedPeopleIds.map((id) {
+      return _members.firstWhere(
+        (m) => m.userId == id,
+        orElse: () => MemberModel(
+          id: id,
+          userId: id,
+          name: 'User ${id.substring(0, 6)}',
+          avatarColor: const Color(0xFFD9F0FC),
+        ),
+      );
+    }).toList();
 
     final currencyCode = widget.paymentDetails['currency'] ?? AppCurrency.code;
     final currencySymbol = currencyCode == 'INR'
