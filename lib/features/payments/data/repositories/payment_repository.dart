@@ -11,15 +11,66 @@ import 'package:travelly/features/payments/data/services/payment_service.dart';
 class PaymentRepository {
   final PaymentService _service;
 
+  // In-memory Future caching to prevent redundant API calls during prefetch
+  final Map<String, Future<List<ExpenseModel>>> _expensesCache = {};
+  final Map<String, Future<List<UserBalance>>> _balancesCache = {};
+  final Map<String, Future<List<SettlementModel>>> _settlementsCache = {};
+  final Map<String, Future<GroupSummaryModel?>> _summaryCache = {};
+  final Map<String, Future<List<MemberModel>>> _membersCache = {};
+
   PaymentRepository({PaymentService? service})
     : _service = service ?? PaymentService();
+
+  // ---------------------------------------------------------------------------
+  // Prefetch
+  // ---------------------------------------------------------------------------
+  void prefetchAll(String groupId, {String? userId}) {
+    getExpenses(groupId);
+    getBalances(groupId);
+    getGroupSummary(groupId, userId: userId);
+  }
+
+  /// Evict the expenses cache for a group so the next call fetches fresh data.
+  void invalidateExpensesCache(String groupId) {
+    _expensesCache.remove(groupId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Members
+  // ---------------------------------------------------------------------------
+
+  /// Fetch all members for a group (cached).
+  Future<List<MemberModel>> getMembers(String groupId, {bool forceRefresh = false}) {
+    if (forceRefresh || !_membersCache.containsKey(groupId)) {
+      _membersCache[groupId] = _fetchMembers(groupId);
+    }
+    return _membersCache[groupId]!;
+  }
+
+  Future<List<MemberModel>> _fetchMembers(String groupId) async {
+    final response = await _service.fetchGroupMembers(groupId);
+    final data = response['members'];
+    if (data is List) {
+      return data
+          .map((m) => MemberModel.fromJson(m as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
 
   // ---------------------------------------------------------------------------
   // Expenses
   // ---------------------------------------------------------------------------
 
   /// Fetch all expenses for a group.
-  Future<List<ExpenseModel>> getExpenses(String groupId) async {
+  Future<List<ExpenseModel>> getExpenses(String groupId, {bool forceRefresh = false}) {
+    if (forceRefresh || !_expensesCache.containsKey(groupId)) {
+      _expensesCache[groupId] = _fetchExpenses(groupId);
+    }
+    return _expensesCache[groupId]!;
+  }
+
+  Future<List<ExpenseModel>> _fetchExpenses(String groupId) async {
     final response = await _service.fetchExpenses(groupId);
     final data = response['data'];
     if (data is List) {
@@ -80,7 +131,14 @@ class PaymentRepository {
   // ---------------------------------------------------------------------------
 
   /// Fetch per-currency balances for all members.
-  Future<List<UserBalance>> getBalances(String groupId) async {
+  Future<List<UserBalance>> getBalances(String groupId, {bool forceRefresh = false}) {
+    if (forceRefresh || !_balancesCache.containsKey(groupId)) {
+      _balancesCache[groupId] = _fetchBalances(groupId);
+    }
+    return _balancesCache[groupId]!;
+  }
+
+  Future<List<UserBalance>> _fetchBalances(String groupId) async {
     final response = await _service.fetchBalances(groupId);
     final data = response['data'];
     if (data is Map<String, dynamic>) {
@@ -91,6 +149,19 @@ class PaymentRepository {
 
   /// Fetch settlement transactions (simplified or netting).
   Future<List<SettlementModel>> getSettlements(
+    String groupId, {
+    bool? simplifyDebts,
+    bool forceRefresh = false,
+  }) {
+    // Cache key depends on simplifyDebts value to avoid cross-pollination
+    final cacheKey = '${groupId}_$simplifyDebts';
+    if (forceRefresh || !_settlementsCache.containsKey(cacheKey)) {
+      _settlementsCache[cacheKey] = _fetchSettlements(groupId, simplifyDebts: simplifyDebts);
+    }
+    return _settlementsCache[cacheKey]!;
+  }
+
+  Future<List<SettlementModel>> _fetchSettlements(
     String groupId, {
     bool? simplifyDebts,
   }) async {
@@ -158,6 +229,19 @@ class PaymentRepository {
 
   /// Fetch group summary with optional individual stats.
   Future<GroupSummaryModel?> getGroupSummary(
+    String groupId, {
+    String? userId,
+    bool forceRefresh = false,
+  }) {
+    // Cache key depends on userId to avoid cross-pollination
+    final cacheKey = '${groupId}_$userId';
+    if (forceRefresh || !_summaryCache.containsKey(cacheKey)) {
+      _summaryCache[cacheKey] = _fetchGroupSummary(groupId, userId: userId);
+    }
+    return _summaryCache[cacheKey]!;
+  }
+
+  Future<GroupSummaryModel?> _fetchGroupSummary(
     String groupId, {
     String? userId,
   }) async {

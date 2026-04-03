@@ -178,6 +178,38 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> patch(
+    String endpoint, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    _logRequest('PATCH', url, body: body);
+
+    try {
+      final response = await _client.patch(
+        Uri.parse(url),
+        headers: _buildHeaders(customHeaders: headers),
+        body: body != null ? jsonEncode(body) : null,
+      );
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
+    }
+  }
+
   Future<dynamic> delete(
     String endpoint, {
     Map<String, String>? headers,
@@ -332,7 +364,17 @@ class ApiClient {
       final errorBody = jsonDecode(response.body);
       errorMessage = errorBody['message'] ?? errorBody['error'] ?? errorMessage;
       errorData = errorBody;
-    } catch (_) {
+
+      // 409 Conflict — server detected optimistic locking violation.
+      // Throw a typed ConflictException carrying fresh server data.
+      if (statusCode == 409 && errorBody['error'] == 'CONFLICT') {
+        throw ConflictException(
+          message: 'Trip was modified by someone else.',
+          freshData: errorBody['freshData'] as Map<String, dynamic>?,
+        );
+      }
+    } catch (e) {
+      if (e is ConflictException) rethrow;
       // Ignore invalid JSON error bodies.
     }
 
@@ -343,3 +385,18 @@ class ApiClient {
     );
   }
 }
+
+/// Thrown when the server returns HTTP 409 due to an optimistic locking conflict.
+///
+/// Carries [freshData] — the current server version of the resource —
+/// so the caller can update its local cache without needing a separate fetch.
+class ConflictException implements Exception {
+  final String message;
+  final Map<String, dynamic>? freshData;
+
+  const ConflictException({required this.message, this.freshData});
+
+  @override
+  String toString() => 'ConflictException: $message';
+}
+

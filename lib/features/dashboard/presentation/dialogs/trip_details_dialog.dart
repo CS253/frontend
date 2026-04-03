@@ -318,8 +318,9 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                               _debounce = Timer(
                                 const Duration(milliseconds: 500),
                                 () async {
-                                  if (mounted)
+                                  if (mounted) {
                                     setState(() => _isSearching = true);
+                                  }
                                   try {
                                     final results =
                                         await DestinationService.searchCities(
@@ -327,8 +328,9 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                                         );
                                     completer.complete(results);
                                   } finally {
-                                    if (mounted)
+                                    if (mounted) {
                                       setState(() => _isSearching = false);
+                                    }
                                   }
                                 },
                               );

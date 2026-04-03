@@ -153,4 +153,18 @@ class TripsRepository {
       throw Exception('Failed to load members: $e');
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Update Trip (partial PATCH)
+  // ---------------------------------------------------------------------------
+
+  /// Sends only changed fields to the server. Returns the updated [TripModel].
+  Future<TripModel> updateTrip(String tripId, Map<String, dynamic> fields) async {
+    try {
+      final rawData = await service.updateTrip(tripId, fields);
+      return TripModel.fromJson(rawData['trip'] as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to update trip: $e');
+    }
+  }
 }

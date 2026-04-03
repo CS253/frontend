@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/trip_model.dart';
 import '../../data/models/member_model.dart';
 import '../../data/repositories/trips_repository.dart';
+import '../../../../core/cache/trip_cache.dart';
 
 class TripsProvider with ChangeNotifier {
   final TripsRepository repository;
@@ -105,26 +106,33 @@ class TripsProvider with ChangeNotifier {
   // Load Trips
   // ---------------------------------------------------------------------------
 
-  /// Loads the trip list from the backend (or mock).
+  /// Loads the trip list from the backend.
   ///
-  /// BACKEND CALL: MyTripsScreen loads → TripsProvider.loadTrips()
-  ///   → TripsRepository.getTrips() → TripsService.getTrips()
-  ///   → GET /groups?page=1&limit=10
+  /// Stale-while-revalidate: if TripCache already has data, shows it
+  /// INSTANTLY (no spinner) then fetches fresh data in the background
+  /// and silently updates the UI when it arrives.
   ///
-  /// TODO: Replace mock data once backend API is connected
-  Future<void> loadTrips({bool refresh = false}) async {
+  /// Pass [context] to enable cover image pre-fetching (eliminates flicker).
+  Future<void> loadTrips({bool refresh = false, BuildContext? context}) async {
+    final cache = TripCache.instance;
+
+    // Serve from cache immediately for instant UI on revisit
+    if (!refresh && cache.hasShells && _trips.isEmpty) {
+      _trips = cache.getAllShells();
+      notifyListeners(); // instant render
+    }
+
     if (refresh) {
       _currentPage = 1;
       _hasMore = true;
-      _trips = [];
+      if (!cache.hasShells) _trips = []; // only clear if no cache
     }
 
-    // Don't load if already loading or no more data
     if (_isLoading || (!_hasMore && !refresh)) return;
 
     _isLoading = true;
+    if (_trips.isEmpty) notifyListeners(); // show spinner only if no cache
     _errorMessage = null;
-    notifyListeners();
 
     try {
       final newTrips = await repository.getTrips(
@@ -132,10 +140,24 @@ class TripsProvider with ChangeNotifier {
         limit: 10,
       );
 
+      if (refresh || _currentPage == 1) {
+        _trips = newTrips;
+        cache.setAll(newTrips); // update cache
+      } else {
+        _trips.addAll(newTrips);
+        for (final t in newTrips) {
+          cache.putShell(t);
+        }
+      }
+
+      // Pre-fetch all cover images into GPU memory so navigation is flicker-free
+      if (context != null && context.mounted) {
+        cache.precacheAll(newTrips, context);
+      }
+
       if (newTrips.isEmpty) {
         _hasMore = false;
       } else {
-        _trips.addAll(newTrips);
         _currentPage++;
       }
     } catch (e) {
@@ -144,6 +166,26 @@ class TripsProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Update Trip Fields (dirty-check PATCH)
+  // ---------------------------------------------------------------------------
+
+  /// Sends only the changed [fields] to the server via PATCH.
+  /// Updates both the local trip list and the TripCache.
+  Future<TripModel> updateTripFields(
+    String tripId,
+    Map<String, dynamic> fields,
+  ) async {
+    final updated = await repository.updateTrip(tripId, fields);
+    // Update in-list
+    final idx = _trips.indexWhere((t) => t.id == tripId);
+    if (idx >= 0) _trips[idx] = updated;
+    // Update cache
+    TripCache.instance.patchShell(tripId, updated);
+    notifyListeners();
+    return updated;
   }
 
   // ---------------------------------------------------------------------------
@@ -252,6 +294,7 @@ class TripsProvider with ChangeNotifier {
 
       // Add the new trip to the local cache
       _trips.insert(0, tripWithMembers);
+      TripCache.instance.putShell(tripWithMembers); // keep cache in sync
 
       // Reset creation state
       _resetCreationState();
@@ -375,6 +418,7 @@ class TripsProvider with ChangeNotifier {
       );
 
       _trips = _trips.where((trip) => trip.id != tripId).toList();
+      TripCache.instance.remove(tripId); // remove from cache
       if (_selectedTrip?.id == tripId) {
         _selectedTrip = null;
       }
@@ -412,6 +456,7 @@ class TripsProvider with ChangeNotifier {
     _currentPage = 1;
     _hasMore = true;
     _resetCreationState();
+    TripCache.instance.clear();
     notifyListeners();
   }
 

@@ -201,6 +201,14 @@ class PaymentService {
     ) as Map<String, dynamic>;
   }
 
+  /// Fetch group members list.
+  /// GET /groups/:groupId/members
+  Future<Map<String, dynamic>> fetchGroupMembers(String groupId) async {
+    return await _apiClient.get(
+      ApiEndpoints.groupMembers(groupId),
+    ) as Map<String, dynamic>;
+  }
+
   // ---------------------------------------------------------------------------
   // Settings
   // ---------------------------------------------------------------------------

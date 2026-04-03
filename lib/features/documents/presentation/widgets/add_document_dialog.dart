@@ -14,7 +14,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  String _selectedEmoji = '📄';
+  final String _selectedEmoji = '📄';
   String? _selectedFileName;
   String? _selectedFilePath;
 

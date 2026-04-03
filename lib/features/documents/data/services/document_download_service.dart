@@ -45,13 +45,12 @@ class DocumentDownloadService {
           // Fallback if picker fails
           Directory? dir;
           if (Platform.isAndroid) {
-            dir = await getExternalStorageDirectory();
-            dir ??= await getApplicationDocumentsDirectory();
+            dir = await getExternalStorageDirectory() ??
+                await getApplicationDocumentsDirectory();
           } else {
-            dir = await getDownloadsDirectory();
-            dir ??= await getApplicationDocumentsDirectory();
+            dir = await getDownloadsDirectory() ??
+                await getApplicationDocumentsDirectory();
           }
-          if (dir == null) throw Exception('Could not determine download directory');
           outputFile = '${dir.path}/$fileName';
         }
       }

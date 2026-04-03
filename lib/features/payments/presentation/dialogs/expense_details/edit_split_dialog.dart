@@ -182,7 +182,7 @@ class _EditSplitDialogState extends State<EditSplitDialog> {
                     children: [
                       Switch.adaptive(
                         value: _splitEqually,
-                        activeColor: const Color(0xFF9FDFCA),
+                        activeTrackColor: const Color(0xFF9FDFCA),
                         onChanged: (v) {
                           setState(() {
                             _splitEqually = v;

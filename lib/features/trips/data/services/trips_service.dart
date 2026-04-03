@@ -189,4 +189,26 @@ class TripsService {
     final response = await apiClient.get(ApiEndpoints.getMembers(tripId));
     return response as Map<String, dynamic>;
   }
+
+  // ---------------------------------------------------------------------------
+  // Patch Trip (partial update)
+  // ---------------------------------------------------------------------------
+
+  /// Sends only the changed fields to the server via PATCH.
+  ///
+  /// BACKEND CALL: PATCH /groups/{tripId}
+  /// Body: only the dirty fields (e.g. { "destination": "Goa" })
+  ///
+  Future<Map<String, dynamic>> updateTrip(
+    String tripId,
+    Map<String, dynamic> fields,
+  ) async {
+    final response = await apiClient.patch(
+      ApiEndpoints.patchTrip(tripId),
+      body: fields,
+    );
+    final raw = response as Map<String, dynamic>;
+    final trip = raw['data'] as Map<String, dynamic>? ?? raw['trip'] as Map<String, dynamic>? ?? raw;
+    return {'trip': _normalizeTrip(trip)};
+  }
 }

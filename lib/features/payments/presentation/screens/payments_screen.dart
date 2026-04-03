@@ -46,8 +46,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     final dashboardProvider = context.read<DashboardProvider>();
     final participants = dashboardProvider.participants;
 
+    // loadAll internally guards against re-running for the same groupId
+    // so navigating back won't trigger a full reload.
     _paymentsProvider.loadAll(
       groupId: widget.groupId,
+      simplifyDebts: dashboardProvider.currentTrip?.simplifyDebts,
       participants: participants
           .map(
             (p) => MemberModel(
@@ -61,8 +64,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     );
   }
 
+  /// Called after a mutation completes (settle, add expense edit).
+  /// Only refreshes balances/summary — expense list is already up-to-date
+  /// via optimistic updates so no full reload is needed.
   void _reload() {
-    _loadData();
+    _paymentsProvider.refreshDerived(groupId: widget.groupId);
   }
 
   @override
@@ -146,9 +152,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         groupId: widget.groupId,
                         expenses: provider.expenses,
                         currentUserId: provider.currentUserId,
+                        members: provider.members,
                         isLoading: provider.isExpensesLoading,
                         onUpdated: _reload,
                         onDelete: (expenseId) async {
+                          final messenger = ScaffoldMessenger.of(context);
                           try {
                             final dashProvider = context
                                 .read<DashboardProvider>();
@@ -166,21 +174,17 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                   )
                                   .toList(),
                             );
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Expense deleted successfully'),
-                                ),
-                              );
-                            }
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Expense deleted successfully'),
+                              ),
+                            );
                           } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error deleting expense: $e'),
-                                ),
-                              );
-                            }
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Error deleting expense: $e'),
+                              ),
+                            );
                           }
                         },
                       ),
@@ -294,7 +298,16 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       onTap: () => AddPaymentFlow.show(
         context,
         groupId: widget.groupId,
-        onComplete: _reload,
+        onComplete: (expenseData) {
+          _paymentsProvider.addExpense(widget.groupId, expenseData);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Expense added successfully'),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
       ),
       child: Container(
         decoration: BoxDecoration(

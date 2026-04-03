@@ -47,6 +47,9 @@ class ParticipantRow extends StatefulWidget {
   final List<ParticipantModel> participants;
   final int maxVisibleAvatars;
   final VoidCallback? onTap;
+  /// Overrides participants.length in the info bar when the real list is still loading.
+  /// Typically the membersCount from the TripCache shell (known before any fetch).
+  final int? memberCountOverride;
 
   const ParticipantRow({
     super.key,
@@ -54,6 +57,7 @@ class ParticipantRow extends StatefulWidget {
     required this.participants,
     this.maxVisibleAvatars = 4,
     this.onTap,
+    this.memberCountOverride,
   });
 
   @override
@@ -640,14 +644,18 @@ class _ParticipantRowState extends State<ParticipantRow> {
                 color: Colors.white,
               ),
               const SizedBox(width: 6),
-              Text(
-                '${widget.participants.length} ${widget.participants.length == 1 ? 'member' : 'members'}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.95),
-                ),
-              ),
+              Builder(builder: (context) {
+                // Use override (from cache shell) when the real list is still loading
+                final count = widget.memberCountOverride ?? widget.participants.length;
+                return Text(
+                  '$count ${count == 1 ? 'member' : 'members'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.95),
+                  ),
+                );
+              }),
             ],
           ),
         ),

@@ -396,7 +396,13 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     return Row(
       children: [
         GestureDetector(
-          onTap: () { if (_isEditing) setState(() { _isEditing = false; _populateControllers(expense); }); else Navigator.pop(context); },
+          onTap: () {
+            if (_isEditing) {
+              setState(() { _isEditing = false; _populateControllers(expense); });
+            } else {
+              Navigator.pop(context);
+            }
+          },
           child: Icon(_isEditing ? Icons.close : Icons.arrow_back, size: 20),
         ),
         const SizedBox(width: 8),

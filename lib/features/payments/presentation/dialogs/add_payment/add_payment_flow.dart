@@ -5,7 +5,7 @@ import 'select_people_dialog.dart';
 import 'split_amount_dialog.dart';
 
 class AddPaymentFlow {
-  static void show(BuildContext context, {required String groupId, VoidCallback? onComplete}) {
+  static void show(BuildContext context, {required String groupId, void Function(Map<String, dynamic>)? onComplete}) {
     _showDetails(context, groupId, null, null, onComplete);
   }
 
@@ -14,7 +14,7 @@ class AddPaymentFlow {
     String groupId,
     Map<String, String>? initialDetails,
     List<String>? initialPeopleIds,
-    VoidCallback? onComplete,
+    void Function(Map<String, dynamic>)? onComplete,
   ) {
     showDialog(
       context: context,
@@ -36,7 +36,7 @@ class AddPaymentFlow {
     String groupId,
     Map<String, String> details,
     List<String>? initialPeopleIds,
-    VoidCallback? onComplete,
+    void Function(Map<String, dynamic>)? onComplete,
   ) {
     showDialog(
       context: context,
@@ -62,7 +62,7 @@ class AddPaymentFlow {
     String groupId,
     Map<String, String> details,
     List<String> peopleIds,
-    VoidCallback? onComplete,
+    void Function(Map<String, dynamic>)? onComplete,
   ) {
     showDialog(
       context: context,

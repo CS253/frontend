@@ -60,6 +60,8 @@ class TripModel {
   /// Null if no cover photo has been uploaded — falls back to trip-type default.
   final String? coverImage;
   final bool simplifyDebts;
+  /// Server-side last-updated timestamp for optimistic locking.
+  final DateTime? updatedAt;
 
   const TripModel({
     required this.id,
@@ -73,6 +75,7 @@ class TripModel {
     this.tripType = 'Other',
     this.coverImage,
     this.simplifyDebts = false,
+    this.updatedAt,
   });
 
   /// Parses a trip from the backend JSON map.
@@ -93,6 +96,9 @@ class TripModel {
       tripType: json['tripType'] as String? ?? 'Other',
       coverImage: json['coverImage'] as String?,
       simplifyDebts: json['simplifyDebts'] as bool? ?? false,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'] as String)
+          : null,
     );
   }
 
@@ -127,6 +133,7 @@ class TripModel {
     String? tripType,
     String? coverImage,
     bool? simplifyDebts,
+    DateTime? updatedAt,
   }) {
     return TripModel(
       id: id ?? this.id,
@@ -140,6 +147,7 @@ class TripModel {
       tripType: tripType ?? this.tripType,
       coverImage: coverImage ?? this.coverImage,
       simplifyDebts: simplifyDebts ?? this.simplifyDebts,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

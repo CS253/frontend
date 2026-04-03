@@ -51,6 +51,41 @@ class DashboardService {
     };
   }
 
+  /// Fetches only the group/trip detail record.
+  Future<Map<String, dynamic>?> fetchTripDetails(String tripId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.groupDetails(tripId)) as Map<String, dynamic>;
+      final group = response['data'] as Map<String, dynamic>? ?? {};
+      // Use a placeholder membersCount=0 — the real count will come from fetchTripMembers
+      return _mapTrip(group, 0);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Fetches only the member list for the trip.
+  Future<List<Map<String, dynamic>>> fetchTripMembers(String tripId) async {
+    final response = await _apiClient.get(ApiEndpoints.groupMembers(tripId)) as Map<String, dynamic>;
+    final membersRaw = response['members'] as List<dynamic>? ?? const [];
+    return membersRaw
+        .map((m) => _mapParticipant(m as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Fetches only the activity/history log for the trip (latest 5).
+  Future<List<Map<String, dynamic>>> fetchTripActivities(String tripId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.groupHistory(tripId)) as Map<String, dynamic>;
+      final history = response['data'] as List<dynamic>? ?? const [];
+      return history
+          .map((item) => _mapActivity(item as Map<String, dynamic>))
+          .take(5)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>> updateTrip({
     required String tripId,
     required String name,
