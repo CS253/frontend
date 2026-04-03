@@ -66,7 +66,7 @@ class NotificationService {
     );
 
     // 3. Create Notification Channel (Android 8.0+)
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'travelly_notifications_channel',
         'Travelly Notifications',
