@@ -112,12 +112,19 @@ class ApiEndpoints {
   /// Response: { "trip": { ... } }
   static const String trips = '/groups';
 
+  /// GET — Lean trip summaries (shell data only, no member join).
+  static const String tripsSummary = '/groups/summary';
+
   /// GET — Fetch details of a specific trip.
   /// Response: { "trip": { "id", "name", "destination", ... } }
   static String tripDetail(String tripId) => '/groups/$tripId';
 
-  /// PUT — Update a specific trip.
+  /// PATCH — Partial update of a trip (only sends changed fields).
+  static String patchTrip(String tripId) => '/groups/$tripId';
+
+  /// PUT — Full update of a specific trip.
   static String updateTrip(String tripId) => '/groups/$tripId';
+  static String groupPhoto(String tripId) => '/groups/$tripId/photo';
 
   /// DELETE — Delete a specific trip.
   static String deleteTrip(String tripId) => '/groups/$tripId';

@@ -232,7 +232,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               const SizedBox(width: 8),
             ],
             const Text(
-              'Add Media',
+              'Add Photos',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,

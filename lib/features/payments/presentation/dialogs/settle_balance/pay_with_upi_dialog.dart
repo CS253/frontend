@@ -5,6 +5,7 @@ import 'package:travelly/features/payments/data/repositories/payment_repository.
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PayWithUpiDialog extends StatefulWidget {
   final String groupId;
@@ -15,6 +16,7 @@ class PayWithUpiDialog extends StatefulWidget {
   final String toUserId;
   final String currency;
   final VoidCallback onBack;
+  final VoidCallback? onComplete;
 
   const PayWithUpiDialog({
     super.key,
@@ -26,6 +28,7 @@ class PayWithUpiDialog extends StatefulWidget {
     required this.toUserId,
     required this.currency,
     required this.onBack,
+    this.onComplete,
   });
 
   @override
@@ -34,8 +37,41 @@ class PayWithUpiDialog extends StatefulWidget {
 
 class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
   bool _isLoading = false;
+  bool _isSettling = false;
   String? _paymentLink;
   String? _error;
+
+  Future<void> _markAsPaid() async {
+    final amount = double.tryParse(widget.amount) ?? 0.0;
+    if (amount <= 0) return;
+
+    setState(() => _isSettling = true);
+
+    try {
+      if (!mounted) return;
+      await context.read<PaymentRepository>().markSettlementPaid(
+        widget.groupId,
+        fromUserId: widget.fromUserId,
+        toUserId: widget.toUserId,
+        amount: amount,
+        currency: widget.currency,
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        if (widget.onComplete != null) widget.onComplete!();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment marked as settled')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSettling = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error settling: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _initiatePayment() async {
     setState(() {
@@ -44,6 +80,12 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
     });
 
     try {
+      if (!mounted) return;
+      
+      // Debug: Log the Firebase ID token for Postman testing
+      final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+      debugPrint("DEBUG_TOKEN: Bearer $token");
+      
       if (!mounted) return;
       final result = await context.read<PaymentRepository>().initiatePayment(
         widget.groupId,
@@ -70,7 +112,14 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Error initiating payment: $e';
+          String errMsg = e.toString();
+          if (errMsg.contains('ApiException')) {
+            final parts = errMsg.split(': ');
+            if (parts.length > 1) {
+              errMsg = parts.sublist(1).join(': ');
+            }
+          }
+          _error = errMsg;
           _isLoading = false;
         });
       }
@@ -79,9 +128,14 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
 
   Future<void> _launchUpiLink(String link) async {
     final uri = Uri.parse(link);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No UPI app found to handle this payment')),
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No UPI app found to handle this payment')),
@@ -216,6 +270,17 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
               textColor: const Color(0xFF1A6B9C),
               icon: Icons.account_balance_outlined,
             ),
+            if (_paymentLink != null) ...[
+              const SizedBox(height: 12),
+              DialogPrimaryButton(
+                text: 'Mark as Paid',
+                isLoading: _isSettling,
+                onPressed: _markAsPaid,
+                backgroundColor: const Color(0xFF9FDFCA),
+                textColor: const Color(0xFF339977),
+                icon: Icons.check,
+              ),
+            ],
           ],
         ),
       ),

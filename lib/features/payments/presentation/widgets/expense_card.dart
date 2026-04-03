@@ -1,25 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/expense_model.dart';
 import 'package:travelly/features/payments/presentation/dialogs/expense_details/payment_details_dialog.dart';
 import 'package:travelly/core/constants/currency.dart';
+import 'package:travelly/features/payments/data/models/member_model.dart';
 
 /// List of all expense cards — now a presentational widget.
 class AllExpensesList extends StatelessWidget {
   final String groupId;
   final List<ExpenseModel> expenses;
   final String currentUserId;
+  final List<MemberModel>? members;
   final bool isLoading;
   final void Function(String expenseId)? onDelete;
+  final VoidCallback? onUpdated;
 
   const AllExpensesList({
     super.key,
     required this.groupId,
     required this.expenses,
     required this.currentUserId,
+    this.members,
     this.isLoading = false,
     this.onDelete,
+    this.onUpdated,
   });
+
+  String _resolvePayerName(String payerId, String? payerName) {
+    if (payerName != null && payerName.isNotEmpty && payerName != 'Unknown') {
+      return payerName;
+    }
+    if (members != null) {
+      for (final m in members!) {
+        if (m.userId == payerId) return m.name;
+      }
+    }
+    return 'Unknown';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +57,7 @@ class AllExpensesList extends StatelessWidget {
               id: expense.id,
               title: expense.title,
               amount: expense.amount.toStringAsFixed(2),
-              payerName: expense.payerName ?? 'Unknown',
+              payerName: _resolvePayerName(expense.paidBy, expense.payerName),
               payerInitials: expense.payerInitials,
               payerColor: const Color(0xFF87D4F8),
               date: expense.formattedDate,
@@ -48,6 +66,7 @@ class AllExpensesList extends StatelessWidget {
               currency: expense.currency,
               groupId: groupId,
               onDelete: onDelete != null ? () => onDelete!(expense.id) : null,
+              onUpdated: onUpdated,
             ),
             const SizedBox(height: 10),
           ],
@@ -84,6 +103,7 @@ class ExpenseCard extends StatelessWidget {
   final String shareTextPrefix;
   final Color payerColor;
   final VoidCallback? onDelete;
+  final VoidCallback? onUpdated;
 
   const ExpenseCard({
     super.key,
@@ -100,6 +120,7 @@ class ExpenseCard extends StatelessWidget {
     required this.currency,
     required this.groupId,
     this.onDelete,
+    this.onUpdated,
   });
 
   @override
@@ -118,9 +139,12 @@ class ExpenseCard extends StatelessWidget {
       onTap: () {
         showDialog(
           context: context,
-          builder: (context) => PaymentDetailsDialog(
-            expenseId: id,
-            groupId: groupId,
+          builder: (context) => KeyboardSafeDialog(
+            child: PaymentDetailsDialog(
+              expenseId: id,
+              groupId: groupId,
+              onUpdated: onUpdated,
+            ),
           ),
         );
       },

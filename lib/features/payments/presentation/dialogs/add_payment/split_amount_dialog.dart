@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:provider/provider.dart';
 import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'package:travelly/features/payments/data/services/payment_service.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/dialog_primary_button.dart';
 import 'package:travelly/features/payments/presentation/dialogs/widgets/payment_split_row.dart';
 import 'package:travelly/core/constants/currency.dart';
@@ -13,7 +12,7 @@ class SplitAmountDialog extends StatefulWidget {
   final Map<String, String> paymentDetails;
   final List<String> selectedPeopleIds;
   final VoidCallback onBack;
-  final VoidCallback? onComplete;
+  final void Function(Map<String, dynamic>)? onComplete;
 
   const SplitAmountDialog({
     super.key,
@@ -140,15 +139,11 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
 
     try {
       if (!mounted) return;
-      await context.read<PaymentService>().createExpense(widget.groupId, body);
-      if (mounted) {
-        Navigator.of(context).pop();
-        if (widget.onComplete != null) {
-          widget.onComplete!();
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense added successfully')),
-        );
+      
+      // Bubble the payload up to be handled optimistically by the Provider
+      Navigator.of(context).pop();
+      if (widget.onComplete != null) {
+        widget.onComplete!(body);
       }
     } catch (e) {
       if (mounted) {

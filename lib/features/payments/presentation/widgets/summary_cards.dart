@@ -4,7 +4,7 @@ import 'package:travelly/features/payments/data/models/group_summary_model.dart'
 import 'package:travelly/features/payments/presentation/dialogs/currency_breakdown_dialog.dart';
 import 'package:travelly/features/payments/presentation/dialogs/members_list_dialog.dart';
 import 'package:provider/provider.dart';
-import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:travelly/features/payments/presentation/providers/payments_provider.dart';
 
 /// Summary cards row (Total Expense, You Paid, Members).
 class SummaryCards extends StatelessWidget {
@@ -71,7 +71,8 @@ class SummaryCards extends StatelessWidget {
             iconColor: Colors.purpleAccent,
             icon: Icons.people_outline,
             title: 'Members',
-            amount: '${context.watch<DashboardProvider>().participants.length}',
+            // memberCount uses TripCache shell as fallback for zero-latency display
+            amount: '${context.watch<PaymentsProvider>().memberCount}',
             onTap: () => MembersListDialog.show(context, groupId: groupId),
           ),
           const SizedBox(width: 8),

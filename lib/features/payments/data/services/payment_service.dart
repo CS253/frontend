@@ -201,6 +201,14 @@ class PaymentService {
     ) as Map<String, dynamic>;
   }
 
+  /// Fetch group members list.
+  /// GET /groups/:groupId/members
+  Future<Map<String, dynamic>> fetchGroupMembers(String groupId) async {
+    return await _apiClient.get(
+      ApiEndpoints.groupMembers(groupId),
+    ) as Map<String, dynamic>;
+  }
+
   // ---------------------------------------------------------------------------
   // Settings
   // ---------------------------------------------------------------------------
@@ -214,6 +222,14 @@ class PaymentService {
     return await _apiClient.put(
       ApiEndpoints.simplifyDebts(groupId),
       body: {'simplifyDebts': simplifyDebts},
+    ) as Map<String, dynamic>;
+  }
+
+  /// Get specifically the simplify-debts setting.
+  /// GET /groups/:groupId/settings/simplify-debts
+  Future<Map<String, dynamic>> fetchSimplifyDebtsSetting(String groupId) async {
+    return await _apiClient.get(
+      ApiEndpoints.simplifyDebts(groupId),
     ) as Map<String, dynamic>;
   }
 }

@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:travelly/core/widgets/emoji_picker_dialog.dart';
 import 'package:travelly/core/widgets/keyboard_safe_dialog.dart';
 
 class AddDocumentDialog extends StatefulWidget {
@@ -15,7 +14,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  String _selectedEmoji = '📄';
+  final String _selectedEmoji = '📄';
   String? _selectedFileName;
   String? _selectedFilePath;
 
@@ -27,6 +26,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
   }
 
   Future<void> _pickFile() async {
+    FocusScope.of(context).unfocus();
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
@@ -57,6 +57,7 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
     Navigator.pop(context, {
       'name': _nameController.text.trim(),
       'description': _descriptionController.text.trim(),
@@ -133,33 +134,6 @@ class _AddDocumentDialogState extends State<AddDocumentDialog> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  GestureDetector(
-                    onTap: () async {
-                      final emoji = await showEmojiPicker(context);
-                      if (emoji != null) {
-                        setState(() => _selectedEmoji = emoji);
-                      }
-                    },
-                    child: Container(
-                      width: 61,
-                      height: 61,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFCFAF8),
-                        borderRadius: BorderRadius.circular(9),
-                        border: Border.all(
-                          color: const Color(0xFFEBE7E0),
-                          width: 0.75,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _selectedEmoji,
-                          style: const TextStyle(fontSize: 36),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

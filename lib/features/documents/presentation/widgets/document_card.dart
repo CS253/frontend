@@ -9,6 +9,7 @@ class DocumentCard extends StatelessWidget {
   final VoidCallback? onView;
   final VoidCallback? onDownload;
   final VoidCallback? onDelete;
+  final bool isLoading;
 
   const DocumentCard({
     super.key,
@@ -19,6 +20,7 @@ class DocumentCard extends StatelessWidget {
     this.onView,
     this.onDownload,
     this.onDelete,
+    this.isLoading = false,
   });
 
   @override
@@ -98,12 +100,24 @@ class DocumentCard extends StatelessWidget {
               ),
               if (onDelete != null) ...[
                 const SizedBox(width: 8),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFF8B8893)),
-                  onPressed: onDelete,
-                ),
+                isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF8B8893),
+                          ),
+                        ),
+                      )
+                    : IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFF8B8893)),
+                        onPressed: onDelete,
+                      ),
               ],
             ],
           ),

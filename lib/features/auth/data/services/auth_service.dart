@@ -90,19 +90,32 @@ class AuthService {
       // Update display name if provided
       if (name != null && user != null) {
         await user.updateDisplayName(name);
+        await user.reload();
       }
 
       // Send verification email
       await user?.sendEmailVerification();
 
-      final token = await user?.getIdToken();
+      // Force a fresh token so the backend gets the updated display name
+      final token = await user?.getIdToken(true);
 
       if (token != null) {
-        await syncWithBackend(
-          token: token,
-          name: name,
-          phone: phone,
-        );
+        try {
+          await syncWithBackend(
+            token: token,
+            name: name,
+            phone: phone,
+            throwOnError: true,
+          );
+        } catch (error) {
+          try {
+            await user?.delete();
+          } catch (_) {
+            await _auth.signOut();
+          }
+
+          rethrow;
+        }
       }
 
       return {
@@ -283,7 +296,10 @@ class AuthService {
         throw Exception(response?['error'] ?? 'Failed to update phone number');
       }
     } catch (e) {
-      throw Exception('Phone update failed: $e');
+      if (e is ApiException) {
+        throw Exception(e.message);
+      }
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -296,6 +312,7 @@ class AuthService {
     required String token,
     String? name,
     String? phone,
+    bool throwOnError = false,
   }) async {
     debugPrint('DEBUG: Starting backend sync...');
     debugPrint('DEBUG: Sync Params - Name: $name, Phone: $phone');
@@ -317,9 +334,18 @@ class AuthService {
         return response['data'] as Map<String, dynamic>?;
       } else {
         debugPrint('DEBUG: Sync failed: ${response?['error']}');
+        if (throwOnError) {
+          throw Exception(response?['error'] ?? 'Backend sync failed');
+        }
       }
     } catch (e) {
       debugPrint('DEBUG: Backend sync error: $e');
+      if (throwOnError) {
+        if (e is ApiException) {
+          throw Exception(e.message);
+        }
+        throw Exception(e.toString().replaceFirst('Exception: ', ''));
+      }
     }
     return null;
   }

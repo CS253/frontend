@@ -157,7 +157,8 @@ class _PlanScreenState extends State<PlanScreen> {
 
     final bool canPlan =
         _startLocation.name.isNotEmpty &&
-        _destinations.any((d) => d.name.isNotEmpty);
+        _destinations.isNotEmpty &&
+        _destinations.every((d) => d.name.trim().isNotEmpty);
     final String subtitle = _destinations.isEmpty
         ? 'Add destinations to start'
         : '${_destinations.length} Stops Added';
@@ -357,15 +358,15 @@ class _PlanScreenState extends State<PlanScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
 
                 // Itinerary Timeline Header
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 24.0,
                       vertical: 24,
                     ),
                     child: Text(
-                      'Optimized Itinerary',
-                      style: TextStyle(
+                      'Your Itinerary',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF212022),
@@ -423,7 +424,18 @@ class _PlanScreenState extends State<PlanScreen> {
                       foregroundColor: canPlan
                           ? Colors.white
                           : const Color(0xFF9E9E9E),
-                      onPressed: canPlan ? _planRoute : () {},
+                      onPressed: canPlan
+                          ? _planRoute
+                          : () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please enter all stop names before planning.',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
                     ),
             ),
           ),

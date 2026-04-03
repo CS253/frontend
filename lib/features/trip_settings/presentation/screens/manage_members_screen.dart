@@ -448,6 +448,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                                       );
 
                                   if (!mounted) return;
+                                  // ignore: use_build_context_synchronously
                                   Navigator.pop(sheetContext);
                                   _showSnackBar(
                                     'Member added successfully',

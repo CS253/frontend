@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/initials_util.dart';
 
 /// Data model representing a group member.
 ///
@@ -53,14 +54,7 @@ class MemberModel {
   }
 
   /// Generate initials from name (e.g. "John Doe" → "JD").
-  String get initials {
-    if (name.isEmpty) return '??';
-    final parts = name.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
-  }
+  String get initials => getInitials(name);
 
   /// Derive a deterministic color from a name.
   static int _colorFromName(String name) {

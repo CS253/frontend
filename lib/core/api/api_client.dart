@@ -101,7 +101,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -128,7 +133,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -155,7 +165,44 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(statusCode: 0, message: 'Unexpected error: $e');
+    }
+  }
+
+  Future<dynamic> patch(
+    String endpoint, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    _logRequest('PATCH', url, body: body);
+
+    try {
+      final response = await _client.patch(
+        Uri.parse(url),
+        headers: _buildHeaders(customHeaders: headers),
+        body: body != null ? jsonEncode(body) : null,
+      );
+      _logResponse(response);
+      return _handleResponse(response);
+    } on SocketException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -180,7 +227,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -206,7 +258,12 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
@@ -214,7 +271,8 @@ class ApiClient {
     }
   }
 
-  Future<dynamic> uploadMultipart(
+  Future<dynamic> _sendMultipart(
+    String method,
     String endpoint, {
     required Map<String, String> fields,
     required String fileFieldName,
@@ -222,10 +280,10 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final url = '$baseUrl$endpoint';
-    _logRequest('MULTIPART POST', url, body: fields);
+    _logRequest('MULTIPART $method', url, body: fields);
 
     try {
-      final request = http.MultipartRequest('POST', Uri.parse(url));
+      final request = http.MultipartRequest(method, Uri.parse(url));
       final authHeaders = _buildHeaders(customHeaders: headers);
       authHeaders.remove('Content-Type');
       request.headers.addAll(authHeaders);
@@ -241,12 +299,51 @@ class ApiClient {
     } on SocketException {
       throw const ApiException(
         statusCode: 0,
-        message: 'No internet connection',
+        message: 'Server can\'t be reached',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'Server can\'t be reached',
       );
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException(statusCode: 0, message: 'Upload failed: $e');
     }
+  }
+
+  Future<dynamic> uploadMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileFieldName,
+    required String filePath,
+    Map<String, String>? headers,
+  }) async {
+    return _sendMultipart(
+      'POST',
+      endpoint,
+      fields: fields,
+      fileFieldName: fileFieldName,
+      filePath: filePath,
+      headers: headers,
+    );
+  }
+
+  Future<dynamic> putMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileFieldName,
+    required String filePath,
+    Map<String, String>? headers,
+  }) async {
+    return _sendMultipart(
+      'PUT',
+      endpoint,
+      fields: fields,
+      fileFieldName: fileFieldName,
+      filePath: filePath,
+      headers: headers,
+    );
   }
 
   dynamic _handleResponse(http.Response response) {
@@ -267,7 +364,17 @@ class ApiClient {
       final errorBody = jsonDecode(response.body);
       errorMessage = errorBody['message'] ?? errorBody['error'] ?? errorMessage;
       errorData = errorBody;
-    } catch (_) {
+
+      // 409 Conflict — server detected optimistic locking violation.
+      // Throw a typed ConflictException carrying fresh server data.
+      if (statusCode == 409 && errorBody['error'] == 'CONFLICT') {
+        throw ConflictException(
+          message: 'Trip was modified by someone else.',
+          freshData: errorBody['freshData'] as Map<String, dynamic>?,
+        );
+      }
+    } catch (e) {
+      if (e is ConflictException) rethrow;
       // Ignore invalid JSON error bodies.
     }
 
@@ -278,3 +385,18 @@ class ApiClient {
     );
   }
 }
+
+/// Thrown when the server returns HTTP 409 due to an optimistic locking conflict.
+///
+/// Carries [freshData] — the current server version of the resource —
+/// so the caller can update its local cache without needing a separate fetch.
+class ConflictException implements Exception {
+  final String message;
+  final Map<String, dynamic>? freshData;
+
+  const ConflictException({required this.message, this.freshData});
+
+  @override
+  String toString() => 'ConflictException: $message';
+}
+

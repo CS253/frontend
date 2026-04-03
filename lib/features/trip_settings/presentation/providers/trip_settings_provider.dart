@@ -47,6 +47,14 @@ class TripSettingsProvider extends ChangeNotifier {
   // INTIALIZATION
   // ---------------------------------------------------------------------------
   void init(String tripId) {
+    if (_tripId != tripId) {
+      _members = [];
+      _tripSettings = null;
+      _notificationSettings = null;
+      _membersError = null;
+      _tripSettingsError = null;
+      _notificationError = null;
+    }
     _tripId = tripId;
     fetchMembers();
     fetchTripSettings();

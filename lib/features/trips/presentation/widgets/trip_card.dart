@@ -9,6 +9,7 @@ class TripCard extends StatelessWidget {
   final String location;
   final String date;
   final String imageUrl;
+  final String tripType;
   final double top;
   final double? left;
   final double? right;
@@ -22,6 +23,7 @@ class TripCard extends StatelessWidget {
     required this.location,
     required this.date,
     required this.imageUrl,
+    required this.tripType,
     required this.top,
     this.left,
     this.right,
@@ -78,9 +80,13 @@ class TripCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        errorWidget: (context, url, error) => Container(
-                          color: const Color(0xFFF3F3F3),
-                          child: const Icon(Icons.broken_image, color: Color(0xFFB0B0B0)),
+                        errorWidget: (context, url, error) => Image.asset(
+                          'assets/images/${tripType.isNotEmpty ? tripType : 'Other'}.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: const Color(0xFFBCE3F7),
+                            child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                          ),
                         ),
                       );
                     } else if (imageUrl.isNotEmpty) {
@@ -88,16 +94,24 @@ class TripCard extends StatelessWidget {
                       return Image.network(
                         imageUrl, // This might still fail but we can't easily check for File Existence across platforms without more logic
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFFBCE3F7),
-                          child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                        errorBuilder: (context, error, stackTrace) => Image.asset(
+                          'assets/images/${tripType.isNotEmpty ? tripType : 'Other'}.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: const Color(0xFFBCE3F7),
+                            child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                          ),
                         ),
                       );
                     } else {
                       // Fallback for no image
-                      return Container(
-                        color: const Color(0xFFBCE3F7),
-                        child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                      return Image.asset(
+                        'assets/images/${tripType.isNotEmpty ? tripType : 'Other'}.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFFBCE3F7),
+                          child: const Icon(Icons.location_on, color: Color(0xFF6BB5E5)),
+                        ),
                       );
                     }
                   },

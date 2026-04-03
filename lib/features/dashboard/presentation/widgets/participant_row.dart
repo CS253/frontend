@@ -47,6 +47,9 @@ class ParticipantRow extends StatefulWidget {
   final List<ParticipantModel> participants;
   final int maxVisibleAvatars;
   final VoidCallback? onTap;
+  /// Overrides participants.length in the info bar when the real list is still loading.
+  /// Typically the membersCount from the TripCache shell (known before any fetch).
+  final int? memberCountOverride;
 
   const ParticipantRow({
     super.key,
@@ -54,6 +57,7 @@ class ParticipantRow extends StatefulWidget {
     required this.participants,
     this.maxVisibleAvatars = 4,
     this.onTap,
+    this.memberCountOverride,
   });
 
   @override
@@ -127,18 +131,18 @@ class _ParticipantRowState extends State<ParticipantRow> {
   String _getStockPhotoForTripType(String tripType) {
     switch (tripType) {
       case 'Beach':
-        return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80';
+        return 'assets/images/Beach.png';
       case 'Mountain':
-        return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+        return 'assets/images/Mountain.png';
       case 'City':
-        return 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=800&q=80';
+        return 'assets/images/City.png';
       case 'Nature':
-        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=80';
+        return 'assets/images/Nature.png';
       case 'Island':
-        return 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8aXNsYW5kfGVufDB8fDB8fHww';
+        return 'assets/images/Island.png';
       case 'Other':
       default:
-        return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+        return 'assets/images/Other.png';
     }
   }
 
@@ -640,14 +644,18 @@ class _ParticipantRowState extends State<ParticipantRow> {
                 color: Colors.white,
               ),
               const SizedBox(width: 6),
-              Text(
-                '${widget.participants.length} ${widget.participants.length == 1 ? 'member' : 'members'}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.95),
-                ),
-              ),
+              Builder(builder: (context) {
+                // Use override (from cache shell) when the real list is still loading
+                final count = widget.memberCountOverride ?? widget.participants.length;
+                return Text(
+                  '$count ${count == 1 ? 'member' : 'members'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.95),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -689,13 +697,12 @@ class _ParticipantRowState extends State<ParticipantRow> {
   /// Builds the stock photo fallback based on tripType.
   /// Falls back to gradient if network image fails.
   Widget _buildStockFallback() {
-    final stockUrl = _getStockPhotoForTripType(widget.trip.tripType);
+    final stockAsset = _getStockPhotoForTripType(widget.trip.tripType);
 
-    return CachedNetworkImage(
-      imageUrl: stockUrl,
+    return Image.asset(
+      stockAsset,
       fit: BoxFit.cover,
-      placeholder: (context, url) => _buildGradientBackground(),
-      errorWidget: (context, url, error) => _buildGradientBackground(),
+      errorBuilder: (context, error, stackTrace) => _buildGradientBackground(),
     );
   }
 

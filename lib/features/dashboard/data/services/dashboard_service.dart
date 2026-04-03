@@ -51,6 +51,41 @@ class DashboardService {
     };
   }
 
+  /// Fetches only the group/trip detail record.
+  Future<Map<String, dynamic>?> fetchTripDetails(String tripId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.groupDetails(tripId)) as Map<String, dynamic>;
+      final group = response['data'] as Map<String, dynamic>? ?? {};
+      // Use a placeholder membersCount=0 — the real count will come from fetchTripMembers
+      return _mapTrip(group, 0);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Fetches only the member list for the trip.
+  Future<List<Map<String, dynamic>>> fetchTripMembers(String tripId) async {
+    final response = await _apiClient.get(ApiEndpoints.groupMembers(tripId)) as Map<String, dynamic>;
+    final membersRaw = response['members'] as List<dynamic>? ?? const [];
+    return membersRaw
+        .map((m) => _mapParticipant(m as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Fetches only the activity/history log for the trip (latest 5).
+  Future<List<Map<String, dynamic>>> fetchTripActivities(String tripId) async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.groupHistory(tripId)) as Map<String, dynamic>;
+      final history = response['data'] as List<dynamic>? ?? const [];
+      return history
+          .map((item) => _mapActivity(item as Map<String, dynamic>))
+          .take(5)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>> updateTrip({
     required String tripId,
     required String name,
@@ -61,6 +96,11 @@ class DashboardService {
     required String emoji,
     String? coverImagePath,
   }) async {
+    final hasNewCoverUpload =
+        coverImagePath != null &&
+        coverImagePath.isNotEmpty &&
+        !coverImagePath.startsWith('http');
+
     final response = await _apiClient.put(
       ApiEndpoints.tripById(tripId),
       body: {
@@ -72,6 +112,16 @@ class DashboardService {
         'emoji': emoji,
       },
     );
+
+    if (hasNewCoverUpload) {
+      await _apiClient.putMultipart(
+        ApiEndpoints.groupPhoto(tripId),
+        fields: const {},
+        fileFieldName: 'photo',
+        filePath: coverImagePath,
+      );
+    }
+
     return response;
   }
 
@@ -81,6 +131,7 @@ class DashboardService {
   ) {
     final destination = (group['destination'] as String? ?? '').trim();
     final tripType = (group['tripType'] as String? ?? 'Other').trim();
+    final coverImage = (group['coverImage'] as String? ?? group['photoUrl'] as String?)?.trim();
 
     return {
       'id': group['id'] as String? ?? '',
@@ -92,8 +143,9 @@ class DashboardService {
       'daysRemaining': _calculateDaysRemaining(group['startDate'] as String?),
       'emoji': _tripEmojiForType(tripType),
       'tripType': tripType.isEmpty ? 'Other' : tripType,
-      'coverImage': group['coverImage'] as String?,
+      'coverImage': coverImage != null && coverImage.isNotEmpty ? coverImage : null,
       'membersCount': memberCount,
+      'simplifyDebts': group['simplifyDebts'] as bool? ?? false,
     };
   }
 

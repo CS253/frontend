@@ -36,9 +36,18 @@ class FriendBalances extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const SizedBox(
-        height: 120,
-        child: Center(child: CircularProgressIndicator()),
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        child: Row(
+          children: List.generate(
+            3,
+            (index) => Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: _buildSkeletonCard(),
+            ),
+          ),
+        ),
       );
     }
 
@@ -222,6 +231,51 @@ class FriendBalances extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Container(
+      width: 155,
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFDFB),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color.fromRGBO(235, 231, 224, 0.5), width: 1),
+        boxShadow: const [
+          BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.08), blurRadius: 18, offset: Offset(0, 3.6))
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFF0ECE8),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: 70,
+            height: 10,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0ECE8),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: 100,
+            height: 20,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0ECE8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ],
       ),
     );
   }

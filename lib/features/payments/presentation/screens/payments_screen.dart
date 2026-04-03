@@ -44,23 +44,31 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
   void _loadData() {
     final dashboardProvider = context.read<DashboardProvider>();
-    final currentTrip = dashboardProvider.currentTrip;
     final participants = dashboardProvider.participants;
 
+    // loadAll internally guards against re-running for the same groupId
+    // so navigating back won't trigger a full reload.
     _paymentsProvider.loadAll(
       groupId: widget.groupId,
-      simplifyDebts: currentTrip?.simplifyDebts ?? false,
-      participants: participants.map((p) => MemberModel(
-        id: p.id,
-        userId: p.id,
-        name: p.name,
-        avatarColor: const Color(0xFFD9F0FC),
-      )).toList(),
+      simplifyDebts: dashboardProvider.currentTrip?.simplifyDebts,
+      participants: participants
+          .map(
+            (p) => MemberModel(
+              id: p.id,
+              userId: p.id,
+              name: p.name,
+              avatarColor: const Color(0xFFD9F0FC),
+            ),
+          )
+          .toList(),
     );
   }
 
+  /// Called after a mutation completes (settle, add expense edit).
+  /// Only refreshes balances/summary — expense list is already up-to-date
+  /// via optimistic updates so no full reload is needed.
   void _reload() {
-    _loadData();
+    _paymentsProvider.refreshDerived(groupId: widget.groupId);
   }
 
   @override
@@ -88,14 +96,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                       BalanceCard(
                         groupId: widget.groupId,
                         summary: provider.summary,
-                        isLoading: provider.isLoading,
+                        isLoading: provider.isSummaryLoading,
                       ),
                       const SizedBox(height: 12),
                       Center(
                         child: SummaryCards(
                           groupId: widget.groupId,
                           summary: provider.summary,
-                          isLoading: provider.isLoading,
+                          isLoading: provider.isSummaryLoading,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -106,20 +114,29 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         settlements: provider.settlements,
                         currentUserId: provider.currentUserId,
                         members: provider.members,
-                        isLoading: provider.isLoading,
-                        onSettle: (name, initials, amount, {String? fromUserId, String? toUserId, String? currency}) {
-                          SettleBalanceFlow.show(
-                            context,
-                            groupId: widget.groupId,
-                            name: name,
-                            initials: initials,
-                            amount: amount,
-                            fromUserId: fromUserId ?? '',
-                            toUserId: toUserId ?? '',
-                            currency: currency ?? 'INR',
-                            onComplete: _reload,
-                          );
-                        },
+                        isLoading: provider.isSettlementsLoading,
+                        onSettle:
+                            (
+                              name,
+                              initials,
+                              amount, {
+                              String? fromUserId,
+                              String? toUserId,
+                              String? currency,
+                            }) {
+                              SettleBalanceFlow.show(
+                                context,
+                                groupId: widget.groupId,
+                                name: name,
+                                initials: initials,
+                                amount: amount,
+                                fromUserId: fromUserId ?? '',
+                                toUserId: toUserId ?? '',
+                                currency: currency ?? 'INR',
+                                currentUserId: provider.currentUserId,
+                                onComplete: _reload,
+                              );
+                            },
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -135,32 +152,39 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         groupId: widget.groupId,
                         expenses: provider.expenses,
                         currentUserId: provider.currentUserId,
-                        isLoading: provider.isLoading,
+                        members: provider.members,
+                        isLoading: provider.isExpensesLoading,
+                        onUpdated: _reload,
                         onDelete: (expenseId) async {
+                          final messenger = ScaffoldMessenger.of(context);
                           try {
-                            final dashProvider = context.read<DashboardProvider>();
+                            final dashProvider = context
+                                .read<DashboardProvider>();
                             await provider.deleteExpense(
                               widget.groupId,
                               expenseId,
-                              simplifyDebts: dashProvider.currentTrip?.simplifyDebts ?? false,
-                              participants: dashProvider.participants.map((p) => MemberModel(
-                                id: p.id,
-                                userId: p.id,
-                                name: p.name,
-                                avatarColor: const Color(0xFFD9F0FC),
-                              )).toList(),
+                              participants: dashProvider.participants
+                                  .map(
+                                    (p) => MemberModel(
+                                      id: p.id,
+                                      userId: p.id,
+                                      name: p.name,
+                                      avatarColor: const Color(0xFFD9F0FC),
+                                    ),
+                                  )
+                                  .toList(),
                             );
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Expense deleted successfully')),
-                              );
-                            }
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Expense deleted successfully'),
+                              ),
+                            );
                           } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error deleting expense: $e')),
-                              );
-                            }
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Error deleting expense: $e'),
+                              ),
+                            );
                           }
                         },
                       ),
@@ -197,7 +221,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -246,25 +273,52 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Balances with friends',
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w500, fontSize: 13, color: const Color(0xFF8A8075))),
-        Text('Detailed',
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w500, fontSize: 13, color: const Color(0xFF8A8075))),
+        Text(
+          'Balances with friends',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: const Color(0xFF8A8075),
+          ),
+        ),
+        Text(
+          'Detailed',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            color: const Color(0xFF8A8075),
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildAddPaymentButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => AddPaymentFlow.show(context, groupId: widget.groupId, onComplete: _reload),
+      onTap: () => AddPaymentFlow.show(
+        context,
+        groupId: widget.groupId,
+        onComplete: (expenseData) {
+          _paymentsProvider.addExpense(widget.groupId, expenseData);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Expense added successfully'),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF75CCFE),
           borderRadius: BorderRadius.circular(9159),
           boxShadow: const [
-            BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.12), blurRadius: 27, offset: Offset(0, 7)),
+            BoxShadow(
+              color: Color.fromRGBO(56, 51, 46, 0.12),
+              blurRadius: 27,
+              offset: Offset(0, 7),
+            ),
           ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
@@ -273,9 +327,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           children: [
             const Icon(Icons.add, color: Color(0xFF064460), size: 18),
             const SizedBox(width: 8),
-            Text('Add Payment',
-                style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold, fontSize: 14.6, color: const Color(0xFF064460))),
+            Text(
+              'Add Payment',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold,
+                fontSize: 14.6,
+                color: const Color(0xFF064460),
+              ),
+            ),
           ],
         ),
       ),

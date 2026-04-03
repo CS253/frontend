@@ -373,9 +373,18 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                           trips.length,
                         );
 
-                        return SingleChildScrollView(
-                          child: SizedBox(
-                            height: (trips.length * 170.0).clamp(
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            final userId = context.read<AuthProvider>().user?.id;
+                            if (userId != null && userId.isNotEmpty) {
+                              await tripsProvider.loadTrips(refresh: true);
+                            }
+                          },
+                          color: const Color(0xFF6BB5E5),
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: (trips.length * 170.0).clamp(
                               400,
                               double.infinity,
                             ),
@@ -407,6 +416,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                                     location: trip.destination,
                                     date: trip.formattedDateRange,
                                     imageUrl: trip.coverImage ?? '',
+                                    tripType: trip.tripType,
                                     top: position,
                                     left: isRight ? null : 20,
                                     right: isRight ? 20 : null,
@@ -416,8 +426,9 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                               ],
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      );
+                    },
                     ),
                   ),
                 ],

@@ -27,6 +27,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   late final DocumentService _documentService;
   final DocumentDownloadService _downloadService = DocumentDownloadService();
   final Map<String, bool> _downloadingIds = {};
+  final Map<String, bool> _deletingIds = {};
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -40,6 +42,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Future<void> _deleteDocument(String id) async {
+    setState(() {
+      _deletingIds[id] = true;
+    });
+
     try {
       await _documentService.deleteDocument(id);
       if (!mounted) {
@@ -56,6 +62,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error deleting document: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingIds[id] = false;
+        });
+      }
     }
   }
 
@@ -90,12 +102,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error downloading: $e')));
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _downloadingIds[id] = false;
+        });
       }
-      setState(() {
-        _downloadingIds[id] = false;
-      });
     }
   }
 
@@ -108,6 +119,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     if (result == null || !mounted) {
       return;
     }
+
+    setState(() {
+      _isUploading = true;
+    });
 
     try {
       await _documentService.uploadDocument(
@@ -129,6 +144,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error uploading document: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
   }
 
@@ -205,13 +226,24 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       onView: url == null ? null : () => _openDocument(doc),
                       onDownload: url == null
                           ? null
-                          : () => _downloadDocument(
-                              doc['id'] as String,
-                              url,
-                              (doc['title'] as String?) ??
-                                  (doc['fileName'] as String? ?? 'document'),
-                            ),
+                          : () {
+                              String title = (doc['title'] as String?) ?? (doc['fileName'] as String? ?? 'document');
+                              // If title doesn't have an extension, try to pull it from the URL
+                              if (!title.contains('.')) {
+                                final uri = Uri.parse(url);
+                                final lastSegment = uri.pathSegments.last;
+                                if (lastSegment.contains('.')) {
+                                  final ext = lastSegment.split('.').last;
+                                  title = '$title.$ext';
+                                } else {
+                                  // Fallback to .pdf if we can't find one
+                                  title = '$title.pdf';
+                                }
+                              }
+                              _downloadDocument(doc['id'] as String, url, title);
+                            },
                       onDelete: () => _deleteDocument(doc['id'] as String),
+                      isLoading: _deletingIds[doc['id'] as String] ?? false,
                     ),
                   );
                 },
@@ -231,6 +263,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             child: Center(
               child: PrimaryFabButton(
                 label: 'Add Document',
+                isLoading: _isUploading,
                 onPressed: _uploadDocument,
               ),
             ),

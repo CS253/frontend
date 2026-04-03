@@ -24,8 +24,11 @@
 //   → Repository → Service → PUT /trips/:id → re-fetch dashboard
 // =============================================================================
 
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -34,6 +37,7 @@ import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/core/utils/helpers.dart';
 import 'package:travelly/core/utils/validators.dart';
+import 'package:travelly/features/trips/data/services/destination_service.dart';
 
 /// Floating dialog for viewing and editing trip details.
 ///
@@ -59,14 +63,15 @@ class TripDetailsDialog extends StatefulWidget {
   /// Convenience method to show this dialog.
   ///
   /// Wraps in [_KeyboardSafeWrapper] for keyboard-safe behavior.
-  static void show(BuildContext context, TripModel trip, List<ParticipantModel> participants) {
+  static void show(
+    BuildContext context,
+    TripModel trip,
+    List<ParticipantModel> participants,
+  ) {
     showDialog(
       context: context,
       builder: (context) => _KeyboardSafeWrapper(
-        child: TripDetailsDialog(
-          trip: trip,
-          participants: participants,
-        ),
+        child: TripDetailsDialog(trip: trip, participants: participants),
       ),
     );
   }
@@ -85,7 +90,10 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
   DateTime? _fromDate;
   DateTime? _toDate;
   String? _coverImagePath;
+  Uint8List? _coverImageBytes;
   bool _isSaving = false;
+  bool _isSearching = false;
+  Timer? _debounce;
 
   /// Date validation error displayed inline.
   String? _dateError;
@@ -96,8 +104,12 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
 
     // Pre-populate fields from current trip data
     _nameController = TextEditingController(text: widget.trip.name);
-    _destinationController = TextEditingController(text: widget.trip.destination);
-    _selectedTripType = widget.trip.tripType.isNotEmpty ? widget.trip.tripType : 'Other';
+    _destinationController = TextEditingController(
+      text: widget.trip.destination,
+    );
+    _selectedTripType = widget.trip.tripType.isNotEmpty
+        ? widget.trip.tripType
+        : 'Other';
 
     // Parse start/end dates from ISO-8601 strings
     if (widget.trip.startDate.isNotEmpty) {
@@ -115,6 +127,7 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
   void dispose() {
     _nameController.dispose();
     _destinationController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -197,10 +210,13 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         final sizeInBytes = platformFile.size;
 
         // 1. Validate file type
-        final allowedExtensions = ['jpg', 'jpeg', 'png'];
+        final allowedExtensions = ['jpg', 'jpeg', 'png', 'heic'];
         if (extension == null || !allowedExtensions.contains(extension)) {
           if (!mounted) return;
-          Helpers.showErrorSnackbar(context, 'Invalid file type. Allowed: jpg, jpeg, png');
+          Helpers.showErrorSnackbar(
+            context,
+            'Invalid file type. Allowed: jpg, jpeg, png, heic',
+          );
           return;
         }
 
@@ -213,7 +229,8 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         }
 
         setState(() {
-          _coverImagePath = platformFile.path!;
+          _coverImagePath = platformFile.path; // Might be null on web
+          _coverImageBytes = platformFile.bytes;
         });
       }
     } catch (e) {
@@ -275,19 +292,176 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                         controller: _nameController,
                         validator: Validators.validateTripName,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                        ),
                         decoration: _inputDecoration('Enter trip name'),
                       ),
                       const SizedBox(height: 16),
 
                       // Destination *
-                      _buildRequiredLabel('Destination', icon: Icons.location_on_outlined),
-                      TextFormField(
-                        controller: _destinationController,
-                        validator: Validators.validateDestination,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
-                        decoration: _inputDecoration('Enter destination'),
+                      _buildRequiredLabel(
+                        'Destination',
+                        icon: Icons.location_on_outlined,
+                      ),
+                      Autocomplete<String>(
+                        optionsBuilder:
+                            (TextEditingValue textEditingValue) async {
+                              if (textEditingValue.text.length < 2) {
+                                return const Iterable<String>.empty();
+                              }
+
+                              // Debouncing to avoid excessive API calls
+                              final completer = Completer<Iterable<String>>();
+                              _debounce?.cancel();
+                              _debounce = Timer(
+                                const Duration(milliseconds: 500),
+                                () async {
+                                  if (mounted) {
+                                    setState(() => _isSearching = true);
+                                  }
+                                  try {
+                                    final results =
+                                        await DestinationService.searchCities(
+                                          textEditingValue.text,
+                                        );
+                                    completer.complete(results);
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => _isSearching = false);
+                                    }
+                                  }
+                                },
+                              );
+
+                              return completer.future;
+                            },
+                        onSelected: (String selection) {
+                          _destinationController.text = selection;
+                        },
+                        // We use the exact same field design as before
+                        fieldViewBuilder:
+                            (
+                              context,
+                              controller,
+                              focusNode,
+                              onEditingComplete,
+                            ) {
+                              if (_destinationController.text.isNotEmpty &&
+                                  controller.text.isEmpty) {
+                                controller.text = _destinationController.text;
+                              }
+                              controller.addListener(() {
+                                _destinationController.text = controller.text;
+                              });
+
+                              return TextFormField(
+                                controller: controller,
+                                focusNode: focusNode,
+                                validator: Validators.validateDestination,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 14,
+                                ),
+                                decoration:
+                                    _inputDecoration(
+                                      'Enter destination',
+                                    ).copyWith(
+                                      suffixIcon: _isSearching
+                                          ? const Padding(
+                                              padding: EdgeInsets.all(12.0),
+                                              child: SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Color(0xFF6BB5E5),
+                                                    ),
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.search,
+                                              size: 20,
+                                              color: Color(0xFF5A7184),
+                                            ),
+                                    ),
+                              );
+                            },
+                        optionsViewBuilder: (context, onSelected, options) {
+                          if (options.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              elevation: 8.0,
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.white,
+                              child: Container(
+                                width: MediaQuery.of(context).size.width - 64,
+                                constraints: const BoxConstraints(
+                                  maxHeight: 250,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFFF3F3F3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListView.separated(
+                                  padding: EdgeInsets.zero,
+                                  shrinkWrap: true,
+                                  itemCount: options.length,
+                                  separatorBuilder: (context, index) =>
+                                      const Divider(
+                                        height: 1,
+                                        color: Color(0xFFF3F3F3),
+                                      ),
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                        final String option = options.elementAt(
+                                          index,
+                                        );
+                                        return InkWell(
+                                          onTap: () => onSelected(option),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                              vertical: 12.0,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.location_on_outlined,
+                                                  size: 16,
+                                                  color: Color(0xFF5A7184),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    option,
+                                                    style: const TextStyle(
+                                                      fontFamily: 'Inter',
+                                                      fontSize: 14,
+                                                      color: Color(0xFF333333),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -298,7 +472,10 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildRequiredLabel('Start Date', icon: Icons.calendar_today_outlined),
+                                _buildRequiredLabel(
+                                  'Start Date',
+                                  icon: Icons.calendar_today_outlined,
+                                ),
                                 _buildDateField(isFrom: true),
                               ],
                             ),
@@ -338,18 +515,45 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _buildTypeChip('Beach', '🏖️', _selectedTripType == 'Beach'),
-                          _buildTypeChip('Mountain', '⛰️', _selectedTripType == 'Mountain'),
-                          _buildTypeChip('City', '🏙️', _selectedTripType == 'City'),
-                          _buildTypeChip('Nature', '🌿', _selectedTripType == 'Nature'),
-                          _buildTypeChip('Island', '🏝️', _selectedTripType == 'Island'),
-                          _buildTypeChip('Other', '🌍', _selectedTripType == 'Other'),
+                          _buildTypeChip(
+                            'Beach',
+                            '🏖️',
+                            _selectedTripType == 'Beach',
+                          ),
+                          _buildTypeChip(
+                            'Mountain',
+                            '⛰️',
+                            _selectedTripType == 'Mountain',
+                          ),
+                          _buildTypeChip(
+                            'City',
+                            '🏙️',
+                            _selectedTripType == 'City',
+                          ),
+                          _buildTypeChip(
+                            'Nature',
+                            '🌿',
+                            _selectedTripType == 'Nature',
+                          ),
+                          _buildTypeChip(
+                            'Island',
+                            '🏝️',
+                            _selectedTripType == 'Island',
+                          ),
+                          _buildTypeChip(
+                            'Other',
+                            '🌍',
+                            _selectedTripType == 'Other',
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
 
                       // Cover Photo
-                      _buildRequiredLabel('Cover Photo', icon: Icons.camera_alt_outlined),
+                      _buildRequiredLabel(
+                        'Cover Photo',
+                        icon: Icons.camera_alt_outlined,
+                      ),
                       const SizedBox(height: 8),
                       _buildCoverPhotoUpload(),
                       const SizedBox(height: 16),
@@ -362,7 +566,9 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                       _isSaving
                           ? const Center(
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6BB5E5)),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF6BB5E5),
+                                ),
                               ),
                             )
                           : _buildPrimaryButton('Save Changes', _saveChanges),
@@ -394,7 +600,11 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                 onTap: () => Navigator.pop(context),
                 child: const Padding(
                   padding: EdgeInsets.only(right: 8.0),
-                  child: Icon(Icons.arrow_back_ios, size: 18, color: Color(0xFF5A7184)),
+                  child: Icon(
+                    Icons.arrow_back_ios,
+                    size: 18,
+                    color: Color(0xFF5A7184),
+                  ),
                 ),
               ),
               const Text(
@@ -437,20 +647,30 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: _coverImagePath!.startsWith('http')
+          child: _coverImageBytes != null
+              ? Image.memory(
+                  _coverImageBytes!,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
+              : (_coverImagePath != null && _coverImagePath!.startsWith('http'))
               ? Image.network(
                   _coverImagePath!,
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _buildUploadPlaceholder(),
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildUploadPlaceholder(),
                 )
-              : Image.file(
+              : (_coverImagePath != null && !kIsWeb)
+              ? Image.file(
                   File(_coverImagePath!),
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                ),
+                )
+              : _buildUploadPlaceholder(),
         ),
         // Replace image button
         Positioned(
@@ -523,53 +743,55 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        ...widget.participants.map((participant) => Padding(
-              padding: const EdgeInsets.only(bottom: 6.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7F7F7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    // Avatar circle with initials
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9F0FC),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _initialsFor(participant.name),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Nunito',
-                            color: Color(0xFF074066),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        participant.name,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF333333),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        ...widget.participants.map(
+          (participant) => Padding(
+            padding: const EdgeInsets.only(bottom: 6.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F7F7),
+                borderRadius: BorderRadius.circular(8),
               ),
-            )),
+              child: Row(
+                children: [
+                  // Avatar circle with initials
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD9F0FC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _initialsFor(participant.name),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Nunito',
+                          color: Color(0xFF074066),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      participant.name,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF333333),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -621,7 +843,11 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: Color(0xFF828282)),
+      hintStyle: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 14,
+        color: Color(0xFF828282),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -648,7 +874,7 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
     final hasError = _dateError != null;
 
     final now = DateTime.now();
-    final firstDate = isFrom ? now : (_fromDate ?? now);
+    final firstDate = isFrom ? DateTime(2000) : (_fromDate ?? DateTime(2000));
     final initialDate = date ?? (isFrom ? now : (_fromDate ?? now));
 
     return GestureDetector(
@@ -683,7 +909,9 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: hasError ? Colors.red : const Color(0xFFF3F3F3)),
+          border: Border.all(
+            color: hasError ? Colors.red : const Color(0xFFF3F3F3),
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Align(
@@ -692,8 +920,8 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
             date != null
                 ? Helpers.formatDisplayDate(date)
                 : isFrom
-                    ? 'Start date'
-                    : 'End date',
+                ? 'Start date'
+                : 'End date',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
@@ -749,9 +977,7 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6BB5E5),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: Text(
           text,
@@ -767,14 +993,19 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
   }
 
   String _initialsFor(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
     if (parts.isEmpty) {
       return '?';
     }
     if (parts.length == 1) {
       return parts.first.substring(0, 1).toUpperCase();
     }
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
   }
 }
 
@@ -810,9 +1041,7 @@ class _KeyboardSafeWrapper extends StatelessWidget {
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.85,
                 ),
-                child: SingleChildScrollView(
-                  child: child,
-                ),
+                child: SingleChildScrollView(child: child),
               ),
             ),
           ),

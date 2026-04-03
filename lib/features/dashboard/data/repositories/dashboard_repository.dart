@@ -1,4 +1,7 @@
 import 'package:travelly/features/dashboard/data/models/dashboard_response_model.dart';
+import 'package:travelly/features/dashboard/data/models/trip_model.dart';
+import 'package:travelly/features/dashboard/data/models/participant_model.dart';
+import 'package:travelly/features/dashboard/data/models/activity_model.dart';
 import 'package:travelly/features/dashboard/data/services/dashboard_service.dart';
 
 /// Repository layer that transforms raw API JSON into typed models.
@@ -29,6 +32,25 @@ class DashboardRepository {
   Future<DashboardResponseModel> getDashboard(String tripId) async {
     final response = await _service.fetchDashboard(tripId);
     return DashboardResponseModel.fromJson(response);
+  }
+
+  /// Fetches only the trip/group detail record.
+  Future<TripModel?> getTripDetails(String tripId) async {
+    final data = await _service.fetchTripDetails(tripId);
+    if (data == null) return null;
+    return TripModel.fromJson(data);
+  }
+
+  /// Fetches only the member list for the trip.
+  Future<List<ParticipantModel>> getTripMembers(String tripId) async {
+    final list = await _service.fetchTripMembers(tripId);
+    return list.map(ParticipantModel.fromJson).toList();
+  }
+
+  /// Fetches only the activity/history log for the trip.
+  Future<List<ActivityModel>> getTripActivities(String tripId) async {
+    final list = await _service.fetchTripActivities(tripId);
+    return list.map(ActivityModel.fromJson).toList();
   }
 
   /// Updates trip details via the service layer.

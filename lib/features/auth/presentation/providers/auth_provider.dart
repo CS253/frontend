@@ -79,7 +79,7 @@ class AuthProvider with ChangeNotifier {
       );
       _status = AuthStatus.authenticated;
       repository.apiClient.setAuthToken(token ?? '');
-      
+
       // Async sync with backend
       if (token != null) {
         repository.service.syncWithBackend(
@@ -284,6 +284,9 @@ class AuthProvider with ChangeNotifier {
   /// Extracts a user-friendly error message from an exception.
   String _extractErrorMessage(dynamic error) {
     final message = error.toString();
+    if (message.contains('An account already exists with this phone number')) {
+      return 'An account already exists with this phone number';
+    }
     if (message.startsWith('Exception: ')) {
       return message.substring(11);
     }
