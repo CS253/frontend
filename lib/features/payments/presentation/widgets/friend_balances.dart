@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/features/payments/data/models/settlement_model.dart';
 import 'package:travelly/features/payments/data/models/member_model.dart';
 import 'package:travelly/core/constants/currency.dart';
+import 'package:travelly/core/utils/initials_util.dart';
+
 
 /// Horizontal scrollable friend balance cards with dynamic data.
 class FriendBalances extends StatelessWidget {
@@ -100,16 +102,9 @@ class FriendBalances extends StatelessWidget {
             statusTextColor = const Color(0xFF8A8075);
           }
 
-          final initials = _getInitials(displayName);
+          final initials = getInitials(displayName);
 
-          Color avatarColor = const Color(0xFFEEECE8);
-          if (iOwe) {
-            avatarColor = _getMemberColor(settlement.toUserId);
-          } else if (owesMe) {
-            avatarColor = _getMemberColor(settlement.fromUserId);
-          } else {
-            avatarColor = _getMemberColor(settlement.fromUserId);
-          }
+          Color avatarColor = const Color(0xFFD9F0FC);
 
           return Padding(
             padding: EdgeInsets.only(right: isLast ? 0 : 10),
@@ -145,23 +140,6 @@ class FriendBalances extends StatelessWidget {
     }
   }
 
-  String _getInitials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
-    if (parts.isEmpty) {
-      return '?';
-    }
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
-  }
-
-  Color _getMemberColor(String userId) {
-    for (final m in members) {
-      if (m.userId == userId) return m.avatarColor;
-    }
-    return const Color(0xFFD9F0FC);
-  }
 
   Widget _card({
     required String initials,

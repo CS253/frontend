@@ -69,6 +69,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   /// via optimistic updates so no full reload is needed.
   void _reload() {
     _paymentsProvider.refreshDerived(groupId: widget.groupId);
+    try {
+      context.read<DashboardProvider>().refreshActivities(widget.groupId);
+    } catch (_) {
+      // Ignored if unavailable
+    }
   }
 
   @override
@@ -83,116 +88,124 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           children: [
             Consumer<PaymentsProvider>(
               builder: (context, provider, _) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    left: 14.6,
-                    right: 14.6,
-                    top: MediaQuery.of(context).padding.top + 120,
-                    bottom: 120,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      BalanceCard(
-                        groupId: widget.groupId,
-                        summary: provider.summary,
-                        isLoading: provider.isSummaryLoading,
-                      ),
-                      const SizedBox(height: 12),
-                      Center(
-                        child: SummaryCards(
+                return RefreshIndicator(
+                  onRefresh: () =>
+                      provider.forceReload(groupId: widget.groupId),
+                  color: const Color(0xFF75CCFE),
+                  backgroundColor: Colors.white,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: 14.6,
+                      right: 14.6,
+                      top: MediaQuery.of(context).padding.top + 120,
+                      bottom: 120,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        BalanceCard(
                           groupId: widget.groupId,
                           summary: provider.summary,
                           isLoading: provider.isSummaryLoading,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildBalancesHeader(),
-                      const SizedBox(height: 10),
-                      FriendBalances(
-                        groupId: widget.groupId,
-                        settlements: provider.settlements,
-                        currentUserId: provider.currentUserId,
-                        members: provider.members,
-                        isLoading: provider.isSettlementsLoading,
-                        onSettle:
-                            (
-                              name,
-                              initials,
-                              amount, {
-                              String? fromUserId,
-                              String? toUserId,
-                              String? currency,
-                            }) {
-                              SettleBalanceFlow.show(
-                                context,
-                                groupId: widget.groupId,
-                                name: name,
-                                initials: initials,
-                                amount: amount,
-                                fromUserId: fromUserId ?? '',
-                                toUserId: toUserId ?? '',
-                                currency: currency ?? 'INR',
-                                currentUserId: provider.currentUserId,
-                                onComplete: _reload,
-                              );
-                            },
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'All Expenses',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          color: const Color(0xFF8A8075),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: SummaryCards(
+                            groupId: widget.groupId,
+                            summary: provider.summary,
+                            isLoading: provider.isSummaryLoading,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      AllExpensesList(
-                        groupId: widget.groupId,
-                        expenses: provider.expenses,
-                        currentUserId: provider.currentUserId,
-                        members: provider.members,
-                        isLoading: provider.isExpensesLoading,
-                        onUpdated: _reload,
-                        onDelete: (expenseId) async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          try {
-                            final dashProvider = context
-                                .read<DashboardProvider>();
-                            await provider.deleteExpense(
-                              widget.groupId,
-                              expenseId,
-                              participants: dashProvider.participants
-                                  .map(
-                                    (p) => MemberModel(
-                                      id: p.id,
-                                      userId: p.id,
-                                      name: p.name,
-                                      avatarColor: const Color(0xFFD9F0FC),
-                                    ),
-                                  )
-                                  .toList(),
-                            );
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Expense deleted successfully'),
-                              ),
-                            );
-                          } catch (e) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('Error deleting expense: $e'),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        _buildBalancesHeader(),
+                        const SizedBox(height: 10),
+                        FriendBalances(
+                          groupId: widget.groupId,
+                          settlements: provider.settlements,
+                          currentUserId: provider.currentUserId,
+                          members: provider.members,
+                          isLoading: provider.isSettlementsLoading,
+                          onSettle:
+                              (
+                                name,
+                                initials,
+                                amount, {
+                                String? fromUserId,
+                                String? toUserId,
+                                String? currency,
+                              }) {
+                                SettleBalanceFlow.show(
+                                  context,
+                                  groupId: widget.groupId,
+                                  name: name,
+                                  initials: initials,
+                                  amount: amount,
+                                  fromUserId: fromUserId ?? '',
+                                  toUserId: toUserId ?? '',
+                                  currency: currency ?? 'INR',
+                                  currentUserId: provider.currentUserId,
+                                  onComplete: _reload,
+                                );
+                              },
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'All Expenses',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: const Color(0xFF8A8075),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        AllExpensesList(
+                          groupId: widget.groupId,
+                          expenses: provider.expenses,
+                          currentUserId: provider.currentUserId,
+                          members: provider.members,
+                          isLoading: provider.isExpensesLoading,
+                          onUpdated: _reload,
+                          onDelete: (expenseId) async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            try {
+                              final dashProvider = context
+                                  .read<DashboardProvider>();
+                              await provider.deleteExpense(
+                                widget.groupId,
+                                expenseId,
+                                participants: dashProvider.participants
+                                    .map(
+                                      (p) => MemberModel(
+                                        id: p.id,
+                                        userId: p.id,
+                                        name: p.name,
+                                        avatarColor: const Color(0xFFD9F0FC),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Expense deleted successfully'),
+                                ),
+                              );
+                            } catch (e) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Error deleting expense: $e'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
+
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 16,
@@ -282,7 +295,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           ),
         ),
         Text(
-          'Detailed',
+          _paymentsProvider.simplifyDebts ? 'Simplified' : 'Detailed',
           style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w500,
             fontSize: 13,

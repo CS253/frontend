@@ -9,6 +9,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -25,7 +26,9 @@ void main() async {
 
   // Initialize Firebase for all platforms
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     if (e is FirebaseException && e.code == 'duplicate-app') {
       // Firebase is already initialized on the native side
@@ -38,6 +41,11 @@ void main() async {
       }
     }
   }
+
+  // Lock to portrait mode only
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
 
   runApp(const App(startFromTrips: kStartFromTrips));
 }

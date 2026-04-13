@@ -1,3 +1,5 @@
+import 'package:travelly/core/utils/initials_util.dart';
+
 /// Data model for an expense returned by the API.
 ///
 /// Maps to GET /groups/:groupId/expenses and
@@ -74,12 +76,7 @@ class ExpenseModel {
 
   /// Helper: get initials from payer name for avatar display.
   String get payerInitials {
-    if (payerName == null || payerName!.isEmpty) return '??';
-    final parts = payerName!.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return payerName!.substring(0, payerName!.length >= 2 ? 2 : 1).toUpperCase();
+    return getInitials(payerName ?? '');
   }
 
   /// Helper: formatted date string for display.

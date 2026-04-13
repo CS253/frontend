@@ -29,7 +29,6 @@ class TripSettingsScreen extends StatefulWidget {
 }
 
 class _TripSettingsScreenState extends State<TripSettingsScreen> {
-  bool _notificationsEnabled = true;
 
   @override
   void initState() {
@@ -96,28 +95,6 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                                 ),
                               );
                             },
-                          ),
-                          const Divider(
-                            height: 1,
-                            color: Color(0xFFEDEDED),
-                            indent: 16,
-                            endIndent: 16,
-                          ),
-                          SettingItem(
-                            title: 'Notifications',
-                            subtitle: 'Enable or disable alerts',
-                            icon: Icons.notifications_none,
-                            iconBgColor: const Color(0xFFE3D9F2),
-                            iconColor: const Color(0xFF8757C3),
-                            trailing: _buildSwitch(
-                              _notificationsEnabled,
-                              (value) {
-                                setState(() {
-                                  _notificationsEnabled = value;
-                                });
-                              },
-                            ),
-                            showChevron: false,
                           ),
                           const Divider(
                             height: 1,

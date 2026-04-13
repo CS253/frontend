@@ -406,7 +406,14 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
           child: Icon(_isEditing ? Icons.close : Icons.arrow_back, size: 20),
         ),
         const SizedBox(width: 8),
-        Expanded(child: Text(_isEditing ? 'Edit Expense' : expense.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16))),
+        Expanded(
+          child: Text(
+            _isEditing ? 'Edit Expense' : expense.title,
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
         if (!_isEditing) GestureDetector(onTap: () { _populateControllers(expense); setState(() => _isEditing = true); }, child: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF6BB5E5))),
       ],
     );
@@ -451,6 +458,24 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
 
   Widget _buildInfoRow(String label, String value) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF8A8075))), Text(value, style: const TextStyle(fontWeight: FontWeight.bold))]),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF8A8075)),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            overflow: label == 'Notes' ? TextOverflow.ellipsis : TextOverflow.visible,
+            maxLines: label == 'Notes' ? 3 : null,
+          ),
+        ),
+      ],
+    ),
   );
 }

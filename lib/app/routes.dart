@@ -29,7 +29,6 @@ import '../features/trip_settings/presentation/screens/trip_settings_screen.dart
 import '../features/account_settings/presentation/screens/personal_info_screen.dart';
 import '../features/account_settings/presentation/screens/change_password_screen.dart';
 import '../features/trip_settings/presentation/screens/manage_members_screen.dart';
-import '../features/trip_settings/presentation/screens/notification_settings_screen.dart';
 
 // Feature screens
 import '../features/payments/presentation/screens/payments_screen.dart';
@@ -110,8 +109,6 @@ class AppRoutes {
           settings,
         );
 
-      case RouteConstants.tripNotifications:
-        return _buildRoute(const NotificationSettingsScreen(), settings);
 
       case RouteConstants.manageMembers:
         final args = settings.arguments;

@@ -143,117 +143,124 @@ class _EditSplitDialogState extends State<EditSplitDialog> {
     return Dialog(
       backgroundColor: const Color(0xFFFCFAF8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Edit Split',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: const Color(0xFF38332E),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Edit Split',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: const Color(0xFF38332E),
+                    ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, size: 20),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Toggle & Edit People Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _splitEqually = !_splitEqually;
-                      if (_splitEqually) _recalculateSplits();
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Switch.adaptive(
-                        value: _splitEqually,
-                        activeTrackColor: const Color(0xFF9FDFCA),
-                        onChanged: (v) {
-                          setState(() {
-                            _splitEqually = v;
-                            if (_splitEqually) _recalculateSplits();
-                          });
-                        },
-                      ),
-                      Text(
-                        'Split equally',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, size: 20),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Toggle & Edit People Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _splitEqually = !_splitEqually;
+                        if (_splitEqually) _recalculateSplits();
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        Switch.adaptive(
+                          value: _splitEqually,
+                          activeTrackColor: const Color(0xFF9FDFCA),
+                          onChanged: (v) {
+                            setState(() {
+                              _splitEqually = v;
+                              if (_splitEqually) _recalculateSplits();
+                            });
+                          },
                         ),
-                      ),
-                    ],
+                        Text(
+                          'Split equally',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  TextButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => SelectPeopleDialog(
+                          groupId: widget.groupId,
+                          initialPeopleIds: _selectedPeopleIds,
+                          onBack: () => Navigator.pop(ctx),
+                          onContinue: (ids) {
+                            Navigator.pop(ctx);
+                            _updatePeople(ids);
+                          },
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.person_add_alt_1, size: 16),
+                    label: const Text('People'),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => SelectPeopleDialog(
-                        groupId: widget.groupId,
-                        initialPeopleIds: _selectedPeopleIds,
-                        onBack: () => Navigator.pop(ctx),
-                        onContinue: (ids) {
-                          Navigator.pop(ctx);
-                          _updatePeople(ids);
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: activeMembers.length,
+                  itemBuilder: (context, index) {
+                    final member = activeMembers[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: PaymentSplitRow(
+                        member: member,
+                        controller: _splitControllers[member.userId]!,
+                        currencySymbol: widget.currencySymbol,
+                        onManualEdit: () {
+                          if (_splitEqually) {
+                            setState(() => _splitEqually = false);
+                          }
                         },
                       ),
                     );
                   },
-                  icon: const Icon(Icons.person_add_alt_1, size: 16),
-                  label: const Text('People'),
                 ),
-              ],
-            ),
-            
-            const SizedBox(height: 12),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: activeMembers.length,
-                itemBuilder: (context, index) {
-                  final member = activeMembers[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: PaymentSplitRow(
-                      member: member,
-                      controller: _splitControllers[member.userId]!,
-                      currencySymbol: widget.currencySymbol,
-                      onManualEdit: () {
-                        if (_splitEqually) setState(() => _splitEqually = false);
-                      },
-                    ),
-                  );
-                },
               ),
-            ),
-
-            const SizedBox(height: 20),
-            DialogPrimaryButton(
-              text: 'Done',
-              onPressed: _onSave,
-              backgroundColor: const Color(0xFF9FDFCA),
-              textColor: const Color(0xFF339977),
-            ),
-          ],
+  
+              const SizedBox(height: 20),
+              DialogPrimaryButton(
+                text: 'Done',
+                onPressed: _onSave,
+                backgroundColor: const Color(0xFF9FDFCA),
+                textColor: const Color(0xFF339977),
+              ),
+            ],
+          ),
         ),
       ),
     );
+
   }
 }

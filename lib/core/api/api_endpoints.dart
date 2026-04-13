@@ -236,4 +236,14 @@ class ApiEndpoints {
 
   /// POST — Get optimized route and place timings.
   static const String planRoute = '/route-planner/plan';
+
+  // ---------------------------------------------------------------------------
+  // Notification Endpoints
+  // ---------------------------------------------------------------------------
+
+  /// POST — Register FCM token.
+  static const String registerToken = '/notifications/register-token';
+
+  /// DELETE — Unregister FCM token.
+  static const String unregisterToken = '/notifications/unregister-token';
 }

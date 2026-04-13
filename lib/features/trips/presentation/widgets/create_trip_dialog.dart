@@ -190,19 +190,39 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     final name = _memberNameController.text.trim();
     final phone = _memberPhoneController.text.trim();
 
+    // Check for duplicates (same name OR same phone)
+    final tripsProvider = context.read<TripsProvider>();
+    final bool isDuplicate = tripsProvider.newTripMembers.any(
+      (m) =>
+          m.name.toLowerCase() == name.toLowerCase() ||
+          (m.phone != null &&
+              m.phone!.replaceAll(RegExp(r'[\s\-\(\)]'), '') ==
+                  phone.replaceAll(RegExp(r'[\s\-\(\)]'), '')),
+    );
+
+    if (isDuplicate) {
+      Helpers.showErrorSnackbar(
+        context,
+        'A member with this name or phone number is already added.',
+      );
+      return;
+    }
+
+
     final member = MemberModel(
       id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       phone: phone.isNotEmpty ? phone : null,
     );
 
-    context.read<TripsProvider>().addMemberToNewTrip(member);
+    tripsProvider.addMemberToNewTrip(member);
     _memberNameController.clear();
     _memberPhoneController.clear();
 
     // Reset form validation state after adding
     _step2FormKey.currentState?.reset();
   }
+
 
   /// Builds a required field label with a red asterisk (*) using RichText + TextSpan.
   Widget _buildRequiredLabel(String label, {IconData? icon}) {
@@ -646,40 +666,6 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
           ),
           const SizedBox(height: 16),
 
-          const Text(
-            'Or Add from Contacts',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF5A7184),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.group_add_outlined, color: Color(0xFF6BB5E5)),
-                SizedBox(width: 8),
-                Text(
-                  'Contacts',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Color(0xFF333333),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 24),
 
           // Members list from provider

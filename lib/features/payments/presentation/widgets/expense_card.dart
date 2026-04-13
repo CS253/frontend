@@ -42,7 +42,37 @@ class AllExpensesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Column(
+        children: List.generate(3, (i) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDFDFB),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: const Color.fromRGBO(235, 231, 224, 0.5), width: 1),
+              boxShadow: const [BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.08), blurRadius: 18, offset: Offset(0, 3.6))],
+            ),
+            child: Row(
+              children: [
+                Container(width: 40, height: 40, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF0ECE8))),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(width: 120, height: 11, decoration: BoxDecoration(color: const Color(0xFFF0ECE8), borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(height: 6),
+                      Container(width: 80, height: 9, decoration: BoxDecoration(color: const Color(0xFFF0ECE8), borderRadius: BorderRadius.circular(4))),
+                    ],
+                  ),
+                ),
+                Container(width: 60, height: 14, decoration: BoxDecoration(color: const Color(0xFFF0ECE8), borderRadius: BorderRadius.circular(4))),
+              ],
+            ),
+          ),
+        )),
+      );
     }
 
     if (expenses.isEmpty) {

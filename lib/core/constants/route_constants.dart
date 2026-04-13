@@ -54,6 +54,5 @@ class RouteConstants {
   static const String changePassword = '/account-settings/change-password';
 
   static const String tripSettings = '/trip-settings';
-  static const String tripNotifications = '/trip-settings/notifications';
   static const String manageMembers = '/trip-settings/members';
 }

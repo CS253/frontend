@@ -74,9 +74,15 @@ class PaymentRepository {
     final response = await _service.fetchExpenses(groupId);
     final data = response['data'];
     if (data is List) {
-      return data
+      final list = data
           .map((e) => ExpenseModel.fromJson(e as Map<String, dynamic>))
           .toList();
+      list.sort((a, b) {
+        final dateA = a.date ?? a.createdAt ?? DateTime(2000);
+        final dateB = b.date ?? b.createdAt ?? DateTime(2000);
+        return dateB.compareTo(dateA);
+      });
+      return list;
     }
     return [];
   }

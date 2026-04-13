@@ -162,6 +162,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         controller: _phoneController,
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
+                        isReadOnly: true,
                       ),
                       const SizedBox(height: 24),
                       _buildTextField(

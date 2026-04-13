@@ -236,6 +236,15 @@ class TripsProvider with ChangeNotifier {
 
   /// Adds a member to the trip being created (Step 2).
   void addMemberToNewTrip(MemberModel member) {
+    // Safety check: Don't add if name or phone already exists
+    final isDuplicate = _newTripMembers.any(
+      (m) =>
+          m.name.toLowerCase() == member.name.toLowerCase() ||
+          (m.phone != null && m.phone == member.phone),
+    );
+    if (isDuplicate) return;
+
+
     _newTripMembers.add(member);
     notifyListeners();
   }
