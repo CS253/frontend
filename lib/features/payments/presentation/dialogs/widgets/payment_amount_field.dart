@@ -46,7 +46,10 @@ class PaymentAmountField extends StatelessWidget {
                 ? const TextInputType.numberWithOptions(decimal: true)
                 : TextInputType.text,
             inputFormatters: isNumber
-                ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))]
+                ? [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                    LengthLimitingTextInputFormatter(8),
+                  ]
                 : null,
             decoration: InputDecoration(
               filled: true,

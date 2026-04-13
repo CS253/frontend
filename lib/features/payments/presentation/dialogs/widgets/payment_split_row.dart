@@ -67,7 +67,10 @@ class PaymentSplitRow extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(8),
+              ],
               onChanged: (_) => onManualEdit(),
               decoration: InputDecoration(
                 filled: true,
