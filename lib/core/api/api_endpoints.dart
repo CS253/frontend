@@ -38,7 +38,7 @@ class ApiEndpoints {
     } else {
       try {
         if (Platform.isAndroid) {
-          return 'http://172.23.36.189:5000/api';
+          return 'http://172.27.16.252:5210/api';
         }
       } catch (_) {}
       return 'http://localhost:5001/api';

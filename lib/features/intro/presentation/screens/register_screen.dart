@@ -67,8 +67,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (authProvider.isAuthenticated) {
-      // Navigate to the "Verify Email" screen
-      Navigator.pushNamed(context, RouteConstants.verifyEmail);
+      // Navigate to the "Verify Email" screen and clear the stack
+      // so user can't press back to bypass verification
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        RouteConstants.verifyEmail,
+        (route) => false,
+      );
     } else if (authProvider.errorMessage != null) {
       Helpers.showErrorSnackbar(context, authProvider.errorMessage!);
     }

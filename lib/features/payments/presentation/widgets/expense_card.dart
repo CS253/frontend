@@ -76,7 +76,15 @@ class AllExpensesList extends StatelessWidget {
     }
 
     if (expenses.isEmpty) {
-      return const Center(child: Text('No expenses found.'));
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text(
+            'No expenses found.',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ),
+      );
     }
 
     return Column(
@@ -109,12 +117,14 @@ class AllExpensesList extends StatelessWidget {
     if (expense.splits.isNotEmpty && currentUserId.isNotEmpty) {
       for (final split in expense.splits) {
         if (split.userId == currentUserId) {
-          return split.amount.toStringAsFixed(2);
+          final amt = split.amount;
+          return (amt.isNaN || amt.isInfinite) ? '0.00' : amt.toStringAsFixed(2);
         }
       }
       return '0.00';
     }
-    return expense.amount.toStringAsFixed(2);
+    final expAmt = expense.amount;
+    return (expAmt.isNaN || expAmt.isInfinite) ? '0.00' : expAmt.toStringAsFixed(2);
   }
 }
 
@@ -322,23 +332,20 @@ class ExpenseCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
-                        child: Row(
-                          children: [
-                            if (shareTextPrefix == 'Your share: ')
-                              Flexible(
-                                child: Text(
-                                  shareTextPrefix,
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              if (shareTextPrefix == 'Your share: ')
+                                TextSpan(
+                                  text: shareTextPrefix,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.normal,
                                     fontSize: 12.8,
                                     color: const Color(0xFF8A8075),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            Flexible(
-                              child: Text(
-                                shareTextPrefix == 'Your share: '
+                              TextSpan(
+                                text: shareTextPrefix == 'Your share: '
                                     ? '$currencySymbol$yourShare'
                                     : '$shareTextPrefix $currencySymbol$yourShare',
                                 style: GoogleFonts.plusJakartaSans(
@@ -348,10 +355,11 @@ class ExpenseCard extends StatelessWidget {
                                       ? const Color(0xFFD1475E)
                                       : const Color(0xFF339977),
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

@@ -38,23 +38,23 @@ class ExpenseModel {
   factory ExpenseModel.fromJson(Map<String, dynamic> json) {
     final payer = json['payer'] as Map<String, dynamic>?;
     return ExpenseModel(
-      id: json['id'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      currency: json['currency'] as String? ?? 'INR',
-      groupId: json['groupId'] as String? ?? '',
-      paidBy: json['paidBy'] as String? ?? '',
-      payerName: payer?['name'] as String? ?? json['payerName'] as String?,
-      payerEmail: payer?['email'] as String?,
-      date: json['date'] != null ? DateTime.tryParse(json['date']) : null,
-      notes: json['notes'] as String?,
-      splitType: json['splitType'] as String? ?? 'EQUAL',
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
+      currency: json['currency']?.toString() ?? 'INR',
+      groupId: json['groupId']?.toString() ?? '',
+      paidBy: json['paidBy']?.toString() ?? '',
+      payerName: payer?['name']?.toString() ?? json['payerName']?.toString(),
+      payerEmail: payer?['email']?.toString(),
+      date: json['date'] != null ? DateTime.tryParse(json['date'].toString()) : null,
+      notes: json['notes']?.toString(),
+      splitType: json['splitType']?.toString() ?? 'EQUAL',
       splits: (json['splits'] as List<dynamic>?)
               ?.map((s) => ExpenseSplit.fromJson(s as Map<String, dynamic>))
               .toList() ??
           [],
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'])
+          ? DateTime.tryParse(json['createdAt'].toString())
           : null,
     );
   }
@@ -111,12 +111,12 @@ class ExpenseSplit {
   factory ExpenseSplit.fromJson(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>?;
     return ExpenseSplit(
-      id: json['id'] as String? ?? '',
-      expenseId: json['expenseId'] as String? ?? '',
-      userId: json['userId'] as String? ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      userName: user?['name'] as String?,
-      userEmail: user?['email'] as String?,
+      id: json['id']?.toString() ?? '',
+      expenseId: json['expenseId']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
+      userName: user?['name']?.toString(),
+      userEmail: user?['email']?.toString(),
     );
   }
 

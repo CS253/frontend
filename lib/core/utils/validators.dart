@@ -35,7 +35,10 @@ class Validators {
   /// Validate a UPI ID format.
   static String? upiId(String? value) {
     if (value == null || value.trim().isEmpty) return null; // optional
-    if (!value.contains('@')) return 'Enter a valid UPI ID (e.g. name@upi)';
+    final upiRegex = RegExp(r'^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$');
+    if (!upiRegex.hasMatch(value.trim())) {
+      return 'Enter a valid UPI ID (e.g. name@upi)';
+    }
     return null;
   }
 
@@ -130,6 +133,21 @@ class Validators {
   static String? validateMemberName(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Name is required';
+    }
+    return null;
+  }
+
+  /// Validates profile name against special characters (injection prevention).
+  static String? validateProfileName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Name is required';
+    }
+    if (value.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    final nameRegex = RegExp(r"^[a-zA-Z0-9\s.\-']+$");
+    if (!nameRegex.hasMatch(value.trim())) {
+      return 'Name contains invalid characters';
     }
     return null;
   }

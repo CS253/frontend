@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:travelly/core/constants/currency.dart';
 import 'package:travelly/features/payments/data/repositories/payment_repository.dart';
@@ -199,6 +200,10 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
               child: TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  LengthLimitingTextInputFormatter(8),
+                ],
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w500,
                   fontSize: 14,

@@ -33,26 +33,42 @@ class AuthService {
           .signInWithEmailAndPassword(email: email, password: password);
 
       final user = userCredential.user;
-      final token = await user?.getIdToken();
 
-        if (token != null) {
-          await syncWithBackend(
-            token: token,
-            name: user?.displayName,
-            phone: user?.phoneNumber,
-          );
-        }
+      // Reload user to get latest emailVerified status
+      await user?.reload();
+      final refreshedUser = _auth.currentUser;
 
-        return {
-          'token': token,
-          'user': {
-            'id': user?.uid,
-            'name': user?.displayName ?? email.split('@').first,
-            'email': user?.email,
-            'phone': user?.phoneNumber,
-            'avatarUrl': user?.photoURL,
-          },
-        };
+      // If the email is NOT verified, treat this account as non-existent:
+      // delete the stale Firebase account and reject the login.
+      if (refreshedUser != null && !refreshedUser.emailVerified) {
+        await refreshedUser.delete();
+        await _auth.signOut();
+        throw Exception(
+          'Account not found. Please register first.',
+        );
+      }
+
+      final token = await refreshedUser?.getIdToken();
+
+      if (token != null) {
+        await syncWithBackend(
+          token: token,
+          name: refreshedUser?.displayName,
+          phone: refreshedUser?.phoneNumber,
+        );
+      }
+
+      return {
+        'token': token,
+        'user': {
+          'id': refreshedUser?.uid,
+          'name': refreshedUser?.displayName ?? email.split('@').first,
+          'email': refreshedUser?.email,
+          'phone': refreshedUser?.phoneNumber,
+          'avatarUrl': refreshedUser?.photoURL,
+          'isEmailVerified': refreshedUser?.emailVerified ?? false,
+        },
+      };
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Login failed');
     }
@@ -70,56 +86,97 @@ class AuthService {
     String? phone,
   }) async {
     try {
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      final user = userCredential.user;
-
-      // Update display name if provided
-      if (name != null && user != null) {
-        await user.updateDisplayName(name);
-        await user.reload();
-      }
-
-      // Send verification email
-      await user?.sendEmailVerification();
-
-      // Force a fresh token so the backend gets the updated display name
-      final token = await user?.getIdToken(true);
-
-      if (token != null) {
-        try {
-          await syncWithBackend(
-            token: token,
-            name: name,
-            phone: phone,
-            throwOnError: true,
-          );
-        } catch (error) {
-          try {
-            await user?.delete();
-          } catch (_) {
-            await _auth.signOut();
-          }
-
-          rethrow;
-        }
-      }
-
-      return {
-        'token': token,
-        'user': {
-          'id': user?.uid,
-          'name': user?.displayName ?? name ?? email.split('@').first,
-          'email': user?.email,
-          'phone': phone ?? user?.phoneNumber,
-          'avatarUrl': user?.photoURL,
-          'isEmailVerified': user?.emailVerified ?? false,
-        },
-      };
+      return await _createAndSetupUser(
+        email: email,
+        password: password,
+        name: name,
+        phone: phone,
+      );
     } on FirebaseAuthException catch (e) {
+      // If the email is already in use, check if the existing account is
+      // unverified. If so, delete the stale account and retry registration.
+      if (e.code == 'email-already-in-use') {
+        try {
+          final existing = await _auth.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          final existingUser = existing.user;
+          if (existingUser != null) {
+            await existingUser.reload();
+            final refreshed = _auth.currentUser;
+            if (refreshed != null && !refreshed.emailVerified) {
+              // Old unverified account — delete and retry
+              await refreshed.delete();
+              await _auth.signOut();
+              return await _createAndSetupUser(
+                email: email,
+                password: password,
+                name: name,
+                phone: phone,
+              );
+            }
+          }
+          // Account exists and IS verified (or sign-in succeeded) — sign out
+          // and report the conflict.
+          await _auth.signOut();
+        } catch (_) {
+          // Sign-in failed (e.g. wrong password) — the email truly belongs
+          // to another verified account.
+        }
+        throw Exception('This email is already in use by a verified account.');
+      }
       throw Exception(e.message ?? 'Registration failed');
     }
+  }
+
+  /// Helper: creates a Firebase user, sets display name, sends verification
+  /// email, syncs with backend, and returns the auth response map.
+  Future<Map<String, dynamic>> _createAndSetupUser({
+    required String email,
+    required String password,
+    String? name,
+    String? phone,
+  }) async {
+    final UserCredential userCredential = await _auth
+        .createUserWithEmailAndPassword(email: email, password: password);
+
+    final user = userCredential.user;
+
+    // Update display name if provided
+    if (name != null && user != null) {
+      await user.updateDisplayName(name);
+      await user.reload();
+    }
+
+    // Send verification email
+    await user?.sendEmailVerification();
+
+    // Force a fresh token so the backend gets the updated display name
+    final token = await user?.getIdToken(true);
+
+    if (token != null) {
+      // Sync with backend but don't fail registration if backend is
+      // unreachable — the sync will be retried at login.
+      await syncWithBackend(
+        token: token,
+        name: name,
+        phone: phone,
+        throwOnError: false,
+      );
+    }
+
+    return {
+      'token': token,
+      'user': {
+        'id': user?.uid,
+        'name': user?.displayName ?? name ?? email.split('@').first,
+        'email': user?.email,
+        'phone': phone ?? user?.phoneNumber,
+        'avatarUrl': user?.photoURL,
+        'isEmailVerified': user?.emailVerified ?? false,
+      },
+    };
   }
 
   /// Sends a verification email to the currently signed-in user.
@@ -254,6 +311,18 @@ class AuthService {
       };
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message ?? 'Google Sign-In failed');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete Current User
+  // ---------------------------------------------------------------------------
+
+  /// Deletes the currently signed-in Firebase user account.
+  Future<void> deleteCurrentUser() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.delete();
     }
   }
 
