@@ -85,9 +85,20 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
   }
 
   Future<void> _submitExpense() async {
-    int totalCents =
-        ((double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0) * 100)
-            .round();
+    FocusScope.of(context).unfocus();
+    
+    final totalAmount = double.tryParse(widget.paymentDetails['amount'] ?? '0') ?? 0.0;
+    if (totalAmount >= 100000000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('enter amount less than 100000000'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    int totalCents = (totalAmount * 100).round();
     int currentSumCents = 0;
     for (var controller in controllers.values) {
       currentSumCents += ((double.tryParse(controller.text) ?? 0.0) * 100)
@@ -161,7 +172,12 @@ class _SplitAmountDialogState extends State<SplitAmountDialog> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error adding expense: $e')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text('Error adding expense: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }

@@ -190,19 +190,39 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
     final name = _memberNameController.text.trim();
     final phone = _memberPhoneController.text.trim();
 
+    // Check for duplicates (same name OR same phone)
+    final tripsProvider = context.read<TripsProvider>();
+    final bool isDuplicate = tripsProvider.newTripMembers.any(
+      (m) =>
+          m.name.toLowerCase() == name.toLowerCase() ||
+          (m.phone != null &&
+              m.phone!.replaceAll(RegExp(r'[\s\-\(\)]'), '') ==
+                  phone.replaceAll(RegExp(r'[\s\-\(\)]'), '')),
+    );
+
+    if (isDuplicate) {
+      Helpers.showErrorSnackbar(
+        context,
+        'A member with this name or phone number is already added.',
+      );
+      return;
+    }
+
+
     final member = MemberModel(
       id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       phone: phone.isNotEmpty ? phone : null,
     );
 
-    context.read<TripsProvider>().addMemberToNewTrip(member);
+    tripsProvider.addMemberToNewTrip(member);
     _memberNameController.clear();
     _memberPhoneController.clear();
 
     // Reset form validation state after adding
     _step2FormKey.currentState?.reset();
   }
+
 
   /// Builds a required field label with a red asterisk (*) using RichText + TextSpan.
   Widget _buildRequiredLabel(String label, {IconData? icon}) {
