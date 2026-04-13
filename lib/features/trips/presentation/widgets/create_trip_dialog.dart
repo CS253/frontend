@@ -112,8 +112,8 @@ class _CreateTripDialogState extends State<CreateTripDialog> {
       // Save trip details to provider
       final tripsProvider = context.read<TripsProvider>();
       tripsProvider.updateTripDetails(
-        name: _tripNameController.text,
-        destination: _destinationController.text,
+        name: _tripNameController.text.trim(),
+        destination: _destinationController.text.trim(),
         startDate: _fromDate,
         endDate: _toDate,
         tripType: _selectedTripType,
