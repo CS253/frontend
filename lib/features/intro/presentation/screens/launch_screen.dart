@@ -31,13 +31,20 @@ class _LaunchScreenState extends State<LaunchScreen> {
 
     if (!mounted) return;
 
-    // If user is already authenticated, go to trips
+    // If user is already authenticated, check verification status
     if (authProvider.isAuthenticated) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        RouteConstants.trips,
-        (route) => false,
-      );
+      if (!authProvider.isEmailVerified) {
+        // Unverified cached session — delete the stale Firebase account
+        // and sign out so the user must register fresh.
+        await authProvider.deleteUnverifiedAndLogout();
+        // Stay on the launch screen — user must register again.
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RouteConstants.trips,
+          (route) => false,
+        );
+      }
     }
   }
 

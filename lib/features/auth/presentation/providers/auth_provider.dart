@@ -67,26 +67,34 @@ class AuthProvider with ChangeNotifier {
 
     final currentUser = repository.service.currentUser;
     if (currentUser != null) {
-      final token = await currentUser.getIdToken();
-      _token = token;
-      _user = UserModel(
-        id: currentUser.uid,
-        name: currentUser.displayName ?? 'Traveller',
-        email: currentUser.email ?? '',
-        phone: currentUser.phoneNumber,
-        avatarUrl: currentUser.photoURL,
-        isEmailVerified: currentUser.emailVerified,
-      );
-      _status = AuthStatus.authenticated;
-      repository.apiClient.setAuthToken(token ?? '');
+      // Reload to get the latest emailVerified status from Firebase
+      await currentUser.reload();
+      final refreshedUser = repository.service.currentUser;
 
-      // Async sync with backend
-      if (token != null) {
-        repository.service.syncWithBackend(
-          token: token,
-          name: currentUser.displayName,
-          phone: currentUser.phoneNumber,
+      if (refreshedUser != null) {
+        final token = await refreshedUser.getIdToken();
+        _token = token;
+        _user = UserModel(
+          id: refreshedUser.uid,
+          name: refreshedUser.displayName ?? 'Traveller',
+          email: refreshedUser.email ?? '',
+          phone: refreshedUser.phoneNumber,
+          avatarUrl: refreshedUser.photoURL,
+          isEmailVerified: refreshedUser.emailVerified,
         );
+        _status = AuthStatus.authenticated;
+        repository.apiClient.setAuthToken(token ?? '');
+
+        // Async sync with backend
+        if (token != null) {
+          repository.service.syncWithBackend(
+            token: token,
+            name: refreshedUser.displayName,
+            phone: refreshedUser.phoneNumber,
+          );
+        }
+      } else {
+        _status = AuthStatus.unauthenticated;
       }
     } else {
       _status = AuthStatus.unauthenticated;
@@ -241,6 +249,28 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _status = AuthStatus.unauthenticated;
     _setLoading(false);
+  }
+
+  /// Deletes the current unverified Firebase account and resets auth state.
+  /// Used on app launch when a cached session has an unverified email.
+  Future<void> deleteUnverifiedAndLogout() async {
+    try {
+      await repository.service.deleteCurrentUser();
+    } catch (_) {
+      // Ignore — the account may already be deleted
+    }
+
+    try {
+      await repository.logout();
+    } catch (_) {}
+
+    repository.apiClient.clearAuthToken();
+    UserIdentityService.instance.clearCache();
+
+    _user = null;
+    _token = null;
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
   }
 
   /// Updates the phone number for the current user.

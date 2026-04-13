@@ -87,8 +87,17 @@ class _OtpScreenState extends State<OtpScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
+          onPressed: () async {
+            // Sign out the user before going back — prevents
+            // unverified users from remaining logged in
+            final authProvider = context.read<AuthProvider>();
+            await authProvider.logout();
+            if (!mounted) return;
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              RouteConstants.login,
+              (route) => false,
+            );
           },
         ),
       ),

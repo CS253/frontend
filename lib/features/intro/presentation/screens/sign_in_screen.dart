@@ -66,6 +66,8 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!mounted) return;
 
     if (authProvider.isAuthenticated) {
+      // Login succeeded — user is verified (unverified accounts are
+      // automatically deleted by the service layer).
       Navigator.pushNamedAndRemoveUntil(
         context,
         RouteConstants.trips,
