@@ -35,7 +35,10 @@ class Validators {
   /// Validate a UPI ID format.
   static String? upiId(String? value) {
     if (value == null || value.trim().isEmpty) return null; // optional
-    if (!value.contains('@')) return 'Enter a valid UPI ID (e.g. name@upi)';
+    final upiRegex = RegExp(r'^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$');
+    if (!upiRegex.hasMatch(value.trim())) {
+      return 'Enter a valid UPI ID (e.g. name@upi)';
+    }
     return null;
   }
 
