@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../data/models/user_profile.dart';
 import '../providers/account_settings_provider.dart';
+import '../../../../core/utils/validators.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -152,9 +153,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         label: 'Full Name',
                         controller: _nameController,
                         icon: Icons.person_outline,
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Name is required'
-                            : null,
+                        validator: Validators.validateProfileName,
                       ),
                       const SizedBox(height: 24),
                       _buildTextField(

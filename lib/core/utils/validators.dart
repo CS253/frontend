@@ -136,4 +136,19 @@ class Validators {
     }
     return null;
   }
+
+  /// Validates profile name against special characters (injection prevention).
+  static String? validateProfileName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Name is required';
+    }
+    if (value.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    final nameRegex = RegExp(r"^[a-zA-Z0-9\s.\-']+$");
+    if (!nameRegex.hasMatch(value.trim())) {
+      return 'Name contains invalid characters';
+    }
+    return null;
+  }
 }
