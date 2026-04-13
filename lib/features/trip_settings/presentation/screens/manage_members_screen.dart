@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travelly/features/trips/data/models/member_model.dart';
 import 'package:travelly/features/trips/presentation/providers/trips_provider.dart';
+import 'package:travelly/core/utils/initials_util.dart';
+
 
 class ManageMembersScreen extends StatefulWidget {
   final String tripId;
@@ -261,7 +263,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
             radius: 20,
             backgroundColor: _avatarColorFor(member.id),
             child: Text(
-              _initialsFor(member.name),
+              getInitials(member.name),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -649,16 +651,6 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     );
   }
 
-  String _initialsFor(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
-    if (parts.isEmpty) {
-      return '?';
-    }
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
-  }
 
   Color _avatarColorFor(String seed) {
     const palette = [

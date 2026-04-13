@@ -155,6 +155,13 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
+  /// Refreshes only the activity/history log (useful after adding payments).
+  Future<void> refreshActivities(String tripId) async {
+    _isActivitiesLoading = true;
+    notifyListeners();
+    await _fetchActivities(tripId);
+  }
+
   /// Refreshes dashboard data. Convenience method for pull-to-refresh.
   Future<void> refresh(String tripId) => fetchDashboard(tripId);
   /// Updates trip details with all editable fields.

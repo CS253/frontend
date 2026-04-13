@@ -46,8 +46,13 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
     descriptionController = TextEditingController(
       text: widget.initialDetails?['description'] ?? '',
     );
+    final initialDateStr = widget.initialDetails?['date'] ?? '';
+    _selectedDate = initialDateStr.isNotEmpty 
+        ? DateTime.tryParse(initialDateStr) ?? DateTime.now() 
+        : DateTime.now();
+
     dateController = TextEditingController(
-      text: widget.initialDetails?['date'] ?? '',
+      text: initialDateStr.isNotEmpty ? initialDateStr : "${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}",
     );
 
     final participants = context.read<DashboardProvider>().participants;
@@ -220,15 +225,36 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
             DialogPrimaryButton(
               text: 'Continue',
               onPressed: () {
-                if (amountController.text.isEmpty) {
+                FocusScope.of(context).unfocus();
+                
+                final amountText = amountController.text;
+                if (amountText.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter an amount')),
+                    const SnackBar(
+                      content: Text('Please enter an amount'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                   return;
                 }
+
+                final amount = double.tryParse(amountText) ?? 0;
+                if (amount >= 100000000) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('enter amount less than 100000000'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+
                 if (descriptionController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a description')),
+                    const SnackBar(
+                      content: Text('Please enter a description'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                   return;
                 }
@@ -236,6 +262,7 @@ class _PaymentDetailsDialogState extends State<PaymentDetailsDialog> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please select who paid for this'),
+                      behavior: SnackBarBehavior.floating,
                     ),
                   );
                   return;

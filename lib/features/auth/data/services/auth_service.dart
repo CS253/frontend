@@ -10,25 +10,13 @@ class AuthService {
 
   final ApiClient _apiClient;
 
-  // GoogleSignIn is now a singleton in version 7.x
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  bool _isGoogleSignInInitialized = false;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: "545892068210-upjf18pmi2qtflne3qeegj87s3c715o7.apps.googleusercontent.com",
+  );
 
   AuthService({
     required ApiClient apiClient,
   }) : _apiClient = apiClient;
-
-  Future<void> _ensureGoogleSignInInitialized() async {
-    if (_isGoogleSignInInitialized) return;
-
-    await _googleSignIn.initialize(
-      clientId: kIsWeb
-          ? "545892068210-b90rpi6cl42g7gip8r53if0svcflajo9.apps.googleusercontent.com"
-          : null,
-      serverClientId: "545892068210-b90rpi6cl42g7gip8r53if0svcflajo9.apps.googleusercontent.com",
-    );
-    _isGoogleSignInInitialized = true;
-  }
 
   User? get currentUser => _auth.currentUser;
 
@@ -233,11 +221,10 @@ class AuthService {
 
   Future<Map<String, dynamic>> googleSignIn() async {
     try {
-      await _ensureGoogleSignInInitialized();
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) throw Exception('Google Sign-In cancelled');
 
-      final googleUser = await _googleSignIn.authenticate();
-
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
@@ -276,7 +263,6 @@ class AuthService {
 
   Future<void> logout() async {
     await _auth.signOut();
-    await _ensureGoogleSignInInitialized();
     await _googleSignIn.signOut();
     _apiClient.clearAuthToken();
   }

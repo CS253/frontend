@@ -13,6 +13,7 @@ class MarkAsPaidDialog extends StatefulWidget {
   final String fromUserId;
   final String toUserId;
   final String currency;
+  final String? currentUserId;
   final VoidCallback onBack;
   final VoidCallback? onComplete;
 
@@ -25,6 +26,7 @@ class MarkAsPaidDialog extends StatefulWidget {
     required this.fromUserId,
     required this.toUserId,
     required this.currency,
+    this.currentUserId,
     required this.onBack,
     this.onComplete,
   });
@@ -50,10 +52,16 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
   }
 
   Future<void> _markAsPaid() async {
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
+    FocusScope.of(context).unfocus();
+    final amountText = _amountController.text;
+    final amount = double.tryParse(amountText) ?? 0.0;
+    
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid amount')),
+        const SnackBar(
+          content: Text('Please enter a valid amount'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -73,14 +81,20 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
         Navigator.of(context).pop();
         if (widget.onComplete != null) widget.onComplete!();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment marked as settled')),
+          const SnackBar(
+            content: Text('Payment marked as settled'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error settling: $e')),
+          SnackBar(
+            content: Text('Error settling: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -157,7 +171,9 @@ class _MarkAsPaidDialogState extends State<MarkAsPaidDialog> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                'Paying ${widget.name}',
+                widget.currentUserId == widget.toUserId 
+                    ? '${widget.name} paid you' 
+                    : 'Paying ${widget.name}',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w500,
                   fontSize: 13,

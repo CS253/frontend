@@ -22,9 +22,39 @@ class SummaryCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const SizedBox(
-        height: 120,
-        child: Center(child: CircularProgressIndicator()),
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(width: 8),
+            ...List.generate(
+              3,
+              (_) => Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDFDFB),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: const Color.fromRGBO(235, 231, 224, 0.5), width: 1),
+                    boxShadow: const [
+                      BoxShadow(color: Color.fromRGBO(56, 51, 46, 0.08), blurRadius: 18, offset: Offset(0, 3.6))
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(width: 36, height: 36, decoration: BoxDecoration(color: const Color(0xFFF0ECE8), borderRadius: BorderRadius.circular(11))),
+                      const SizedBox(height: 12),
+                      Container(width: 60, height: 9, decoration: BoxDecoration(color: const Color(0xFFF0ECE8), borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(height: 6),
+                      Container(width: 40, height: 14, decoration: BoxDecoration(color: const Color(0xFFF0ECE8), borderRadius: BorderRadius.circular(4))),
+                    ],
+                  ),
+                ),
+              ),
+            ).expand((w) => [w, const SizedBox(width: 8)]),
+          ],
+        ),
       );
     }
 

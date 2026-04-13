@@ -37,6 +37,7 @@ import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 import 'package:travelly/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:travelly/core/utils/helpers.dart';
 import 'package:travelly/core/utils/validators.dart';
+import 'package:travelly/core/utils/initials_util.dart';
 import 'package:travelly/features/trips/data/services/destination_service.dart';
 
 /// Floating dialog for viewing and editing trip details.
@@ -765,7 +766,7 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                     ),
                     child: Center(
                       child: Text(
-                        _initialsFor(participant.name),
+                        getInitials(participant.name),
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -992,21 +993,6 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
     );
   }
 
-  String _initialsFor(String name) {
-    final parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) {
-      return '?';
-    }
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
-        .toUpperCase();
-  }
 }
 
 // =============================================================================

@@ -286,7 +286,13 @@ class PaymentsProvider extends ChangeNotifier {
         }
       } else if (split != null) {
         final splits = split['splits'] as List;
-        final mySplit = splits.firstWhere((s) => s['userId'] == _currentUserId, orElse: () => null);
+        Map<String, dynamic>? mySplit;
+        for (final s in splits) {
+          if (s['userId'] == _currentUserId) {
+            mySplit = s as Map<String, dynamic>;
+            break;
+          }
+        }
         if (mySplit != null) {
           yourShare = (mySplit['amount'] as num).toDouble();
         }
@@ -305,6 +311,8 @@ class PaymentsProvider extends ChangeNotifier {
 
     _expenses = List.from(_expenses)..insert(0, optimisticExpense);
     MutationTracker.instance.begin(groupId);
+    _isSettlementsLoading = true; // Instantly show skeletons for balances
+    _isSummaryLoading = true;
     notifyListeners(); // instant feedback
 
     try {

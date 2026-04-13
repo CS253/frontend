@@ -81,6 +81,7 @@ class SettleBalanceFlow {
           fromUserId: fromUserId,
           toUserId: toUserId,
           currency: currency,
+          currentUserId: currentUserId,
           onBack: () {
             Navigator.pop(ctx);
             _showSelectOption(context, groupId, name, initials, amount, fromUserId, toUserId, currency, currentUserId, onComplete);
