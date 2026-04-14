@@ -29,7 +29,6 @@ class TripModel {
   final int membersCount;
   final String? createdBy;
   final bool simplifyDebts;
-  final String? inviteLink;
   /// Server-side last-updated timestamp, used for optimistic locking.
   final DateTime? updatedAt;
 
@@ -45,7 +44,6 @@ class TripModel {
     this.membersCount = 0,
     this.createdBy,
     this.simplifyDebts = false,
-    this.inviteLink,
     this.updatedAt,
   });
 
@@ -63,7 +61,6 @@ class TripModel {
       membersCount: json['membersCount'] as int? ?? 0,
       createdBy: json['createdBy'] as String?,
       simplifyDebts: json['simplifyDebts'] as bool? ?? false,
-      inviteLink: json['inviteLink'] as String?,
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'] as String)
           : null,
@@ -102,7 +99,6 @@ class TripModel {
     int? membersCount,
     String? createdBy,
     bool? simplifyDebts,
-    String? inviteLink,
     DateTime? updatedAt,
   }) {
     return TripModel(
@@ -117,7 +113,6 @@ class TripModel {
       membersCount: membersCount ?? this.membersCount,
       createdBy: createdBy ?? this.createdBy,
       simplifyDebts: simplifyDebts ?? this.simplifyDebts,
-      inviteLink: inviteLink ?? this.inviteLink,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
