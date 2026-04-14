@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 
 class DocumentViewerScreen extends StatelessWidget {
   final String url;
@@ -14,6 +16,7 @@ class DocumentViewerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -43,6 +46,7 @@ class DocumentViewerScreen extends StatelessWidget {
         pageFling: false,
       ).fromUrl(
         url,
+        headers: token != null ? {'Authorization': 'Bearer $token'} : null,
         placeholder: (double progress) => Center(
           child: CircularProgressIndicator(
             value: progress / 100,

@@ -356,7 +356,7 @@ class TripsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addMember({
+  Future<MemberModel> addMember({
     required String tripId,
     required String phone,
     String? name,
@@ -378,6 +378,7 @@ class TripsProvider with ChangeNotifier {
 
       _members = [..._members, ...members];
       _syncTripMemberCount(tripId, _members.length);
+      return members.first;
     } catch (e) {
       _errorMessage = e.toString();
       rethrow;
@@ -408,6 +409,32 @@ class TripsProvider with ChangeNotifier {
       rethrow;
     } finally {
       _isUpdatingMembers = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> joinTrip({
+    required String inviteLink,
+    required String participantName,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await repository.joinTrip(
+        inviteLink: inviteLink,
+        participantName: participantName,
+      );
+      _isLoading = false;
+      notifyListeners();
+      await loadTrips(refresh: true);
+      return result;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }

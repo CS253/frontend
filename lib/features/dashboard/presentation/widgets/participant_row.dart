@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import 'package:travelly/features/dashboard/data/models/trip_model.dart';
 import 'package:travelly/features/dashboard/data/models/participant_model.dart';
 import 'package:travelly/features/dashboard/data/models/weather_model.dart';
@@ -195,6 +197,7 @@ class _ParticipantRowState extends State<ParticipantRow> {
 
   @override
   Widget build(BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -675,8 +678,10 @@ class _ParticipantRowState extends State<ParticipantRow> {
       final coverImage = widget.trip.coverImage!;
 
       if (coverImage.startsWith('http')) {
+        final token = Provider.of<AuthProvider>(context, listen: false).token;
         return CachedNetworkImage(
           imageUrl: coverImage,
+          httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : null,
           fit: BoxFit.cover,
           placeholder: (context, url) => _buildStockFallback(),
           errorWidget: (context, url, error) => _buildStockFallback(),

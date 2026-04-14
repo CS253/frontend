@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 
 import '../providers/gallery_provider.dart';
 import 'package:travelly/features/documents/data/services/document_download_service.dart';
@@ -46,7 +47,8 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
       final extension = photo.imageUrl.toLowerCase().contains('.png') ? '.png' : '.jpg';
       final fileName = 'travelly_${photo.id.substring(0, 8)}$extension';
       
-      final savedPath = await _downloadService.downloadDocument(photo.imageUrl, fileName);
+      final token = Provider.of<AuthProvider>(context, listen: false).token;
+      final savedPath = await _downloadService.downloadDocument(photo.imageUrl, fileName, token: token);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,6 +96,7 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     final provider = context.watch<GalleryProvider>();
 
     return Scaffold(
@@ -151,6 +154,7 @@ class _FullPhotoScreenState extends State<FullPhotoScreen> {
                       )
                     : CachedNetworkImage(
                         imageUrl: photo.imageUrl,
+                        httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : null,
                         fit: BoxFit.contain,
                         width: double.infinity,
                         height: double.infinity,

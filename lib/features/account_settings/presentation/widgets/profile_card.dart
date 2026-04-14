@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import '../../data/models/user_profile.dart';
 import '../../../../core/utils/initials_util.dart';
 
@@ -14,6 +16,7 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     if (isLoading) {
       return Container(
         width: double.infinity,
@@ -66,7 +69,10 @@ class ProfileCard extends StatelessWidget {
               border: Border.all(color: const Color(0xFFD9F2EA), width: 3),
               image: userProfile!.imageUrl != null
                   ? DecorationImage(
-                      image: NetworkImage(userProfile!.imageUrl!),
+                      image: NetworkImage(
+                        userProfile!.imageUrl!,
+                        headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+                      ),
                       fit: BoxFit.cover,
                     )
                   : null,

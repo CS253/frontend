@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'package:travelly/core/utils/initials_util.dart';
 import 'package:travelly/features/trips/data/models/member_model.dart';
 import 'package:travelly/features/trips/presentation/providers/trips_provider.dart';
-import 'package:travelly/core/utils/initials_util.dart';
-
 
 class ManageMembersScreen extends StatefulWidget {
   final String tripId;
@@ -22,7 +24,9 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TripsProvider>().loadMembers(widget.tripId);
+      final tripsProvider = context.read<TripsProvider>();
+      tripsProvider.loadMembers(widget.tripId);
+      tripsProvider.loadTripDetail(widget.tripId);
     });
   }
 
@@ -73,6 +77,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
         child: Consumer<TripsProvider>(
           builder: (context, tripsProvider, _) {
             final members = tripsProvider.members;
+            final inviteLink = _resolveInviteLink(tripsProvider);
             final showLoadingState = tripsProvider.isLoading && members.isEmpty;
             final hasError = tripsProvider.errorMessage != null && members.isEmpty;
 
@@ -108,7 +113,10 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => tripsProvider.loadMembers(widget.tripId),
+                        onPressed: () {
+                          tripsProvider.loadMembers(widget.tripId);
+                          tripsProvider.loadTripDetail(widget.tripId);
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6CB4E6),
                           shape: RoundedRectangleBorder(
@@ -130,12 +138,20 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
             }
 
             return RefreshIndicator(
-              onRefresh: () => tripsProvider.loadMembers(widget.tripId),
+              onRefresh: () async {
+                await tripsProvider.loadMembers(widget.tripId);
+                await tripsProvider.loadTripDetail(widget.tripId);
+              },
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 children: [
                   _buildMembersHeader(context, members.length),
                   const SizedBox(height: 12),
+                  if (inviteLink != null && inviteLink.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildInviteCard(inviteLink),
+                    ),
                   if (members.isEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
@@ -165,7 +181,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                           ),
                           SizedBox(height: 6),
                           Text(
-                            'Add a traveller by phone number to bring them into this trip.',
+                            'Add a traveller by name and phone number, then share the invite link so they can join the trip.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
@@ -180,7 +196,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                     ...members.map(
                       (member) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
-                        child: _buildMemberCard(context, member),
+                        child: _buildMemberCard(context, member, inviteLink),
                       ),
                     ),
                 ],
@@ -240,7 +256,78 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     );
   }
 
-  Widget _buildMemberCard(BuildContext context, MemberModel member) {
+  Widget _buildInviteCard(String inviteLink) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFE),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDDEAF4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.link_outlined,
+                size: 18,
+                color: Color(0xFF6CB4E6),
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Trip Invite Link',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Nunito',
+                  color: Color(0xFF1F242E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            inviteLink,
+            style: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'Nunito',
+              color: Color(0xFF4A5568),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _copyInviteText(
+                  _buildGenericInviteMessage(inviteLink),
+                  successMessage: 'Invite link copied',
+                ),
+                icon: const Icon(Icons.copy_outlined, size: 16),
+                label: const Text('Copy'),
+              ),
+              FilledButton.icon(
+                onPressed: () => _shareInvite(_buildGenericInviteMessage(inviteLink)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF6CB4E6),
+                ),
+                icon: const Icon(Icons.share_outlined, size: 16),
+                label: const Text('Share'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberCard(
+    BuildContext context,
+    MemberModel member,
+    String? inviteLink,
+  ) {
     final subtitle = member.pending
         ? 'Pending invite${member.phone != null && member.phone!.isNotEmpty ? ' - ${member.phone}' : ''}'
         : member.role == 'admin'
@@ -304,7 +391,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
               color: Color(0xFF8B8893),
               size: 18,
             ),
-            onPressed: () => _showMemberOptions(context, member),
+            onPressed: () => _showMemberOptions(context, member, inviteLink),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -314,8 +401,10 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
   }
 
   void _showAddMemberSheet(BuildContext context) {
+    final nameController = TextEditingController();
     final phoneController = TextEditingController();
-    String? errorText;
+    String? nameErrorText;
+    String? phoneErrorText;
 
     showModalBottomSheet(
       context: context,
@@ -360,7 +449,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Enter the phone number of the person you want to add to this trip.',
+                    'Add the invited traveller\'s name and phone number. Once they are added, share the invite link with them so they can join the trip.',
                     style: TextStyle(
                       fontSize: 13,
                       fontFamily: 'Nunito',
@@ -368,6 +457,25 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 14,
+                      color: Color(0xFF1F242E),
+                    ),
+                    onChanged: (value) {
+                      setSheetState(() {
+                        nameErrorText = _validateName(value);
+                      });
+                    },
+                    decoration: _sheetInputDecoration(
+                      hintText: 'Participant Name',
+                      icon: Icons.person_outline,
+                      errorText: nameErrorText,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
@@ -378,53 +486,13 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                     ),
                     onChanged: (value) {
                       setSheetState(() {
-                        errorText = _validatePhone(value);
+                        phoneErrorText = _validatePhone(value);
                       });
                     },
-                    decoration: InputDecoration(
+                    decoration: _sheetInputDecoration(
                       hintText: 'Phone Number',
-                      errorText: errorText,
-                      errorStyle: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 12,
-                        color: Color(0xFFD1475E),
-                      ),
-                      hintStyle: const TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 14,
-                        color: Color(0xFF8B8893),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.phone_outlined,
-                        color: Color(0xFF8B8893),
-                        size: 20,
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFFF9FAFB),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E4E9)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E4E9)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF6CB4E6)),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFD1475E)),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFD1475E)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
+                      icon: Icons.phone_outlined,
+                      errorText: phoneErrorText,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -434,31 +502,53 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                         onPressed: tripsProvider.isUpdatingMembers
                             ? null
                             : () async {
+                                final name = nameController.text.trim();
                                 final phone = phoneController.text.trim();
-                                final validation = _validatePhone(phone);
-                                if (validation != null) {
+                                final resolvedNameError = _validateName(name);
+                                final resolvedPhoneError = _validatePhone(phone);
+
+                                if (resolvedNameError != null || resolvedPhoneError != null) {
                                   setSheetState(() {
-                                    errorText = validation;
+                                    nameErrorText = resolvedNameError;
+                                    phoneErrorText = resolvedPhoneError;
                                   });
                                   return;
                                 }
 
                                 try {
-                                  await context.read<TripsProvider>().addMember(
+                                  final createdMember = await context.read<TripsProvider>().addMember(
                                         tripId: widget.tripId,
+                                        name: name,
                                         phone: phone,
                                       );
 
                                   if (!mounted) return;
-                                  // ignore: use_build_context_synchronously
                                   Navigator.pop(sheetContext);
-                                  _showSnackBar(
-                                    'Member added successfully',
-                                    isError: false,
-                                  );
+
+                                  var inviteLink = _resolveInviteLink(context.read<TripsProvider>());
+                                  if ((inviteLink == null || inviteLink.isEmpty) && createdMember.pending) {
+                                    await context.read<TripsProvider>().loadTripDetail(widget.tripId);
+                                    inviteLink = _resolveInviteLink(context.read<TripsProvider>());
+                                  }
+                                  if (createdMember.pending && inviteLink != null && inviteLink.isNotEmpty) {
+                                    _showInviteActions(member: createdMember, inviteLink: inviteLink);
+                                  } else {
+                                    _showSnackBar(
+                                      createdMember.pending
+                                          ? 'Member added. Share the trip invite so they can join.'
+                                          : 'Member added successfully',
+                                      isError: false,
+                                    );
+                                  }
                                 } catch (error) {
+                                  final message = _formatError(error);
                                   setSheetState(() {
-                                    errorText = _formatError(error);
+                                    if (message.toLowerCase().contains('name')) {
+                                      nameErrorText = message;
+                                      phoneErrorText = null;
+                                    } else {
+                                      phoneErrorText = message;
+                                    }
                                   });
                                 }
                               },
@@ -502,7 +592,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     );
   }
 
-  void _showMemberOptions(BuildContext context, MemberModel member) {
+  void _showMemberOptions(BuildContext context, MemberModel member, String? inviteLink) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -525,7 +615,41 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+              if (member.pending && inviteLink != null && inviteLink.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      _sheetActionButton(
+                        label: 'Copy Invite',
+                        icon: Icons.copy_outlined,
+                        foregroundColor: const Color(0xFF1F242E),
+                        backgroundColor: const Color(0xFFF3F5F7),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          _copyInviteText(
+                            _buildInviteMessage(inviteLink, member.name),
+                            successMessage: 'Invite copied for ${member.name}',
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _sheetActionButton(
+                        label: 'Share Invite',
+                        icon: Icons.share_outlined,
+                        foregroundColor: Colors.white,
+                        backgroundColor: const Color(0xFF6CB4E6),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          _shareInvite(_buildInviteMessage(inviteLink, member.name));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               if (member.role == 'admin' && !member.pending)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24),
@@ -543,39 +667,51 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
               else
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
+                  child: _sheetActionButton(
+                    label: member.pending ? 'Remove Invite' : 'Remove from Trip',
+                    icon: Icons.delete_outline,
+                    foregroundColor: const Color(0xFFD1475E),
+                    backgroundColor: const Color(0xFFFDE8E8),
+                    onTap: () async {
                       Navigator.pop(sheetContext);
                       await _handleRemoveMember(member);
                     },
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Color(0xFFD1475E),
-                      size: 20,
-                    ),
-                    label: Text(
-                      member.pending ? 'Remove Invite' : 'Remove from Trip',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Nunito',
-                        color: Color(0xFFD1475E),
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFDE8E8),
-                      minimumSize: const Size(double.infinity, 64),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
                   ),
                 ),
               const SizedBox(height: 40),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _sheetActionButton({
+    required String label,
+    required IconData icon,
+    required Color foregroundColor,
+    required Color backgroundColor,
+    required VoidCallback onTap,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, color: foregroundColor, size: 20),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Nunito',
+          color: foregroundColor,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: backgroundColor,
+        minimumSize: const Size(double.infinity, 56),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        elevation: 0,
       ),
     );
   }
@@ -609,6 +745,265 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     }
   }
 
+  void _showInviteActions({
+    required MemberModel member,
+    required String inviteLink,
+  }) {
+    final inviteMessage = _buildInviteMessage(inviteLink, member.name);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E4E9),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Invite ready for ${member.name}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Nunito',
+                  color: Color(0xFF1F242E),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Share this invite now so the pending member has the trip link and the participant name they should use while joining.',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontFamily: 'Nunito',
+                  color: Color(0xFF737B8C),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FBFE),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFDDEAF4)),
+                ),
+                child: Text(
+                  inviteLink,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Nunito',
+                    color: Color(0xFF4A5568),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _copyInviteText(
+                          inviteMessage,
+                          successMessage: 'Invite copied for ${member.name}',
+                        );
+                      },
+                      icon: const Icon(Icons.copy_outlined, size: 16),
+                      label: const Text('Copy Invite'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _shareInvite(inviteMessage);
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF6CB4E6),
+                      ),
+                      icon: const Icon(Icons.share_outlined, size: 16),
+                      label: const Text('Share Invite'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _sheetInputDecoration({
+    required String hintText,
+    required IconData icon,
+    String? errorText,
+  }) {
+    return InputDecoration(
+      hintText: hintText,
+      errorText: errorText,
+      errorStyle: const TextStyle(
+        fontFamily: 'Nunito',
+        fontSize: 12,
+        color: Color(0xFFD1475E),
+      ),
+      hintStyle: const TextStyle(
+        fontFamily: 'Nunito',
+        fontSize: 14,
+        color: Color(0xFF8B8893),
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: const Color(0xFF8B8893),
+        size: 20,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF9FAFB),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E4E9)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E4E9)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF6CB4E6)),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFD1475E)),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFD1475E)),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+    );
+  }
+
+  String? _resolveInviteLink(TripsProvider provider) {
+    if (provider.selectedTrip?.id == widget.tripId &&
+        provider.selectedTrip?.inviteLink != null &&
+        provider.selectedTrip!.inviteLink!.trim().isNotEmpty) {
+      return provider.selectedTrip!.inviteLink!.trim();
+    }
+
+    for (final trip in provider.trips) {
+      if (trip.id == widget.tripId &&
+          trip.inviteLink != null &&
+          trip.inviteLink!.trim().isNotEmpty) {
+        return trip.inviteLink!.trim();
+      }
+    }
+
+    return null;
+  }
+
+  String _buildInviteMessage(String inviteLink, String participantName) {
+    final inviteUri = Uri(
+      scheme: 'travelly',
+      host: 'join',
+      queryParameters: {
+        'inviteLink': inviteLink,
+        'participantName': participantName,
+      },
+    ).toString();
+
+    return '''
+Join my Travelly trip.
+
+Invite link: $inviteUri
+Trip invite code: $inviteLink
+Participant name: $participantName
+
+Open Travelly, go to "Join Trip", and paste this invite link or code. Use the participant name above while joining.
+''';
+  }
+
+  String _buildGenericInviteMessage(String inviteLink) {
+    final inviteUri = Uri(
+      scheme: 'travelly',
+      host: 'join',
+      queryParameters: {
+        'inviteLink': inviteLink,
+      },
+    ).toString();
+
+    return '''
+Join my Travelly trip.
+
+Invite link: $inviteUri
+Trip invite code: $inviteLink
+
+Open Travelly, go to "Join Trip", and paste this invite link or code.
+''';
+  }
+
+  Future<void> _copyInviteText(
+    String inviteText, {
+    required String successMessage,
+  }) async {
+    await Clipboard.setData(ClipboardData(text: inviteText));
+    if (!mounted) return;
+    _showSnackBar(successMessage, isError: false);
+  }
+
+  Future<void> _shareInvite(String inviteText) async {
+    try {
+      final smsUri = Uri(
+        scheme: 'sms',
+        queryParameters: {
+          'body': inviteText,
+        },
+      );
+
+      final launched = await launchUrl(smsUri);
+      if (launched) {
+        return;
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    await _copyInviteText(
+      inviteText,
+      successMessage: 'Invite copied. Share it in any app.',
+    );
+  }
+
+  String? _validateName(String value) {
+    if (value.trim().isEmpty) {
+      return 'Participant name is required';
+    }
+    if (value.trim().length < 2) {
+      return 'Enter a valid participant name';
+    }
+    return null;
+  }
+
   String? _validatePhone(String value) {
     final digits = value.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) {
@@ -629,6 +1024,7 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
     message = message.replaceFirst('Failed to add members: ', '');
     message = message.replaceFirst('Failed to add member: ', '');
     message = message.replaceFirst('Failed to remove member: ', '');
+    message = message.replaceFirst('Failed to load trip: ', '');
 
     final apiExceptionMatch = RegExp(r'ApiException\(\d+\):\s*(.*)').firstMatch(message);
     if (apiExceptionMatch != null) {
@@ -650,7 +1046,6 @@ class _ManageMembersScreenState extends State<ManageMembersScreen> {
       ),
     );
   }
-
 
   Color _avatarColorFor(String seed) {
     const palette = [

@@ -22,6 +22,7 @@ class TripModel {
   final String name;
   final String destination;
   final String? coverImage;
+  final String? inviteLink;
   final DateTime startDate;
   final DateTime endDate;
   final String tripType;
@@ -36,6 +37,7 @@ class TripModel {
     required this.name,
     required this.destination,
     this.coverImage,
+    this.inviteLink,
     required this.startDate,
     required this.endDate,
     required this.tripType,
@@ -52,6 +54,7 @@ class TripModel {
       name: json['name'] as String,
       destination: json['destination'] as String,
       coverImage: json['coverImage'] as String?,
+      inviteLink: json['inviteLink'] as String?,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
       tripType: json['tripType'] as String? ?? 'Other',
@@ -71,12 +74,14 @@ class TripModel {
       'name': name,
       'destination': destination,
       'coverImage': coverImage,
+      'inviteLink': inviteLink,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
       'tripType': tripType,
       'membersCount': membersCount,
       'createdBy': createdBy,
       'simplifyDebts': simplifyDebts,
+      if (inviteLink != null) 'inviteLink': inviteLink,
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
@@ -87,6 +92,7 @@ class TripModel {
     String? name,
     String? destination,
     String? coverImage,
+    String? inviteLink,
     DateTime? startDate,
     DateTime? endDate,
     String? tripType,
@@ -100,6 +106,7 @@ class TripModel {
       name: name ?? this.name,
       destination: destination ?? this.destination,
       coverImage: coverImage ?? this.coverImage,
+      inviteLink: inviteLink ?? this.inviteLink,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       tripType: tripType ?? this.tripType,

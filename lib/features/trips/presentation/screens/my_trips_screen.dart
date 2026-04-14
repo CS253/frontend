@@ -187,7 +187,12 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                               maxWidth: 180,
                             ),
                             onSelected: (value) async {
-                              if (value == 'account_settings') {
+                              if (value == 'join_trip') {
+                                Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).pushNamed(RouteConstants.joinTrip);
+                              } else if (value == 'account_settings') {
                                 Navigator.of(
                                   context,
                                   rootNavigator: true,
@@ -206,6 +211,38 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                               }
                             },
                             itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'join_trip',
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE8F5FD),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.group_add_outlined,
+                                        color: Color(0xFF6BB5E5),
+                                        size: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Join Trip',
+                                      style: TextStyle(
+                                        color: Color(0xFF212022),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(height: 1),
                               PopupMenuItem(
                                 value: 'account_settings',
                                 height: 38,

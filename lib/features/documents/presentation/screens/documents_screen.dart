@@ -11,6 +11,7 @@ import 'package:travelly/features/documents/presentation/screens/document_viewer
 import 'package:travelly/features/documents/presentation/widgets/add_document_dialog.dart';
 import 'package:travelly/features/documents/presentation/widgets/document_card.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 
 class DocumentsScreen extends StatefulWidget {
   final String groupId;
@@ -81,7 +82,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     });
 
     try {
-      final savedPath = await _downloadService.downloadDocument(url, title);
+      final token = Provider.of<AuthProvider>(context, listen: false).token;
+      final savedPath = await _downloadService.downloadDocument(url, title, token: token);
       if (!mounted) {
         return;
       }

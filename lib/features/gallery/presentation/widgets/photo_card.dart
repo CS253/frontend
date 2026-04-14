@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import '../../data/models/photo_model.dart';
 import '../providers/gallery_provider.dart';
 import '../screens/full_photo_screen.dart';
@@ -14,6 +15,7 @@ class PhotoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     final provider = context.watch<GalleryProvider>();
     final isSelected = provider.selectedPhotoIds.contains(photo.id);
     final inSelectionMode = provider.isSelectionMode;
@@ -61,6 +63,7 @@ class PhotoCard extends StatelessWidget {
                       )
                     : CachedNetworkImage(
                         imageUrl: photo.imageUrl,
+                        httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : null,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
                           color: const Color(0xFFE0E0E0),

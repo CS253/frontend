@@ -165,6 +165,21 @@ class TripsService {
     return response as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> joinTrip({
+    required String inviteLink,
+    required String participantName,
+  }) async {
+    final response = await apiClient.post(
+      ApiEndpoints.joinTrip,
+      body: {
+        'inviteLink': inviteLink,
+        'participantName': participantName,
+      },
+    );
+
+    return response as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> leaveTrip({
     required String tripId,
     required String userId,

@@ -8,6 +8,8 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import '../../features/trips/data/models/trip_model.dart';
 
 class TripCache {
@@ -62,10 +64,11 @@ class TripCache {
   ///
   /// Call this immediately after receiving the summary list.
   void precacheAll(List<TripModel> trips, BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     for (final trip in trips) {
       final url = trip.coverImage;
       if (url != null && url.isNotEmpty && url.startsWith('http')) {
-        precacheImage(NetworkImage(url), context);
+        precacheImage(NetworkImage(url, headers: token != null ? {'Authorization': 'Bearer $token'} : null), context);
       }
     }
   }

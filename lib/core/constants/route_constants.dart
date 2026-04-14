@@ -28,6 +28,7 @@ class RouteConstants {
   static const String createTrip = '/trips/create';
   static const String addMembers = '/trips/add-members';
   static const String reviewTrip = '/trips/review';
+  static const String joinTrip = '/trips/join';
 
   // ---------------------------------------------------------------------------
   // Dashboard Routes
