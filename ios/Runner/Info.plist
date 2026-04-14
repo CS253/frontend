@@ -12,6 +12,7 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>com.googleusercontent.apps.545892068210-bk9bfqdjsgbn1kqncd3k7ptrbm899gmq</string>
+					<string>travelly</string>
 				</array>
 			</dict>
 		</array>

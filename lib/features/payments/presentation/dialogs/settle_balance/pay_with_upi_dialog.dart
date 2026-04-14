@@ -127,7 +127,15 @@ class _PayWithUpiDialogState extends State<PayWithUpiDialog> {
   }
 
   Future<void> _launchUpiLink(String link) async {
-    final uri = Uri.parse(link);
+    String finalLink = link;
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      // Force Google Pay on iOS using its custom scheme
+      if (finalLink.toLowerCase().startsWith('upi:')) {
+        finalLink = finalLink.replaceFirst(RegExp(r'upi://?', caseSensitive: false), 'gpay://upi/');
+      }
+    }
+
+    final uri = Uri.parse(finalLink);
     try {
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {

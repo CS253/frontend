@@ -15,26 +15,22 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/trip_settings_provider.dart';
 import 'manage_members_screen.dart';
 
-
 class TripSettingsScreen extends StatefulWidget {
   final String? tripId;
 
-  const TripSettingsScreen({
-    super.key,
-    this.tripId,
-  });
+  const TripSettingsScreen({super.key, this.tripId});
 
   @override
   State<TripSettingsScreen> createState() => _TripSettingsScreenState();
 }
 
 class _TripSettingsScreenState extends State<TripSettingsScreen> {
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final tripId = widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
+      final tripId =
+          widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
       if (tripId != null && tripId.isNotEmpty) {
         context.read<TripSettingsProvider>().init(tripId);
       }
@@ -51,7 +47,8 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
           Consumer<TripSettingsProvider>(
             builder: (context, provider, child) {
               // Build the switch state optimistically based on provider values
-              final simplifyDebts = provider.tripSettings?.simplifyDebts ?? true;
+              final simplifyDebts =
+                  provider.tripSettings?.simplifyDebts ?? true;
 
               return SingleChildScrollView(
                 padding: EdgeInsets.only(
@@ -78,11 +75,17 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                             iconColor: const Color(0xFF5AB6EE),
                             onTap: () {
                               final tripId =
-                                  widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
+                                  widget.tripId ??
+                                  context
+                                      .read<DashboardProvider>()
+                                      .currentTrip
+                                      ?.id;
                               if (tripId == null || tripId.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('No trip selected right now.'),
+                                    content: Text(
+                                      'No trip selected right now.',
+                                    ),
                                   ),
                                 );
                                 return;
@@ -91,7 +94,8 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ManageMembersScreen(tripId: tripId),
+                                  builder: (context) =>
+                                      ManageMembersScreen(tripId: tripId),
                                 ),
                               );
                             },
@@ -113,16 +117,45 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                                     width: 44,
                                     height: 44,
                                     child: Center(
-                                      child: CupertinoActivityIndicator(radius: 8),
+                                      child: CupertinoActivityIndicator(
+                                        radius: 8,
+                                      ),
                                     ),
                                   )
-                                : _buildSwitch(
-                                    simplifyDebts,
-                                    (value) {
-                                      provider.updateTripSetting('simplify_debts', value);
-                                      context.read<DashboardProvider>().updateSimplifyDebts(value);
-                                    },
-                                  ),
+                                : _buildSwitch(simplifyDebts, (value) async {
+                                    try {
+                                      await provider.updateTripSetting(
+                                        'simplify_debts',
+                                        value,
+                                      );
+                                      if (context.mounted) {
+                                        context
+                                            .read<DashboardProvider>()
+                                            .updateSimplifyDebts(value);
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        var errorMessage = e.toString();
+                                        if (errorMessage.contains(
+                                          'Only the group creator',
+                                        )) {
+                                          errorMessage =
+                                              'Only the group creator can change this setting';
+                                        }
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(errorMessage),
+                                            backgroundColor: const Color(
+                                              0xFFD74242,
+                                            ),
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  }),
                             showChevron: false,
                           ),
                         ],
@@ -190,7 +223,10 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -237,7 +273,7 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
     final token = Provider.of<AuthProvider>(context, listen: false).token;
     final dashboardProvider = context.watch<DashboardProvider>();
     final trip = dashboardProvider.currentTrip;
-    
+
     if (trip == null) {
       return Container(
         height: 140,
@@ -255,15 +291,19 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
       if (trip.coverImage!.startsWith('http')) {
         backgroundImage = CachedNetworkImage(
           imageUrl: trip.coverImage!,
-          httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : null,
+          httpHeaders: token != null
+              ? {'Authorization': 'Bearer $token'}
+              : null,
           fit: BoxFit.cover,
-          errorWidget: (context, url, error) => _buildStockFallback(trip.tripType),
+          errorWidget: (context, url, error) =>
+              _buildStockFallback(trip.tripType),
         );
       } else {
         backgroundImage = Image.file(
           File(trip.coverImage!),
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildStockFallback(trip.tripType),
+          errorBuilder: (context, error, stackTrace) =>
+              _buildStockFallback(trip.tripType),
         );
       }
     } else {
@@ -317,7 +357,11 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
                 color: Colors.white,
                 letterSpacing: -0.5,
                 shadows: [
-                  Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 2)),
+                  Shadow(
+                    color: Color(0x66000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
             ),
@@ -351,7 +395,8 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
     return Image.asset(
       stockAsset,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF90CAF9)),
+      errorBuilder: (context, error, stackTrace) =>
+          Container(color: const Color(0xFF90CAF9)),
     );
   }
 
@@ -367,20 +412,20 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
   }
 
   Future<void> _handleLeaveTrip() async {
-    final tripId = widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
+    final tripId =
+        widget.tripId ?? context.read<DashboardProvider>().currentTrip?.id;
     final userId = context.read<AuthProvider>().user?.id;
 
     if (tripId == null || tripId.isEmpty || userId == null || userId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to leave this trip right now.'),
-        ),
+        const SnackBar(content: Text('Unable to leave this trip right now.')),
       );
       return;
     }
 
-    final shouldLeave = await showDialog<bool>(
+    final shouldLeave =
+        await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text(
@@ -423,9 +468,9 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
 
     try {
       final result = await context.read<TripsProvider>().leaveTrip(
-            tripId: tripId,
-            userId: userId,
-          );
+        tripId: tripId,
+        userId: userId,
+      );
 
       if (!mounted) return;
 
@@ -445,10 +490,10 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
         ),
       );
 
-      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-        RouteConstants.trips,
-        (route) => false,
-      );
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil(RouteConstants.trips, (route) => false);
     } catch (error) {
       if (!mounted) return;
 
@@ -459,7 +504,9 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
         message = message.substring('Exception: '.length);
       }
       message = message.replaceFirst('Failed to leave trip: ', '');
-      final apiExceptionMatch = RegExp(r'ApiException\(\d+\):\s*(.*)').firstMatch(message);
+      final apiExceptionMatch = RegExp(
+        r'ApiException\(\d+\):\s*(.*)',
+      ).firstMatch(message);
       if (apiExceptionMatch != null) {
         message = apiExceptionMatch.group(1) ?? message;
       }
@@ -474,4 +521,3 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
     }
   }
 }
-
