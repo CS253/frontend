@@ -122,6 +122,21 @@ class TripsRepository {
     }
   }
 
+  Future<Map<String, dynamic>> joinTrip({
+    required String inviteLink,
+    required String participantName,
+  }) async {
+    try {
+      final rawData = await service.joinTrip(
+        inviteLink: inviteLink,
+        participantName: participantName,
+      );
+      return rawData['data'] as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to join trip: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> leaveTrip({
     required String tripId,
     required String userId,

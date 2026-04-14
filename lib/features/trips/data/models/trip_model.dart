@@ -22,12 +22,14 @@ class TripModel {
   final String name;
   final String destination;
   final String? coverImage;
+  final String? inviteLink;
   final DateTime startDate;
   final DateTime endDate;
   final String tripType;
   final int membersCount;
   final String? createdBy;
   final bool simplifyDebts;
+  final String? inviteLink;
   /// Server-side last-updated timestamp, used for optimistic locking.
   final DateTime? updatedAt;
 
@@ -36,12 +38,14 @@ class TripModel {
     required this.name,
     required this.destination,
     this.coverImage,
+    this.inviteLink,
     required this.startDate,
     required this.endDate,
     required this.tripType,
     this.membersCount = 0,
     this.createdBy,
     this.simplifyDebts = false,
+    this.inviteLink,
     this.updatedAt,
   });
 
@@ -52,12 +56,14 @@ class TripModel {
       name: json['name'] as String,
       destination: json['destination'] as String,
       coverImage: json['coverImage'] as String?,
+      inviteLink: json['inviteLink'] as String?,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
       tripType: json['tripType'] as String? ?? 'Other',
       membersCount: json['membersCount'] as int? ?? 0,
       createdBy: json['createdBy'] as String?,
       simplifyDebts: json['simplifyDebts'] as bool? ?? false,
+      inviteLink: json['inviteLink'] as String?,
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'] as String)
           : null,
@@ -71,12 +77,14 @@ class TripModel {
       'name': name,
       'destination': destination,
       'coverImage': coverImage,
+      'inviteLink': inviteLink,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
       'tripType': tripType,
       'membersCount': membersCount,
       'createdBy': createdBy,
       'simplifyDebts': simplifyDebts,
+      if (inviteLink != null) 'inviteLink': inviteLink,
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
@@ -87,12 +95,14 @@ class TripModel {
     String? name,
     String? destination,
     String? coverImage,
+    String? inviteLink,
     DateTime? startDate,
     DateTime? endDate,
     String? tripType,
     int? membersCount,
     String? createdBy,
     bool? simplifyDebts,
+    String? inviteLink,
     DateTime? updatedAt,
   }) {
     return TripModel(
@@ -100,12 +110,14 @@ class TripModel {
       name: name ?? this.name,
       destination: destination ?? this.destination,
       coverImage: coverImage ?? this.coverImage,
+      inviteLink: inviteLink ?? this.inviteLink,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       tripType: tripType ?? this.tripType,
       membersCount: membersCount ?? this.membersCount,
       createdBy: createdBy ?? this.createdBy,
       simplifyDebts: simplifyDebts ?? this.simplifyDebts,
+      inviteLink: inviteLink ?? this.inviteLink,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

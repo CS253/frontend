@@ -147,6 +147,9 @@ class ApiEndpoints {
   static String removeMember(String tripId, String memberId) =>
       '/groups/$tripId/members/$memberId';
 
+  /// POST — Join a trip using an invite link and participant name.
+  static const String joinTrip = '/groups/join';
+
   /// POST — Leave a trip as the current user.
   static String leaveTrip(String tripId) => '/groups/$tripId/leave';
 

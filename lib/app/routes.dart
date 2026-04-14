@@ -20,6 +20,7 @@ import '../features/intro/presentation/screens/provide_phone_screen.dart';
 
 // Trip screens
 import '../features/trips/presentation/screens/my_trips_screen.dart';
+import '../features/trips/presentation/screens/join_trip_screen.dart';
 
 import '../features/dashboard/presentation/screens/main_screen.dart';
 
@@ -76,6 +77,9 @@ class AppRoutes {
       // Trips
       case RouteConstants.trips:
         return _buildRoute(const MyTripsScreen(), settings);
+
+      case RouteConstants.joinTrip:
+        return _buildRoute(const JoinTripScreen(), settings);
 
       // Dashboard (main screen with bottom navigation)
       case RouteConstants.dashboard:
