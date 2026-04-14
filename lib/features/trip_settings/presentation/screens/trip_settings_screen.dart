@@ -234,6 +234,7 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
   }
 
   Widget _buildTripCard(BuildContext context, TripSettingsProvider provider) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     final dashboardProvider = context.watch<DashboardProvider>();
     final trip = dashboardProvider.currentTrip;
     
@@ -254,6 +255,7 @@ class _TripSettingsScreenState extends State<TripSettingsScreen> {
       if (trip.coverImage!.startsWith('http')) {
         backgroundImage = CachedNetworkImage(
           imageUrl: trip.coverImage!,
+          httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : null,
           fit: BoxFit.cover,
           errorWidget: (context, url, error) => _buildStockFallback(trip.tripType),
         );

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../core/constants/route_constants.dart';
-
 class TripCard extends StatelessWidget {
   final BuildContext parentContext;
   final String tripId;
@@ -32,6 +33,7 @@ class TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
     return Positioned(
       top: top,
       left: left,
@@ -69,6 +71,7 @@ class TripCard extends StatelessWidget {
                     if (imageUrl.startsWith('http')) {
                       return CachedNetworkImage(
                         imageUrl: imageUrl,
+                        httpHeaders: token != null ? {'Authorization': 'Bearer $token'} : null,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
                           color: const Color(0xFFF3F3F3),
@@ -93,6 +96,7 @@ class TripCard extends StatelessWidget {
                       // Attempt to show local file or fallback
                       return Image.network(
                         imageUrl, // This might still fail but we can't easily check for File Existence across platforms without more logic
+                        headers: token != null ? {'Authorization': 'Bearer $token'} : null,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Image.asset(
                           'assets/images/${tripType.isNotEmpty ? tripType : 'Other'}.png',

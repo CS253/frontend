@@ -15,7 +15,7 @@ class DocumentDownloadService {
   /// - **iOS**: Saves to app Documents folder, visible in Files > On My iPhone > Travelly.
   /// - **Android**: Opens a folder picker so the user can choose where to save.
   /// - **Web**: Opens the URL in the browser for native download.
-  Future<String?> downloadDocument(String url, String fileName) async {
+  Future<String?> downloadDocument(String url, String fileName, {String? token}) async {
     try {
       if (kIsWeb) {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -55,10 +55,16 @@ class DocumentDownloadService {
         }
       }
 
+      Options? options;
+      if (token != null) {
+        options = Options(headers: {'Authorization': 'Bearer $token'});
+      }
+
       // Download the file
       await _dio.download(
         url,
         outputFile,
+        options: options,
         onReceiveProgress: (received, total) {
           if (total != -1) {
             debugPrint('Download progress: ${(received / total * 100).toStringAsFixed(0)}%');

@@ -38,6 +38,7 @@ import 'package:travelly/features/dashboard/presentation/providers/dashboard_pro
 import 'package:travelly/core/utils/helpers.dart';
 import 'package:travelly/core/utils/validators.dart';
 import 'package:travelly/core/utils/initials_util.dart';
+import 'package:travelly/features/auth/presentation/providers/auth_provider.dart';
 import 'package:travelly/features/trips/data/services/destination_service.dart';
 
 /// Floating dialog for viewing and editing trip details.
@@ -656,13 +657,19 @@ class _TripDetailsDialogState extends State<TripDetailsDialog> {
                   fit: BoxFit.cover,
                 )
               : (_coverImagePath != null && _coverImagePath!.startsWith('http'))
-              ? Image.network(
-                  _coverImagePath!,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      _buildUploadPlaceholder(),
+              ? Builder(
+                  builder: (context) {
+                    final token = Provider.of<AuthProvider>(context, listen: false).token;
+                    return Image.network(
+                      _coverImagePath!,
+                      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildUploadPlaceholder(),
+                    );
+                  }
                 )
               : (_coverImagePath != null && !kIsWeb)
               ? Image.file(
