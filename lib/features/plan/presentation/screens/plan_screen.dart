@@ -172,7 +172,11 @@ class _PlanScreenState extends State<PlanScreen> {
             physics: const BouncingScrollPhysics(),
             slivers: [
               // Spacing for Header
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.of(context).padding.top + 110,
+                ),
+              ),
 
               // Departure Time Picker
               SliverToBoxAdapter(
